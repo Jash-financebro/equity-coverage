@@ -300,7 +300,7 @@
     app.innerHTML = `<p class="muted loading">Loading ${esc(t)}…</p>`;
     let d;
     try { d = cache[t] || (cache[t] = await getJSON(`data/${encodeURIComponent(t)}.json`)); }
-    catch { app.innerHTML = `<a class="crumb" href="#/coverage">← Coverage</a><p>No model found for ${esc(t)}.</p>`; return; }
+    catch { app.innerHTML = `<a class="crumb" href="#/library">← Library</a><p>No model found for ${esc(t)}.</p>`; return; }
     const s = d.snapshot || {};
     const cons = d.consensus || {};
     const peerImp = d.peers?.implied?.average;
@@ -313,7 +313,7 @@
     document.title = `${d.ticker} — ${usd(d.target)} target · Equity Coverage`;
 
     app.innerHTML = `
-      <a class="crumb" href="#/coverage">← Coverage</a>
+      <a class="crumb" href="#/library">← Library</a>
       <div class="dhead">
         <div>
           <h1><span class="tk">${esc(d.ticker)}</span>${esc(d.name)}</h1>
@@ -605,13 +605,11 @@
       document.getElementById("foot-right").textContent = INDEX.owner ? "© " + new Date().getFullYear() + " " + INDEX.owner : "";
     }
     const h = location.hash.replace(/^#\/?/, "");
-    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "fund", "library", "coverage"].includes(h) ? h : "")));
+    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "library"].includes(h) ? h : "")));
     window.scrollTo(0, 0);
-    if (!h) generateView();
-    else if (h === "coverage") { document.title = (INDEX.site?.title || "Equity Coverage"); home(); }
+    if (!h || h === "coverage" || h === "fund") { if (h) history.replaceState(null, "", "#/"); generateView(); }
     else if (h === "library") libraryView();
     else if (h === "method") method();
-    else if (h === "fund") fund();
     else detail(decodeURIComponent(h).toUpperCase());
   }
   window.addEventListener("hashchange", route);
