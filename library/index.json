@@ -1,7 +1,10 @@
 {
- "updated_at": "2026-11-24T16:22:09Z",
- "count": 5,
+ "updated_at": "2026-11-24T16:42:54Z",
+ "count": 6,
  "sectors": {
+  "Consumer Discretionary": [
+   "SN"
+  ],
   "Consumer Staples": [
    "KO"
   ],
@@ -19,6 +22,68 @@
   ]
  },
  "models": [
+  {
+   "ticker": "SN",
+   "name": "SharkNinja, Inc.",
+   "cik": 1957132,
+   "sector": "Consumer Discretionary",
+   "industry": "Household Appliances",
+   "exchange": "NYSE",
+   "sic": "3630",
+   "city": "Needham",
+   "state": "MA",
+   "website": "https://www.sharkninja.com",
+   "generated_at": "2026-11-24T16:42:38Z",
+   "version": 1,
+   "price": 227.44,
+   "price_date": "2026-11-24",
+   "target": 298.89,
+   "upside": 0.3141,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 236.31,
+    "base": 298.89,
+    "bull": 378.2
+   },
+   "model_scenarios": {
+    "base": 105.72,
+    "bull": 133.77,
+    "bear": 83.58
+   },
+   "dcf_value": 56.0741572762263,
+   "comps_value": 53.4020517091688,
+   "exit_value": 181.517594201591,
+   "model_value": 105.717110932961,
+   "peer_avg_upside": 0.4640987478164174,
+   "anchor_peers": [
+    "AMKR",
+    "ARM",
+    "AOS",
+    "ADI",
+    "WHR"
+   ],
+   "wacc": 0.1116,
+   "peers": [
+    "AMKR",
+    "ARM",
+    "AOS",
+    "ADI",
+    "WHR"
+   ],
+   "consensus": {
+    "target_mean": 249.58214,
+    "target_median": 250.0,
+    "analysts": 14
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "files": {
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v1.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v1.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T16:42:38Z"
+  },
   {
    "ticker": "CB",
    "name": "Chubb Ltd",
