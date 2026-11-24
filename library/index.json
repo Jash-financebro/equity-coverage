@@ -1,15 +1,78 @@
 {
- "updated_at": "2026-11-24T03:08:11Z",
- "count": 2,
+ "updated_at": "2026-11-24T03:11:26Z",
+ "count": 3,
  "sectors": {
   "Consumer Staples": [
    "KO"
   ],
   "Industrials": [
    "BE"
+  ],
+  "Utilities": [
+   "LNG"
   ]
  },
  "models": [
+  {
+   "ticker": "LNG",
+   "name": "Cheniere Energy, Inc.",
+   "cik": 3570,
+   "sector": "Utilities",
+   "industry": "Natural Gas Distribution",
+   "sic": "4924",
+   "city": "Houston",
+   "state": "TX",
+   "website": "https://www.cheniere.com",
+   "generated_at": "2026-11-24T03:10:47Z",
+   "version": 1,
+   "price": 295.46,
+   "price_date": "2026-11-23",
+   "target": 333.6,
+   "upside": 0.1291,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 273.16,
+    "base": 333.6,
+    "bull": 399.11
+   },
+   "model_scenarios": {
+    "base": 273.54,
+    "bull": 327.25,
+    "bear": 223.98
+   },
+   "dcf_value": 284.742151224466,
+   "comps_value": 332.06411308038,
+   "exit_value": 233.079729380935,
+   "model_value": 273.541574858236,
+   "peer_avg_upside": 0.27910005402603155,
+   "anchor_peers": [
+    "TRGP",
+    "KMI",
+    "TRP",
+    "VG"
+   ],
+   "wacc": 0.0867,
+   "peers": [
+    "TRGP",
+    "KMI",
+    "TRP",
+    "VG",
+    "TCPA"
+   ],
+   "consensus": {
+    "target_mean": 340.8,
+    "target_median": 347.0,
+    "analysts": 20
+   },
+   "beta_source": "default 1.0",
+   "fiscal_year": "FY2025",
+   "files": {
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v1.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v1.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T03:10:47Z"
+  },
   {
    "ticker": "KO",
    "name": "COCA COLA Co",
