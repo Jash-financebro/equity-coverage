@@ -618,9 +618,9 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.line(10, "Weight: DCF exit multiple", {"D": round((1 - w_c) / 2, 2)}, PCT)
     VS.line(11, "DCF perpetuity contribution", {"D": "=D5*D8"}, PS)
     VS.line(12, "Comps + exit-multiple contribution", {"D": "=D6*D9+D7*D10"}, PS)
-    VS.line(13, "Target Price (blended, per share)", {"D": "=D11+D12"}, PS)
+    VS.line(13, "Model value (blended intrinsic, per share)", {"D": "=D11+D12"}, PS)
     VS.line(14, "Current share price", {"D": "=Live_Data!$B$6"}, PS)
-    VS.line(15, "Implied upside / (downside)", {"D": "=IFERROR(D13/D14-1,0)"}, PCT)
+    VS.line(15, "Model upside / (downside)", {"D": "=IFERROR(D13/D14-1,0)"}, PCT)
     VS.section(17, "Scenario comparison")
     for col, name in zip("DEF", ("Bear", "Base", "Bull")):
         VS.put(f"{col}18", name, bold=True)
@@ -629,14 +629,47 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.line(20, "Revenue growth, year 5", {"D": f"={rb('K11')}", "E": f"={rb('K10')}", "F": f"={rb('K9')}"}, PCT)
     VS.line(21, "Cost of revenue % of revenue", {"D": f"={rb('G21')}", "E": f"={rb('G20')}", "F": f"={rb('G19')}"}, PCT)
     VS.line(22, "Terminal growth rate", {"D": f"={rb('D42')}", "E": f"={rb('D41')}", "F": f"={rb('D40')}"}, PCT)
-    VS.put("B25", "Exit multiple factor bull / base / bear: Revenue Build row 44.")
-    VS.line(23, "Target price (blended, per share)", {"D": 0, "E": 0, "F": 0}, PS,
+    VS.put("B26", "Exit multiple factor bull / base / bear: Revenue Build row 44.")
+    VS.line(23, "Model value per case (blended intrinsic)", {"D": 0, "E": 0, "F": 0}, PS,
             note="Recorded at generation by switching Revenue Build D5 to 3 / 2 / 1 and recalculating the model")
-    VS.line(24, "Upside / (downside) vs current price", {c: f"=IFERROR({c}23/$D$14-1,0)" for c in "DEF"}, PCT)
-    VS.put("B26", "To rerun a case yourself: set Revenue Build D5 to 1 (bull), 2 (base) or 3 (bear); every tab follows.")
+    VS.line(24, "Final target per case (anchored base x case / base)",
+            {c: f"=IFERROR($D$43*{c}23/$E$23,0)" for c in "DEF"}, PS)
+    VS.line(25, "Upside / (downside) vs current price", {c: f"=IFERROR({c}24/$D$14-1,0)" for c in "DEF"}, PCT)
+    VS.put("B27", "To rerun a case yourself: set Revenue Build D5 to 1 (bull), 2 (base) or 3 (bear); every tab follows.")
+
+    # ---- peer & consensus anchoring: keep the call in line with what the industry's analysts see
+    anc = ctx.get("anchor") or {}
+    street, peer_up = anc.get("street_median"), anc.get("peer_avg_upside")
+    w_m, w_s, w_p = 0.5, 0.25 if street else 0.0, 0.25 if peer_up is not None else 0.0
+    tot = w_m + w_s + w_p
+    VS.section(28, "Peer & consensus anchoring (final price target)")
+    VS.line(29, "Model value (blended intrinsic)", {"D": "=D13"}, PS)
+    VS.line(30, "Street median price target", {"D": round(street, 2) if street else 0}, PS,
+            note=f"Yahoo Finance consensus, {anc.get('analysts') or 'n/a'} analysts, at generation" if street
+            else "No consensus available: weight set to 0")
+    VS.line(31, "Industry peers' average upside to their street median targets",
+            {"D": round(peer_up, 4) if peer_up is not None else 0}, PCT,
+            note=f"Average over {anc.get('peer_count', 0)} peers with consensus targets ({', '.join(anc.get('peers_used', []))})"
+            if peer_up is not None else "No peer consensus available: weight set to 0, band centred on street/model")
+    VS.line(32, "Peer-relative value (price x (1 + peer average upside))", {"D": "=D14*(1+D31)"}, PS)
+    VS.line(33, "Weight: model value", {"D": round(w_m / tot, 4)}, PCT)
+    VS.line(34, "Weight: street median target", {"D": round(w_s / tot, 4)}, PCT)
+    VS.line(35, "Weight: peer-relative value", {"D": round(w_p / tot, 4)}, PCT)
+    VS.line(36, "Model contribution", {"D": "=D29*D33"}, PS)
+    VS.line(37, "Street contribution", {"D": "=D30*D34"}, PS)
+    VS.line(38, "Peer-relative contribution", {"D": "=D32*D35"}, PS)
+    VS.line(39, "Anchored value", {"D": "=D36+D37+D38"}, PS)
+    centre = "D31" if peer_up is not None else ("(D30/D14-1)" if street else "D15")
+    VS.line(40, "Band around the peer average upside (+/-)", {"D": 0.15}, PCT)
+    VS.line(41, "Lower bound", {"D": f"=D14*(1+{centre}-D40)"}, PS)
+    VS.line(42, "Upper bound", {"D": f"=D14*(1+{centre}+D40)"}, PS)
+    VS.line(43, "Target Price (final, per share)", {"D": "=MIN(D42,MAX(D41,D39))"}, PS)
+    VS.line(44, "Upside / (downside) to final target", {"D": "=IFERROR(D43/D14-1,0)"}, PCT)
+    VS.put("B46", "The final target blends the model with what the street and the industry's analysts see, then keeps the "
+                  "upside within 15 points of the peer average so no single call stands far outside its industry.")
 
     wb.defined_names["Scenario"] = DefinedName("Scenario", attr_text=f"{RB.ref('$D$5')}")
-    wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{VS.ref('$D$13')}")
+    wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{VS.ref('$D$43')}")
     dest.parent.mkdir(parents=True, exist_ok=True)
     wb.save(dest)
     return dest

@@ -1,4 +1,4 @@
-// Equity Coverage API (Cloudflare Worker).
+// Equity Coverage API - Cloudflare Worker.
 // POST /api/generate {ticker}      validate NYSE ticker, dedupe, rate-limit, dispatch the GitHub build
 // GET  /api/status?ticker=T&since= queued / running / ready / failed (+ model when ready)
 // GET  /api/library                shared library index (every model anyone generated, by sector)

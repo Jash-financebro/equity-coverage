@@ -92,7 +92,9 @@ def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> l
         shares = fundamentals.shares_outstanding(p["facts"]) or last("shares_diluted")
         if not shares:
             continue
+        q = sources.quote_summary(p["c"]["ticker"])
         peers.append({"ticker": p["c"]["ticker"], "name": clean_name(p["c"]["name"]), "price": px, "shares": shares,
+                      "street_median": q.get("target_median"), "street_mean": q.get("target_mean"),
                       "net_debt": last("short_term_debt") + last("long_term_debt") - last("cash"),
                       "ebitda": last("operating_income") + last("d_and_a"), "eps": last("eps_diluted"),
                       "revenue": p["rev"]})
@@ -129,9 +131,12 @@ def read_model(path: Path, T: str) -> dict:
     m["dcf"].update({"ev_ebitda_now": g("DCF", "D45"), "exit_mult_used": g("DCF", "D46"), "tv_exit": g("DCF", "D48"),
                      "ev_exit": g("DCF", "D50"), "value_exit": g("DCF", "D52"), "implied_g": g("DCF", "D53")})
     m["val"] = {"dcf": vs(5), "comps": vs(6), "exit": vs(7), "w_dcf": vs(8), "w_comps": vs(9), "w_exit": vs(10),
-                "target": vs(13), "price": vs(14),
+                "model_value": vs(13), "target": vs(43), "price": vs(14),
+                "anchor": {"street": vs(30), "peer_up": vs(31), "peer_value": vs(32), "w_model": vs(33), "w_street": vs(34),
+                           "w_peer": vs(35), "anchored": vs(39), "band": vs(40), "lo": vs(41), "hi": vs(42),
+                           "upside": vs(44)},
                 "upside": vs(15), "cases": {n: {"g1": vs(19, c), "g5": vs(20, c), "cogs": vs(21, c), "tg": vs(22, c),
-                                                "target": vs(23, c), "upside": vs(24, c)}
+                                                "model": vs(23, c), "target": vs(24, c), "upside": vs(25, c)}
                                             for n, c in (("bear", "D"), ("base", "E"), ("bull", "F"))}}
     rb = wb[f"{T} Revenue Build"]
     m["assumptions"] = {"stance": rb["D6"].value, "opex": rb["G23"].value, "capex": rb["G25"].value,
@@ -225,19 +230,27 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
     peers = pick_peers(me, uni, items["revenue"][-1])
     print(f"  peers: {', '.join(p['ticker'] for p in peers) or 'none'}")
 
+    ups = [(p["ticker"], p["street_median"] / p["price"] - 1) for p in peers if p.get("street_median") and p.get("price")]
+    ups = [(t, u) for t, u in ups if -0.6 < u < 1.5]  # drop stale / broken consensus
+    anchor = {"street_median": qs.get("target_median"), "analysts": qs.get("analysts"),
+              "peer_avg_upside": (sum(u for _, u in ups) / len(ups)) if ups else None,
+              "peer_count": len(ups), "peers_used": [t for t, _ in ups]}
+    print(f"  anchor: street median {anchor['street_median']} | peer avg upside {anchor['peer_avg_upside']}")
+
     folder = LIB / slug(me["sector"]) / T
     folder.mkdir(parents=True, exist_ok=True)
     n = max([int(m.group(1)) for f in folder.glob(f"{T}_v*.xlsx") if (m := re.search(r"_v(\d+)$", f.stem))] or [0]) + 1
     label = f"{T}_v{n}"
     work = Path(tempfile.mkdtemp())
     built = work / f"{label}.xlsx"
-    builder.build(T, built, {"live": live, "fin": fin, "peers": peers}, stance="Balanced")
+    builder.build(T, built, {"live": live, "fin": fin, "peers": peers, "anchor": anchor}, stance="Balanced")
     live["model_label"] = label
     vs = f"'{T} Valuation Summary'"
     calc = excel.Calc(port=int(os.environ.get("LO_PORT", "2002")))
     try:
         res = excel.refresh(calc, built, folder / f"{label}.xlsx", live,
-                            {"scenario_cells": {"bear": f"{vs}!D23", "base": f"{vs}!E23", "bull": f"{vs}!F23"}})
+                            {"scenario_cells": {"bear": f"{vs}!D23", "base": f"{vs}!E23", "bull": f"{vs}!F23"},
+                             "scenario_value_ref": f"{vs}!D13"})
     finally:
         calc.close()
     model = read_model(folder / f"{label}.xlsx", T)
@@ -249,8 +262,12 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
         "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "version": n, "price": round(price, 2),
         "price_date": mkt["as_of"], "target": round(target, 2) if target else None,
         "upside": round(upside, 4) if upside is not None else None, "rating": rating_for(upside),
-        "scenarios": {k: round(v, 2) for k, v in res["scenarios"].items() if v},
+        "scenarios": {k: round(model["val"]["cases"][k]["target"], 2) for k in ("bear", "base", "bull")
+                      if model["val"]["cases"][k]["target"]},
+        "model_scenarios": {k: round(v, 2) for k, v in res["scenarios"].items() if v},
         "dcf_value": model["val"]["dcf"], "comps_value": model["val"]["comps"], "exit_value": model["val"]["exit"],
+        "model_value": model["val"]["model_value"], "peer_avg_upside": anchor["peer_avg_upside"],
+        "anchor_peers": anchor["peers_used"],
         "wacc": round(model["wacc"]["wacc"], 4), "peers": [p["ticker"] for p in peers],
         "consensus": {k: qs.get(k) for k in ("target_mean", "target_median", "analysts")},
         "beta_source": beta_src, "fiscal_year": fin["labels"][-1],

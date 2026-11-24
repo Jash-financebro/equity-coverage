@@ -52,7 +52,9 @@ PEERS = [peer("ORCL"), peer("GOOGL")]
 problems = []
 for stance in ("Balanced", "Bearish"):
     dest = tmp / f"MSFT_v{1 if stance == 'Balanced' else 2}.xlsx"
-    builder.build("MSFT", dest, {"live": live, "fin": fin, "peers": PEERS}, stance=stance)
+    builder.build("MSFT", dest, {"live": live, "fin": fin, "peers": PEERS,
+                                 "anchor": {"street_median": 625.0, "analysts": 55, "peer_avg_upside": 0.10,
+                                            "peer_count": 2, "peers_used": ["ORCL", "GOOGL"]}}, stance=stance)
     issues = builder.verify(dest)
     problems += [f"[{stance}] {i}" for i in issues]
 
@@ -61,7 +63,8 @@ for stance in ("Balanced", "Bearish"):
     try:
         vs = "'MSFT Valuation Summary'"
         res = excel.refresh(calc, dest, out, {**live, "model_label": dest.stem},
-                            {"scenario_cells": {"bear": f"{vs}!D23", "base": f"{vs}!E23", "bull": f"{vs}!F23"}})
+                            {"scenario_cells": {"bear": f"{vs}!D23", "base": f"{vs}!E23", "bull": f"{vs}!F23"},
+                             "scenario_value_ref": f"{vs}!D13"})
     finally:
         calc.close()
     wb = openpyxl.load_workbook(out, data_only=True)
@@ -82,14 +85,21 @@ for stance in ("Balanced", "Bearish"):
     print(f"{stance}: target {res['target']:.2f} via {res['target_cell']} | scenarios "
           + ", ".join(f"{k} {v:.2f}" for k, v in sc.items() if v)
           + f" | sens centre {dcf['F39'].value:.2f} | IS hist NI {wb['MSFT Income Statement']['F23'].value:,.0f}")
-    if not (sc["bear"] < sc["base"] < sc["bull"]) or abs(res["target"] - (sc["base"] if stance == "Balanced" else sc["bear"])) > 0.01:
+    if not (sc["bear"] < sc["base"] < sc["bull"]):
         problems.append(f"[{stance}] scenarios not ordered: {sc}")
     vsh = wb["MSFT Valuation Summary"]
     blend = vsh["D5"].value * vsh["D8"].value + vsh["D6"].value * vsh["D9"].value + vsh["D7"].value * vsh["D10"].value
-    if abs(blend - res["target"]) > 0.01 or abs(dcf["F39"].value - vsh["D5"].value) > 0.01:
+    px_ = vsh["D14"].value
+    anchored = 0.5 * blend + 0.25 * 625.0 + 0.25 * px_ * 1.10
+    final = min(px_ * 1.25, max(px_ * 0.95, anchored))
+    print(f"   final cases {[round(vsh[c + '24'].value, 2) for c in 'DEF']} | model {blend:.2f} | anchored {anchored:.2f} | band {px_ * 0.95:.2f}-{px_ * 1.25:.2f} | final {res['target']:.2f}")
+    if abs(final - res["target"]) > 0.01 or abs(blend - vsh["D13"].value) > 0.01 or abs(dcf["F39"].value - vsh["D5"].value) > 0.01:
         problems.append(f"[{stance}] blend/sensitivity mismatch {blend} {res['target']}")
     if abs(vsh["E23"].value - sc["base"]) > 0.01 or abs(vsh["F23"].value - sc["bull"]) > 0.01:
         problems.append(f"[{stance}] scenario table not filled")
+    fin3 = [vsh[f"{c}24"].value for c in "DEF"]
+    if not (fin3[0] < fin3[1] < fin3[2]) or abs(fin3[1] * sc["base"] / vsh["E23"].value - fin3[1]) > 0.01:
+        problems.append(f"[{stance}] anchored scenarios wrong {fin3}")
     if not vsh["D6"].value or vsh["D6"].value <= 0:
         problems.append(f"[{stance}] comps value missing: {vsh['D6'].value}")
     print(f"   comps median EV/EBITDA {wb['MSFT Comps']['D' + str(next(r for r in range(5, 40) if wb['MSFT Comps'][f'B{r}'].value == 'Peer median EV / EBITDA'))].value:.1f}x"

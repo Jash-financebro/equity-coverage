@@ -28,7 +28,7 @@ d = json.loads((work / "site" / "data" / "MSFT.json").read_text())
 
 assert d["status"] == "ok", d
 assert (work / "models" / "MSFT_v1.xlsx").exists(), "builder did not save MSFT_v1.xlsx"
-assert abs(d["target"] - d["scenarios"]["base"]) < 0.01 and 150 < d["target"] < 300, d["target"]
+assert abs(d["target"] - d["scenarios"]["base"]) < 0.01 and 150 < d["target"] < 600, d["target"]
 assert d["scenarios"]["bear"] < d["scenarios"]["base"] < d["scenarios"]["bull"], d["scenarios"]
 assert d["financials"]["items"]["net_income"][-1] == 101832     # 10-Q fact ignored
 assert d["consensus"]["target_median"] == 625.0

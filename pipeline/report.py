@@ -198,8 +198,13 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
     direction = "above" if (up or 0) >= 0 else "below"
 
     # ---------------- thesis
+    an = val.get("anchor") or {}
     th1 = (f"We rate {name} <b>{rec['rating'].upper()}</b> with a 12-month price target of <b>{usd(target)}</b>, "
            f"{pct(abs(up or 0))} {direction} the {usd(price)} close on {rec['price_date']}. ")
+    if nz(an.get("peer_up")) and an.get("w_peer"):
+        th1 += (f"The target is anchored to the industry: analysts see {pct(an['peer_up'])} average upside across "
+                f"{', '.join(rec.get('anchor_peers') or [])}, and our final call stays within 15 points of that. ")
+    th1 += f"Before anchoring, our model value is {usd(val['model_value'])}. "
     th1 += (f"The target blends a perpetuity-growth DCF ({pct(val['w_dcf'], 0)}, {usd(val['dcf'])}), an exit-multiple DCF "
             f"({pct(val['w_exit'], 0)}, {usd(val['exit'])}) and an EV/EBITDA comparison against {len(m['comps'])} NYSE peers "
             f"in the same industry ({pct(val['w_comps'], 0)}, {usd(val['comps'])})." if has_comps else
@@ -330,15 +335,32 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
                        f"the same SEC industry group, picked for the closest revenue. Their median EV/EBITDA of {mult(med)} "
                        f"on {yrs[2]} EBITDA of {bn(ebitda[2])} implies {usd(val['comps'])} a share."))
     story.append(P(f"<b>Blend.</b> Weighting the perpetuity DCF {pct(val['w_dcf'], 0)}, the exit-multiple DCF "
-                   f"{pct(val['w_exit'], 0)} and comps {pct(val['w_comps'], 0)} gives {usd(target)}, {pct(up)} versus the "
-                   "current price."))
+                   f"{pct(val['w_exit'], 0)} and comps {pct(val['w_comps'], 0)} gives a model value of "
+                   f"{usd(val['model_value'])}."))
     blend = [["DCF (perpetuity growth)", usd(val["dcf"]), pct(val["w_dcf"], 0), usd((val["dcf"] or 0) * (val["w_dcf"] or 0))],
              ["DCF (exit multiple)", usd(val["exit"]), pct(val["w_exit"], 0), usd((val["exit"] or 0) * (val["w_exit"] or 0))],
              ["Trading comps (EV/EBITDA)", usd(val["comps"]), pct(val["w_comps"], 0),
               usd((val["comps"] or 0) * (val["w_comps"] or 0))],
              ["Blended target price", "", "", usd(target)]]
+    blend[-1][0] = "Model value (blended intrinsic)"
+    blend[-1][3] = usd(val["model_value"])
     story.append(table(["Method", "Value / share", "Weight", "Contribution"], blend, [3.0 * inch, 1.4 * inch, 1.2 * inch, 1.4 * inch],
-                       bold=("Blended target price",)))
+                       bold=("Model value (blended intrinsic)",)))
+    story.append(P("Peer &amp; consensus anchoring", "h2"))
+    story.append(P(f"A mechanical model can land far from where the market and the industry's analysts are. To keep each call "
+                   f"in line with its industry, the final target blends the model value ({pct(an.get('w_model'), 0)}) with "
+                   f"the street median target ({pct(an.get('w_street'), 0)}) and a peer-relative value "
+                   f"({pct(an.get('w_peer'), 0)}): today's price times the average upside analysts see for the peers. The "
+                   f"result is then kept within {pct(an.get('band'), 0)} of the peer average upside."))
+    story.append(table(["Anchoring step", "Value"],
+                       [["Model value (blended intrinsic)", usd(val["model_value"])],
+                        ["Street median target", usd(an.get("street")) if an.get("w_street") else "n/a"],
+                        ["Peer average upside to street median", pct(an.get("peer_up")) if an.get("w_peer") else "n/a"],
+                        ["Peer-relative value", usd(an.get("peer_value")) if an.get("w_peer") else "n/a"],
+                        ["Anchored value", usd(an.get("anchored"))],
+                        ["Allowed range", f"{usd(an.get('lo'))} – {usd(an.get('hi'))}"],
+                        ["Final price target", usd(target)]],
+                       [3.6 * inch, 1.6 * inch], bold=("Final price target",)))
     story += [P("Scenarios", "h2"),
               P("Each case reruns the whole model with the Revenue Build selector switched: bull adds 3 points of revenue "
                 "growth a year and takes 1 point off cost of revenue, bear does the opposite, and terminal growth moves "
@@ -348,9 +370,9 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
                      ["Revenue growth, year 5", *[pct(sc[k]["g5"]) for k in ("bear", "base", "bull")]],
                      ["Cost of revenue % of revenue", *[pct(sc[k]["cogs"]) for k in ("bear", "base", "bull")]],
                      ["Terminal growth", *[pct(sc[k]["tg"], 2) for k in ("bear", "base", "bull")]],
-                     ["Target price (blended)", *[usd(sc[k]["target"]) for k in ("bear", "base", "bull")]],
+                     ["Final target (anchored)", *[usd(sc[k]["target"]) for k in ("bear", "base", "bull")]],
                      ["Upside / (downside)", *[pct(sc[k]["upside"]) for k in ("bear", "base", "bull")]]],
-                    [3.0 * inch, 1.33 * inch, 1.33 * inch, 1.34 * inch], bold=("Target price (blended)",))]
+                    [3.0 * inch, 1.33 * inch, 1.33 * inch, 1.34 * inch], bold=("Final target (anchored)",))]
 
     rows = []
     if closes:
@@ -397,10 +419,12 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
     if len(m["comps"]) < 3:
         risks.append(("Thin peer set.", f"Only {len(m['comps'])} usable NYSE peers were found in the same industry, so "
                       "the comps cross-check carries little weight."))
-    if nz(cons.get("target_median")) and nz(target) and abs(target / cons["target_median"] - 1) > 0.25:
-        risks.append(("Far from consensus.", f"The target differs from the street median of {usd(cons['target_median'])} "
-                      f"by {pct(target / cons['target_median'] - 1, 0)}. A gap this size usually means the automated "
-                      "assumptions are missing something company-specific."))
+    mv = val.get("model_value")
+    if nz(cons.get("target_median")) and nz(mv) and abs(mv / cons["target_median"] - 1) > 0.25:
+        risks.append(("Model far from consensus.", f"Before anchoring, the model value of {usd(mv)} differs from the street "
+                      f"median of {usd(cons['target_median'])} by {pct(mv / cons['target_median'] - 1, 0)}. A gap this size "
+                      "usually means the automated assumptions miss something company-specific, which is why the final "
+                      "target is anchored to the industry."))
     story += [P("Risks", "h1")] + [P(f"<b>{a}</b> {b}") for a, b in risks]
 
     story += [P("Recent SEC Filings", "h1"),
@@ -467,7 +491,8 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
                 "Treasury yield for the risk-free rate. The model is a linked three-statement build (income statement, "
                 "balance sheet, cash flow with PP&E, equity, debt and revolver schedules), a WACC, a five-year DCF with a "
                 "sensitivity grid and an exit-multiple cross-check, a same-industry comps table, and bull, base and bear "
-                "cases. The target blends perpetuity DCF 40%, exit-multiple DCF 40% and comps 20%. No analyst reviewed it.",
+                "cases. The model value blends perpetuity DCF 40%, exit-multiple DCF 40% and comps 20%; the final target "
+                "anchors that value to the street median and the peers' average analyst upside. No analyst reviewed it.",
                 "small"),
               P("For information and education only. This is not investment advice or a recommendation to buy or sell "
                 "any security. Projections are mechanical estimates and will differ from actual results.", "small")]

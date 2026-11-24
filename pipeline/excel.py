@@ -266,6 +266,9 @@ def find_target(doc, explicit: str | None):
 def run_scenarios(doc, cfg: dict, base_target) -> dict:
     """Bull/bear (or any named) cases: apply overrides, recalc, read target, restore."""
     out = {"base": base_target}
+    if cfg.get("scenario_value_ref"):
+        v, _ = find_target(doc, cfg["scenario_value_ref"])
+        out["base"] = v if isinstance(v, float) else None
     names = doc.NamedRanges
     selector = names.getByName("Scenario").getReferredCells().getCellByPosition(0, 0) \
         if names.hasByName("Scenario") else None
@@ -282,7 +285,7 @@ def run_scenarios(doc, cfg: dict, base_target) -> dict:
             saved.append((cell, cell.getFormula()))
             cell.setValue(float(v)) if isinstance(v, (int, float)) else cell.setString(str(v))
         doc.calculateAll()
-        t, _ = find_target(doc, cfg.get("target_price"))
+        t, _ = find_target(doc, cfg.get("scenario_value_ref") or cfg.get("target_price"))
         out[name] = t if isinstance(t, float) else None
         for cell, f in reversed(saved):
             cell.setFormula(f)
