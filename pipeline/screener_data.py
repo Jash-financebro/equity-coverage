@@ -21,6 +21,8 @@ import universe  # noqa: E402
 OUT = universe.OUT.parent / "screener.json"
 FIELDS = ["ticker", "name", "sector", "exchange", "price", "chg_1y", "beta", "mcap", "pe", "ev_ebitda", "rev_growth",
           "gross_m", "op_m", "net_m", "div_yield", "payout", "de", "fcf", "fcf_m", "fin", "fy", "country"]
+US_STATES = set("AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC "
+                "ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY PR VI GU".split())
 REVENUE = ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax",
            "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet", "SalesRevenueGoodsNet"]
 
@@ -160,6 +162,8 @@ def main():
             mcap = None
         # an independent market value (Nasdaq's list) beats price x SEC share count: ADRs, splits and spin-offs
         ncap, country = caps.get(t, (None, ""))
+        if not country:  # not on Nasdaq's list: use the business address in the SEC record
+            country = "United States" if (c.get("state") or "") in US_STATES else "Outside US"
         if ncap:
             mcap = ncap if (r1 or n_ is not None) else None
         r1, r0, n_ = rev1.get(cik), rev0.get(cik), ni.get(cik)

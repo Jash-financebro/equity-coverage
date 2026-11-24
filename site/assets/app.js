@@ -779,7 +779,7 @@
   }
   async function screenerView() {
     document.title = "Screener · " + SITE;
-    app.innerHTML = `<section class="hero"><h1>Screener</h1><p>Find companies that match what you're looking for. Start from one of the ideas below, or open all filters and set your own. Every NYSE and Nasdaq company is included, from its latest 10-K and today's prices. Each result links to a full model.</p></section>
+    app.innerHTML = `<section class="hero"><h1>Screener</h1><p>Find companies that match what you're looking for. Start from one of the ideas below, or open all filters and set your own. It covers every NYSE and Nasdaq company (US-based by default), using each one's latest 10-K and today's prices. Each result links to a full model.</p></section>
       <div class="presets-grid">${SCREEN_PRESETS.map((p) => `<button class="preset" data-p="${p.id}"><b>${esc(p.t)}</b><span>${esc(p.d)}</span></button>`).join("")}</div>
       <details class="card section sf-box" id="sf-box"><summary>All filters</summary><div id="sf"></div></details>
       <div id="sr" class="section"><p class="muted loading">Loading ${"6,000"} companies…</p></div>`;
@@ -803,6 +803,7 @@
           <label class="sf-chk"><input type="checkbox" id="sf-cheap" ${F.cheap_vs_sector ? "checked" : ""}> P/E below its sector's median</label>
           <label class="sf-chk"><input type="checkbox" id="sf-funds" ${F.funds ? "checked" : ""}> Owned by a tracked fund</label>
           <label class="sf-chk"><input type="checkbox" id="sf-nofin" ${F.no_fin ? "checked" : ""}> Exclude banks, insurers and REITs</label>
+          <label class="sf-chk" title="Foreign companies often report in other currencies, so some ratios are less reliable"><input type="checkbox" id="sf-intl" ${F.intl ? "checked" : ""}> Include companies based outside the US</label>
         </div>
         <div class="sf-grid">${SCREEN_FILTERS.map((x) => screenFilterRow(x, F)).join("")}</div>
         <div class="gen-actions"><button class="btn sm" id="sf-reset">Clear all filters</button></div>`;
@@ -816,7 +817,7 @@
       const bind = (id, k, f) => document.getElementById(id).addEventListener("change", (e) => { const v = f(e.target); if (v) F[k] = v; else delete F[k]; active = null; apply(); });
       bind("sf-sector", "sector", (t) => t.value); bind("sf-ex", "exchange", (t) => t.value);
       bind("sf-fcf", "fcf_pos", (t) => t.checked); bind("sf-cheap", "cheap_vs_sector", (t) => t.checked);
-      bind("sf-funds", "funds", (t) => t.checked); bind("sf-nofin", "no_fin", (t) => t.checked);
+      bind("sf-funds", "funds", (t) => t.checked); bind("sf-nofin", "no_fin", (t) => t.checked); bind("sf-intl", "intl", (t) => t.checked);
       document.getElementById("sf-reset").addEventListener("click", () => { F = {}; active = null; drawFilters(); apply(); });
     };
     const pass = (r) => {
@@ -833,6 +834,7 @@
       if (F.cheap_vs_sector && !(r.pe > 0 && med[r.sector] && r.pe < med[r.sector])) return false;
       if (F.funds && !r.funds) return false;
       if (F.no_fin && r.fin) return false;
+      if (!F.intl && r.country && r.country !== "United States") return false;
       return true;
     };
     const COLS = [["ticker", "Company"], ["mcap", "Mkt cap"], ["pe", "P/E"], ["ev_ebitda", "EV/EBITDA"], ["rev_growth", "Rev. growth"],
@@ -841,6 +843,7 @@
       k === "beta" ? (r.beta == null ? "—" : r.beta.toFixed(2)) : k === "chg_1y" ? signed(r.chg_1y) : pct(r[k]);
     const notes = (r) => [r.net_m != null && r.net_m < 0 ? `<span class="tag warn-t" title="Net loss in the latest fiscal year">loss</span>` : "",
       r.fin ? `<span class="tag" title="Banks, insurers and REITs: EV/EBITDA and margins work differently">financial</span>` : "",
+      r.country && r.country !== "United States" ? `<span class="tag" title="${r.country === "Outside US" ? "Based outside the US" : "Based in " + esc(r.country)}; figures may be translated from another currency">outside US</span>` : "",
       r.funds ? `<span class="tag fund-t" title="Held by ${r.funds} tracked fund${r.funds > 1 ? "s" : ""}">${r.funds} fund${r.funds > 1 ? "s" : ""}</span>` : ""].join("");
     function apply() {
       sessionStorage.setItem("mb_screen", JSON.stringify(F));
@@ -866,7 +869,7 @@
       });
     }
     document.querySelectorAll(".preset").forEach((b) => b.addEventListener("click", () => {
-      const p = SCREEN_PRESETS.find((x) => x.id === b.dataset.p); F = { ...p.f }; active = p.id; shown = 50; drawFilters(); apply();
+      const p = SCREEN_PRESETS.find((x) => x.id === b.dataset.p); F = { ...p.f, ...(F.intl ? { intl: true } : {}) }; active = p.id; shown = 50; sort = ["mcap", -1]; drawFilters(); apply();
     }));
     drawFilters(); apply();
   }
