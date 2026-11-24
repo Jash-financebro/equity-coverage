@@ -14,7 +14,7 @@ KEYWORDS = re.compile(r"\b(guidance|outlook|expects?|expected|anticipates?|forec
 METRICS = re.compile(r"\b(revenue|revenues|net sales|sales|organic|EPS|earnings per share|operating income|"
                      r"operating margin|free cash flow|EBITDA)\b", re.I)
 NUMBER = re.compile(r"\d")
-NOISE = re.compile(r"forward-looking|safe harbor|risks and uncertainties|non-gaap|reconcil|conference call|"
+NOISE = re.compile(r"^\(\d+\)|forward-looking|safe harbor|risks and uncertainties|reconcil|conference call|"
                    r"webcast|press release|investor relations|following table|see table|footnote", re.I)
 
 
@@ -36,20 +36,28 @@ def _sentences(text: str):
 
 
 def revenue_growth_range(sentences: list[str]):
-    """(low, high) revenue growth guidance as decimals, if a sentence states one."""
+    """(low, high) full-year revenue growth guidance as decimals, if stated. Full-year ranges beat quarterly ones."""
+    best = None
     for s in sentences:
-        if not re.search(r"revenue|net sales|sales", s, re.I) or not re.search(r"grow|growth|increase", s, re.I):
+        if not re.search(r"revenue|net sales|sales", s, re.I) or not re.search(r"grow|growth|increase|\bup\b", s, re.I):
             continue
+        rng = None
         m = re.search(r"(-?\d+(?:\.\d+)?)\s*%?\s*(?:to|-|–|and)\s*(-?\d+(?:\.\d+)?)\s*%", s)
         if m:
             lo, hi = sorted((float(m.group(1)) / 100, float(m.group(2)) / 100))
             if -0.5 < lo < 1 and -0.5 < hi < 1:
-                return lo, hi
-        m = re.search(r"(?:approximately|about|around|roughly)?\s*(-?\d+(?:\.\d+)?)\s*%", s)
-        if m and -50 < float(m.group(1)) < 100:
-            v = float(m.group(1)) / 100
-            return v, v
-    return None
+                rng = (lo, hi)
+        else:
+            m = re.search(r"(-?\d+(?:\.\d+)?)\s*%", s)
+            if m and -50 < float(m.group(1)) < 100:
+                rng = (float(m.group(1)) / 100,) * 2
+        if not rng:
+            continue
+        score = (2 if re.search(r"full[- ]year|fiscal (?:year )?20\d\d|annual|for the year|20\d\d (?:revenue|net sales)", s, re.I) else 0) \
+            - (2 if re.search(r"quarter|q[1-4]\b", s, re.I) else 0)
+        if best is None or score > best[0]:
+            best = (score, rng)
+    return best[1] if best else None
 
 
 def latest(subs: dict, cik: int, model_growth: float | None = None) -> dict | None:

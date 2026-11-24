@@ -22,4 +22,10 @@ lng = ("CHENIERE ENERGY, INC. NEWS RELEASE . Cheniere Reports Third Quarter 2026
 ls = list(G._sentences(lng))
 assert any(s.startswith("Raising full year 2026 Consolidated Adjusted EBITDA") for s in ls), ls
 assert not any("following table" in s for s in ls), ls
+agilent = ["Fiscal year 2027 revenue is expected in the range of $8.00 billion to $8.15 billion, representing a range of up 6.0% to 8.0% reported and up 5.0% to 7.0% core (1)(5).",
+           "First-quarter 2027 revenue is expected in the range of $1.96 billion to $2.00 billion, growth of 8.8% to 11.0% reported."]
+assert G.revenue_growth_range(agilent) == (0.06, 0.08), G.revenue_growth_range(agilent)
+ko = "Full Year 2026 . Organic revenues (non-GAAP): The company continues to expect to deliver 5% to 6% organic revenue growth."
+assert any("5% to 6% organic revenue growth" in s for s in G._sentences(ko)), list(G._sentences(ko))
+assert not list(G._sentences("(5) Core or organic constant currency revenue growth outlook is based on forecasted rates of 2%."))
 print("OK  guidance:", len(sents), "sentences, revenue growth range", G.revenue_growth_range(sents))
