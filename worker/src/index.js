@@ -166,7 +166,7 @@ async function yahooAuth(ctx) {
   });
 }
 async function quoteOne(t, sector, ctx) {
-  return cached(ctx, `quote-v1-${t}`, 1800, async () => {
+  return cached(ctx, `quote-v2-${t}`, 1800, async () => {
     const out = { ticker: t, sector };
     try {
       const ch = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?range=1y&interval=1wk&events=div`, { headers: YUA }).then((r) => r.json());
