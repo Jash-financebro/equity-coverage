@@ -49,7 +49,7 @@ SIC_SECTORS = [
     ((100, 999), "Consumer Staples"),
 ]
 EXCHANGES = {"NYSE": "NYSE", "NASDAQ": "Nasdaq"}
-MAPPING_VERSION = 3  # bump when SIC_SECTORS changes so the universe rebuilds
+MAPPING_VERSION = 4  # bump when SIC_SECTORS changes so the universe rebuilds
 SECTORS = sorted({s for _, s in SIC_SECTORS} | {"Other"})
 
 
@@ -104,7 +104,9 @@ def build() -> dict:
     companies = []
     for cik, subs in _submissions_iter(set(nyse)):
         tickers = nyse[cik]
-        primary = sorted(tickers, key=lambda t: (len(t[0]), t[0]))[0]
+        # SEC's file lists a company's common stock first; skip preferreds/units ("BAC-PB") and notes listed later
+        common = [t for t in tickers if "-" not in t[0]] or tickers
+        primary = common[0]
         addr = (subs.get("addresses") or {}).get("business") or {}
         companies.append({
             "ticker": primary[0], "other_tickers": [t for t, *_ in tickers if t != primary[0]],

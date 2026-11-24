@@ -434,7 +434,7 @@
     }
     document.addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
-      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz" }[e.key];
+      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds" }[e.key];
       if (e.key === "/") { e.preventDefault(); if (location.hash.replace(/^#\/?/, "")) { location.hash = "#/"; setTimeout(() => document.getElementById("tk")?.focus(), 300); } else document.getElementById("tk")?.focus(); }
       else if (e.key === "t") toggleTheme();
       else if (go) location.hash = go;
@@ -743,6 +743,183 @@
     if (series.length) portfolioChart(document.getElementById("pf-chart"), series);
   }
 
+  // ------------------------------------------------------------- guided screener
+  let SCREEN = null, OWNERS = null, FUNDS = null;
+  const loadScreen = async () => (SCREEN = SCREEN || await getJSON("universe/screener.json"));
+  const loadOwners = async () => { if (OWNERS) return OWNERS; try { OWNERS = await getJSON("funds/owners.json"); } catch { OWNERS = {}; } return OWNERS; };
+  const loadFunds = async () => (FUNDS = FUNDS || await getJSON("funds/index.json"));
+  const SCREEN_PRESETS = [
+    { id: "growers", t: "Profitable and growing", d: "Companies making a profit whose sales grew more than 10% last year. Growth plus profit is what most investors pay up for.", f: { net_m_min: 0.0001, rev_growth_min: 0.10 } },
+    { id: "dividends", t: "Steady dividend payers", d: "Yield above 2%, paying out no more than 75% of profits (so the dividend is affordable) and modest debt.", f: { div_yield_min: 0.02, payout_max: 0.75, de_max: 1.0 } },
+    { id: "cheap", t: "Cheap versus earnings", d: "Profitable companies whose P/E is below the median of their own sector. Cheap can mean a bargain, or that the market sees trouble.", f: { pe_min: 0.01, cheap_vs_sector: true, mcap_min: 300 } },
+    { id: "bigstable", t: "Big and stable", d: "Over $50B in market value with a beta below 0.9: large companies that have moved less than the market.", f: { mcap_min: 50000, beta_max: 0.9 } },
+    { id: "smallprofit", t: "Small but profitable", d: "$300M to $2B in market value and generating free cash flow. Small companies can grow faster, but they swing more.", f: { mcap_min: 300, mcap_max: 2000, fcf_pos: true } },
+  ];
+  // [key, label, unit, help]
+  const SCREEN_FILTERS = [
+    ["mcap", "Market cap ($B)", "b", "Share price × shares. Small cap is about $0.3–2B, mid $2–10B, large above $10B."],
+    ["pe", "P/E", "x", "Price ÷ earnings. Many large US companies sit around 15–25×; fast growers often higher."],
+    ["ev_ebitda", "EV / EBITDA", "x", "Whole-business value ÷ operating profit before depreciation. Often 8–15×; not meaningful for banks."],
+    ["rev_growth", "Revenue growth (last year)", "%", "How fast sales grew. Mature companies 0–5%, growth companies 15%+."],
+    ["gross_m", "Gross margin", "%", "Sales left after the direct cost of the product. Software 70%+, retailers 20–40%."],
+    ["op_m", "Operating margin", "%", "Profit from running the business ÷ sales. 10–20% is healthy for many industries."],
+    ["net_m", "Net margin", "%", "Bottom-line profit ÷ sales. Negative means the company lost money."],
+    ["div_yield", "Dividend yield", "%", "Yearly dividends ÷ market value. The S&P 500 averages around 1–2%; very high yields can signal a cut ahead."],
+    ["payout", "Payout ratio", "%", "Dividends ÷ profit. Above about 80% leaves little room if profits dip."],
+    ["de", "Debt ÷ equity", "x", "Borrowing relative to shareholders' money. Below 1× is conservative; utilities and banks run higher."],
+    ["beta", "Beta", "x", "How much the stock moves with the market (2 years, weekly). 1.0 = in step; below 1 = calmer."],
+    ["chg_1y", "Price change, 1 year", "%", "Past performance only; it says nothing reliable about the next year."],
+  ];
+  function screenFilterRow([k, lab, u, help], F) {
+    const sc = u === "%" ? 100 : u === "b" ? 0.001 : 1;
+    const val = (v) => (v == null ? "" : +(v * sc).toFixed(2));
+    return `<div class="sf"><label>${lab} <span class="note">${u === "%" ? "%" : u === "b" ? "$B" : "×"}</span></label>
+      <div class="sf-in"><input type="number" step="any" placeholder="min" data-k="${k}_min" value="${val(F[k + "_min"])}"><span>to</span><input type="number" step="any" placeholder="max" data-k="${k}_max" value="${val(F[k + "_max"])}"></div>
+      <p class="note">${help}</p></div>`;
+  }
+  async function screenerView() {
+    document.title = "Screener · " + SITE;
+    app.innerHTML = `<section class="hero"><h1>Screener</h1><p>Find companies that match what you're looking for. Start from one of the ideas below, or open all filters and set your own. Every NYSE and Nasdaq company is included, from its latest 10-K and today's prices. Each result links to a full model.</p></section>
+      <div class="presets-grid">${SCREEN_PRESETS.map((p) => `<button class="preset" data-p="${p.id}"><b>${esc(p.t)}</b><span>${esc(p.d)}</span></button>`).join("")}</div>
+      <details class="card section sf-box" id="sf-box"><summary>All filters</summary><div id="sf"></div></details>
+      <div id="sr" class="section"><p class="muted loading">Loading ${"6,000"} companies…</p></div>`;
+    let d;
+    try { d = await loadScreen(); } catch { document.getElementById("sr").innerHTML = `<div class="warn">The screener data isn't available yet. It's rebuilt every night.</div>`; return; }
+    const owners = await loadOwners();
+    const I = Object.fromEntries(d.fields.map((f, i) => [f, i]));
+    const rows = d.rows.map((r) => Object.fromEntries(d.fields.map((f, i) => [f, r[i]])));
+    rows.forEach((r) => (r.funds = (owners[r.ticker] || []).length));
+    const sectors = [...new Set(rows.map((r) => r.sector))].sort();
+    const med = {};
+    sectors.forEach((s) => { const pes = rows.filter((r) => r.sector === s && r.pe > 0).map((r) => r.pe).sort((a, b) => a - b); med[s] = pes.length ? pes[pes.length >> 1] : null; });
+    let F = {}, sort = ["mcap", -1], shown = 50, active = null;
+    try { F = JSON.parse(sessionStorage.getItem("mb_screen") || "{}"); } catch { F = {}; }
+    const drawFilters = () => {
+      document.getElementById("sf").innerHTML = `
+        <div class="sf-top">
+          <div class="sf"><label>Sector</label><select id="sf-sector"><option value="">All sectors</option>${sectors.map((s) => `<option ${F.sector === s ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></div>
+          <div class="sf"><label>Exchange</label><select id="sf-ex"><option value="">NYSE and Nasdaq</option><option ${F.exchange === "NYSE" ? "selected" : ""}>NYSE</option><option ${F.exchange === "Nasdaq" ? "selected" : ""}>Nasdaq</option></select></div>
+          <label class="sf-chk"><input type="checkbox" id="sf-fcf" ${F.fcf_pos ? "checked" : ""}> Positive free cash flow</label>
+          <label class="sf-chk"><input type="checkbox" id="sf-cheap" ${F.cheap_vs_sector ? "checked" : ""}> P/E below its sector's median</label>
+          <label class="sf-chk"><input type="checkbox" id="sf-funds" ${F.funds ? "checked" : ""}> Owned by a tracked fund</label>
+          <label class="sf-chk"><input type="checkbox" id="sf-nofin" ${F.no_fin ? "checked" : ""}> Exclude banks, insurers and REITs</label>
+        </div>
+        <div class="sf-grid">${SCREEN_FILTERS.map((x) => screenFilterRow(x, F)).join("")}</div>
+        <div class="gen-actions"><button class="btn sm" id="sf-reset">Clear all filters</button></div>`;
+      const sf = document.getElementById("sf");
+      sf.querySelectorAll("input[data-k]").forEach((el) => el.addEventListener("input", () => {
+        const k = el.dataset.k, base = k.replace(/_(min|max)$/, ""), u = SCREEN_FILTERS.find((x) => x[0] === base)[2];
+        const sc = u === "%" ? 100 : u === "b" ? 0.001 : 1;
+        if (el.value === "") delete F[k]; else F[k] = Number(el.value) / sc;
+        active = null; apply();
+      }));
+      const bind = (id, k, f) => document.getElementById(id).addEventListener("change", (e) => { const v = f(e.target); if (v) F[k] = v; else delete F[k]; active = null; apply(); });
+      bind("sf-sector", "sector", (t) => t.value); bind("sf-ex", "exchange", (t) => t.value);
+      bind("sf-fcf", "fcf_pos", (t) => t.checked); bind("sf-cheap", "cheap_vs_sector", (t) => t.checked);
+      bind("sf-funds", "funds", (t) => t.checked); bind("sf-nofin", "no_fin", (t) => t.checked);
+      document.getElementById("sf-reset").addEventListener("click", () => { F = {}; active = null; drawFilters(); apply(); });
+    };
+    const pass = (r) => {
+      for (const [k, lab, u] of SCREEN_FILTERS) {
+        const lo = F[k + "_min"], hi = F[k + "_max"];
+        if (lo == null && hi == null) continue;
+        if (r[k] == null) return false;
+        if (lo != null && r[k] < lo) return false;
+        if (hi != null && r[k] > hi) return false;
+      }
+      if (F.sector && r.sector !== F.sector) return false;
+      if (F.exchange && r.exchange !== F.exchange) return false;
+      if (F.fcf_pos && !(r.fcf > 0)) return false;
+      if (F.cheap_vs_sector && !(r.pe > 0 && med[r.sector] && r.pe < med[r.sector])) return false;
+      if (F.funds && !r.funds) return false;
+      if (F.no_fin && r.fin) return false;
+      return true;
+    };
+    const COLS = [["ticker", "Company"], ["mcap", "Mkt cap"], ["pe", "P/E"], ["ev_ebitda", "EV/EBITDA"], ["rev_growth", "Rev. growth"],
+                  ["op_m", "Op. margin"], ["div_yield", "Yield"], ["de", "Debt/eq."], ["beta", "Beta"], ["chg_1y", "1 year"]];
+    const cell = (r, k) => k === "mcap" ? big(r.mcap) : ["pe", "ev_ebitda", "de"].includes(k) ? (r[k] == null ? "—" : mult(r[k])) :
+      k === "beta" ? (r.beta == null ? "—" : r.beta.toFixed(2)) : k === "chg_1y" ? signed(r.chg_1y) : pct(r[k]);
+    const notes = (r) => [r.net_m != null && r.net_m < 0 ? `<span class="tag warn-t" title="Net loss in the latest fiscal year">loss</span>` : "",
+      r.fin ? `<span class="tag" title="Banks, insurers and REITs: EV/EBITDA and margins work differently">financial</span>` : "",
+      r.funds ? `<span class="tag fund-t" title="Held by ${r.funds} tracked fund${r.funds > 1 ? "s" : ""}">${r.funds} fund${r.funds > 1 ? "s" : ""}</span>` : ""].join("");
+    function apply() {
+      sessionStorage.setItem("mb_screen", JSON.stringify(F));
+      document.querySelectorAll(".preset").forEach((b) => b.classList.toggle("on", b.dataset.p === active));
+      const hits = rows.filter(pass);
+      const [sk, sd] = sort;
+      hits.sort((a, b) => sk === "ticker" ? sd * a.ticker.localeCompare(b.ticker) : (a[sk] == null) - (b[sk] == null) || sd * ((a[sk] ?? 0) - (b[sk] ?? 0)));
+      const p = SCREEN_PRESETS.find((x) => x.id === active);
+      document.getElementById("sr").innerHTML = `
+        ${p ? `<p class="note preset-why"><b>${esc(p.t)}.</b> ${esc(p.d)}</p>` : ""}
+        <div class="card"><div class="card-h"><h2>${hits.length.toLocaleString()} compan${hits.length === 1 ? "y" : "ies"} match</h2><span class="note">data as of ${esc(d.as_of)} · fiscal ${d.fiscal_year} 10-Ks · <a href="#" id="sr-csv">download CSV</a></span></div>
+        <div class="scroll"><table class="scr"><thead><tr>${COLS.map(([k, lab]) => `<th class="${k === "ticker" ? "" : "r"} sortable" data-k="${k}">${lab}${sk === k ? (sd > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}<th></th></tr></thead><tbody>
+          ${hits.slice(0, shown).map((r) => `<tr><td><span class="tk">${esc(r.ticker)}</span><span class="co">${esc(r.name)} · ${esc(r.sector)}</span>${notes(r)}</td>${COLS.slice(1).map(([k]) => `<td class="r num">${cell(r, k)}</td>`).join("")}<td class="r"><a class="btn sm" href="#/m/${esc(r.ticker)}">Model</a></td></tr>`).join("")}
+        </tbody></table></div>
+        ${hits.length > shown ? `<div class="gen-actions"><button class="btn sm" id="sr-more">Show 50 more</button><span class="note">${(hits.length - shown).toLocaleString()} more</span></div>` : ""}</div>
+        <p class="note" style="margin-top:10px">Shows companies that match your filters, not what to buy. Figures come from each company's latest 10-K (fiscal ${d.fiscal_year}) via SEC XBRL, so they can lag by up to a year; a dash means the company didn't report that figure in a comparable way.</p>`;
+      document.querySelectorAll("th.sortable").forEach((th) => th.addEventListener("click", () => { sort = [th.dataset.k, sort[0] === th.dataset.k ? -sort[1] : (th.dataset.k === "ticker" ? 1 : -1)]; apply(); }));
+      document.getElementById("sr-more")?.addEventListener("click", () => { shown += 50; apply(); });
+      document.getElementById("sr-csv").addEventListener("click", (e) => {
+        e.preventDefault();
+        const csv = [d.fields.filter((f) => f !== "fin").concat("tracked_funds").join(","), ...hits.map((r) => d.fields.filter((f) => f !== "fin").map((f) => JSON.stringify(r[f] ?? "")).concat(r.funds).join(","))].join("\n");
+        const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = `screen_${d.as_of}.csv`; a.click();
+      });
+    }
+    document.querySelectorAll(".preset").forEach((b) => b.addEventListener("click", () => {
+      const p = SCREEN_PRESETS.find((x) => x.id === b.dataset.p); F = { ...p.f }; active = p.id; shown = 50; drawFilters(); apply();
+    }));
+    drawFilters(); apply();
+  }
+
+  // ------------------------------------------------------------- funds (13F)
+  const chgBadge = (h) => h.change === "new" ? `<span class="tag up-t">New</span>` : h.change === "add" ? `<span class="tag up-t">Added ${nz(h.chg_shares) ? pct(h.chg_shares, 0) : ""}</span>`
+    : h.change === "trim" ? `<span class="tag down-t">Trimmed ${nz(h.chg_shares) ? pct(Math.abs(h.chg_shares), 0) : ""}</span>` : h.change === "same" ? `<span class="note">—</span>` : "";
+  const bn = (v) => (nz(v) ? (v >= 1e9 ? "$" + (v / 1e9).toFixed(1) + "B" : "$" + (v / 1e6).toFixed(0) + "M") : "—");
+  const tickLink = (t, name) => (t ? `<a class="tk" href="#/m/${esc(t)}">${esc(t)}</a><span class="co">${esc(name)}</span>` : `<span class="co">${esc(name)}</span>`);
+  async function fundsView() {
+    document.title = "Funds · " + SITE;
+    app.innerHTML = `<p class="muted loading">Loading…</p>`;
+    let d; try { d = await loadFunds(); } catch { app.innerHTML = `<div class="warn">Fund data isn't available yet.</div>`; return; }
+    const list = (rows, k, lab) => rows.map((a) => `<tr><td>${tickLink(a.ticker, a.name)}</td><td class="r num">${a[k]}</td><td class="r num hide-sm">${bn(a.value)}</td></tr>`).join("") || `<tr><td class="note" colspan="3">None</td></tr>`;
+    app.innerHTML = `<section class="hero"><h1>What the big funds own</h1><p>The US stock holdings of ${d.funds.length} closely followed investment firms, from the 13F reports they must file with the SEC every quarter, and what each one bought and sold since the quarter before. Click any holding to open or build its model.</p>
+      <p class="note">13Fs are filed up to 45 days after each quarter ends, so they're one to four months old. They show long positions in US-listed stocks and options only: no short positions, bonds, cash or foreign holdings. Names refer to the firms; the person is the best-known investor associated with each. This is not a list of recommendations.</p></section>
+      <div class="fund-grid">${d.funds.map((f) => `<a class="fcard" href="#/funds/${esc(f.slug)}"><b>${esc(f.name)}</b><span class="note">${esc(f.person)}</span>
+        <span class="fv">${bn(f.value)} <span class="note">${f.positions} stocks</span></span>
+        <span class="ftop">${f.top.slice(0, 3).map((t) => esc(t[0] || t[1].split(" ")[0])).join(" · ")}</span>
+        <span class="note">${f.new} new · ${f.exits} sold out · Q${Math.floor((+f.period.slice(5, 7) - 1) / 3) + 1} ${esc(f.period.slice(0, 4))}, filed ${esc(f.filed)}</span></a>`).join("")}</div>
+      <div class="grid3 section">
+        <section class="card"><div class="card-h"><h2>Most owned</h2><span class="note">by number of funds</span></div><div class="scroll"><table><thead><tr><th>Company</th><th class="r">Funds</th><th class="r hide-sm">Held</th></tr></thead><tbody>${list(d.most_owned.slice(0, 12), "funds")}</tbody></table></div></section>
+        <section class="card"><div class="card-h"><h2>Most bought</h2><span class="note">new or added last quarter</span></div><div class="scroll"><table><thead><tr><th>Company</th><th class="r">Funds</th><th class="r hide-sm">Held</th></tr></thead><tbody>${list(d.most_bought.slice(0, 12), "bought")}</tbody></table></div></section>
+        <section class="card"><div class="card-h"><h2>Most sold</h2><span class="note">trimmed or sold out</span></div><div class="scroll"><table><thead><tr><th>Company</th><th class="r">Funds</th><th class="r hide-sm">Held</th></tr></thead><tbody>${list(d.most_sold.slice(0, 12), "sold")}</tbody></table></div></section>
+      </div>`;
+  }
+  async function fundPage(slug) {
+    app.innerHTML = `<p class="muted loading">Loading…</p>`;
+    let f; try { f = await getJSON(`funds/${encodeURIComponent(slug)}.json`); } catch { app.innerHTML = `<a class="crumb" href="#/funds">← Funds</a><div class="warn">No data for that fund.</div>`; return; }
+    document.title = `${f.name} · ${SITE}`;
+    const H = f.holdings || [];
+    app.innerHTML = `<a class="crumb" href="#/funds">← Funds</a>
+      <div class="dhead"><div><div class="note">${esc(f.person)} · 13F for the quarter ended ${esc(f.period)}, filed ${esc(f.filed)}</div><h1 class="dname">${esc(f.name)}</h1>
+        <div class="note">SEC filer: ${esc(f.filer)} · <a href="${esc(f.url)}" target="_blank" rel="noopener">all 13F filings ↗</a></div></div></div>
+      <div class="kpis"><div class="kpi hero-n"><div class="k">Reported US stock holdings</div><div class="v">${bn(f.value)}</div><div class="n">${f.positions} positions</div></div>
+        <div class="kpi"><div class="k">Top 10 share</div><div class="v">${pct(f.top10_share, 0)}</div><div class="n">how concentrated</div></div>
+        <div class="kpi"><div class="k">New positions</div><div class="v">${f.new}</div></div><div class="kpi"><div class="k">Added / trimmed</div><div class="v">${f.adds} / ${f.trims}</div></div>
+        <div class="kpi"><div class="k">Sold out</div><div class="v">${f.exits}</div><div class="n">vs ${esc(f.prev_period || "previous quarter")}</div></div></div>
+      <div class="grid2 section"><section class="card"><div class="card-h"><h2>Sector mix</h2></div><div class="bars">${(f.sectors || []).slice(0, 9).map(([s, w]) => `<div class="bar-r"><span>${esc(s)}</span><div class="bar"><i style="width:${(w * 100).toFixed(1)}%"></i></div><b>${pct(w, 0)}</b></div>`).join("")}</div></section>
+        <section class="card"><div class="card-h"><h2>Sold out last quarter</h2></div><div class="scroll"><table><tbody>${(f.exits || []).slice(0, 10).map((e) => `<tr><td>${tickLink(e.ticker, e.name)}</td><td class="r num">${pct(e.prev_weight)} of the fund</td></tr>`).join("") || `<tr><td class="note">No positions sold out.</td></tr>`}</tbody></table></div></section></div>
+      <section class="section card"><div class="card-h"><h2>Holdings</h2><span class="note">${f.options ? `${f.options} option positions not shown · ` : ""}value as reported at quarter end</span></div>
+        <div class="scroll"><table><thead><tr><th>Company</th><th class="r">Value</th><th class="r">Weight</th><th class="r hide-sm">Shares</th><th>Change</th><th class="r"></th></tr></thead><tbody>
+        ${H.map((h) => `<tr><td>${tickLink(h.ticker, h.name)}</td><td class="r num">${bn(h.value)}</td><td class="r num">${pct(h.weight)}</td><td class="r num hide-sm">${h.shares.toLocaleString()}</td><td>${chgBadge(h)}</td>
+          <td class="r">${h.ticker && h.listed ? `<a class="btn sm" href="#/m/${esc(h.ticker)}">Model</a>` : ""}</td></tr>`).join("")}</tbody></table></div></section>`;
+  }
+  async function ownersPanel(t) {
+    const own = (await loadOwners())[t] || [];
+    if (!own.length) return "";
+    let names = {}; try { names = Object.fromEntries((await loadFunds()).funds.map((f) => [f.slug, f])); } catch { /* names optional */ }
+    return `<section class="section card"><div class="card-h"><h2>Tracked funds that own it</h2><span class="note">latest 13F filings · <a href="#/funds">all funds</a></span></div>
+      <div class="scroll"><table><tbody>${own.sort((a, b) => b[1] - a[1]).map(([s, w, c]) => `<tr><td><a href="#/funds/${esc(s)}">${esc(names[s]?.name || s)}</a> <span class="note">${esc(names[s]?.person || "")}</span></td><td class="r num">${pct(w)} of the fund</td><td>${chgBadge({ change: c })}</td></tr>`).join("")}</tbody></table></div></section>`;
+  }
+
   const ratingOf = (u) => (u >= 0.15 ? "Buy" : u <= -0.1 ? "Sell" : "Hold");
 
   function historyChart(el, series, hist) {
@@ -862,6 +1039,7 @@
 
       ${quarterPanel(m)}
       ${guidancePanel(m)}
+      <div id="owners-slot"></div>
       <section class="section card" id="sec-fin"><div class="card-h"><h2>Financial summary</h2><span class="note">$mm except per share · shaded columns are projections (base case)</span></div>
         <div class="scroll"><table class="fin"><thead><tr><th></th>${years.map((y, i) => `<th class="r${i >= hn ? " proj" : ""}">${esc(y)}</th>`).join("")}</tr></thead><tbody>
           ${row("Revenue", d.is?.revenue, mm)}${row("Revenue growth", d.is?.growth, pct, 1)}${row("Gross margin", d.is?.gm, pct)}
@@ -891,6 +1069,7 @@
     });
     document.getElementById("rebuild").addEventListener("click", () => sessionStorage.setItem("mb_prefill", m.ticker));
     document.getElementById("explain").addEventListener("click", () => openExplain(m));
+    ownersPanel(m.ticker).then((h) => { const el = document.getElementById("owners-slot"); if (el) el.innerHTML = h; });
 
     if (x) {
       const bounded = Math.min(30, Math.max(4, nz(x.ev_ebitda_now) ? x.ev_ebitda_now : 4));
@@ -1002,7 +1181,10 @@
       <p>Up to five NYSE or Nasdaq companies, chosen in tiers: first the same Yahoo Finance industry, then the same 4-digit SEC industry code and sector, then the same code, then a related (3-digit) code in the same sector. Candidates come from the SEC code hierarchy plus Yahoo's similar-companies list. A broad 2-digit code group only contributes companies that also share the Yahoo industry, so an appliance maker isn't benchmarked against chip makers. Affiliates (a parent and its listed partnership), blank-check shells and the company's own share classes are excluded. Within a tier the closest in revenue wins: 0.1–10× for same-industry matches, 0.2–5× otherwise. Each model page says why every peer was picked.</p>
       <h2>8. Learning tools</h2>
       <p>Every model page has an <b>Explain this model</b> button that walks through the valuation step by step using that company's own numbers. The <b>Quiz</b> mixes investing basics with questions computed from a real model on the site, and the <b>Practice portfolio</b> shows how a mix of stocks behaves: sector concentration, what you pay for earnings, dividend income, and how the same mix did over the past year against the S&amp;P 500. All educational, none of it advice.</p>
-      <h2>9. Limits</h2>
+      <h2>9. Screener and funds</h2>
+      <p>The <b>Screener</b> covers every NYSE and Nasdaq company, rebuilt nightly from SEC XBRL "frames" (one figure for every filer per request) and Yahoo Finance prices; beta uses two years of weekly returns against the S&amp;P 500. The <b>Funds</b> tab reads the latest two 13F filings of 15 closely followed firms, maps each CUSIP to a ticker with OpenFIGI, and compares quarters. 13Fs lag by up to 45 days and show only long US positions.</p>
+      <p>Also see <a href="#/built">how I built this</a>.</p>
+      <h2>10. Limits</h2>
       <ul>
         <li>Revenue is modelled at the consolidated level: segment detail isn't in standardized XBRL.</li>
         <li>No management guidance, backlog, pricing or one-offs. A company in transition can be badly mispriced.</li>
@@ -1050,7 +1232,9 @@
     const h = location.hash.replace(/^#\/?/, "");
     navLib();
     if (!window.__mbChrome) { window.__mbChrome = true; initChrome(); }
-    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "library", "built", "update", "portfolio", "quiz"].includes(h) ? h : h.startsWith("m/") ? "__" : "")));
+    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds"];
+    const tab = TABS.includes(h) ? h : h.startsWith("funds/") ? "funds" : h ? "__" : "";
+    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + tab));
     window.scrollTo(0, 0);
     if (!h || h === "coverage" || h === "fund") { if (h) history.replaceState(null, "", "#/"); generateView(); }
     else if (h === "library") libraryView();
@@ -1059,6 +1243,9 @@
     else if (h === "built") built();
     else if (h === "update") updateView();
     else if (h === "portfolio") portfolioView();
+    else if (h === "screener") screenerView();
+    else if (h === "funds") fundsView();
+    else if (h.startsWith("funds/")) fundPage(decodeURIComponent(h.slice(6)));
     else if (h === "quiz") quizView();
     else if (h === "compare" || h.startsWith("compare/")) comparePage(decodeURIComponent(h.slice(8)));
     else if (h.startsWith("m/")) modelPage(decodeURIComponent(h.slice(2)));

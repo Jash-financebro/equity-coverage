@@ -124,7 +124,9 @@ def main():
         cl = closes.get(t)
         px = cl[-1] if cl else None
         sh = shares.get(cik)
-        mcap = px * sh / 1e6 if px and sh else None
+        r1, n_ = rev1.get(cik), ni.get(cik)
+        # market value only for US-dollar US-GAAP filers: foreign ADR prices don't match the share count SEC reports
+        mcap = px * sh / 1e6 if px and sh and (r1 or n_ is not None) else None
         r1, r0, n_ = rev1.get(cik), rev0.get(cik), ni.get(cik)
         m = lambda v: v / 1e6 if v is not None else None  # noqa: E731
         debt = sum(v for v in (ltd.get(cik), std.get(cik), stb.get(cik)) if v)
@@ -151,7 +153,7 @@ def main():
             "fin": fin, "fy": y1 if (r1 or n_) else None,
         }
         # sanity: drop absurd values from tagging errors
-        for k, lo, hi in (("pe", 0, 2000), ("ev_ebitda", 0, 500), ("rev_growth", -0.95, 20), ("div_yield", 0, 0.5),
+        for k, lo, hi in (("pe", 2, 2000), ("ev_ebitda", 1, 500), ("rev_growth", -0.95, 20), ("div_yield", 0, 0.15),
                           ("gross_m", -5, 1.01), ("op_m", -50, 1), ("net_m", -50, 5), ("de", 0, 100), ("payout", 0, 10)):
             if row[k] is not None and not (lo <= row[k] <= hi):
                 row[k] = None
