@@ -102,6 +102,8 @@ def main():
     stb = instants(["ShortTermBorrowings", "CommercialPaper"], quarters)
     eq = instants(["StockholdersEquity"], quarters)
     cash = instants(["CashAndCashEquivalentsAtCarryingValue"], quarters)
+    eps = first_of(["EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted", "EarningsPerShareBasic"], f"CY{y1}",
+                   "USD-per-shares")
     shares: dict[int, float] = {}
     for p in quarters:
         for k, v in frame("dei", "EntityCommonStockSharesOutstanding", "shares", p).items():
@@ -127,6 +129,13 @@ def main():
         r1, n_ = rev1.get(cik), ni.get(cik)
         # market value only for US-dollar US-GAAP filers: foreign ADR prices don't match the share count SEC reports
         mcap = px * sh / 1e6 if px and sh and (r1 or n_ is not None) else None
+        # consistency check: share count x EPS should be close to net income. ADRs (one ADS = several shares) and
+        # splits/spin-offs break that, and then market cap, P/E and yield would all be wrong, so leave them blank
+        e = eps.get(cik)
+        if mcap and e and n_ and abs(e) > 0.01 and abs(n_) > 1e6:
+            ratio = sh * e / n_
+            if not (0.67 <= ratio <= 1.5):
+                mcap = None
         r1, r0, n_ = rev1.get(cik), rev0.get(cik), ni.get(cik)
         m = lambda v: v / 1e6 if v is not None else None  # noqa: E731
         debt = sum(v for v in (ltd.get(cik), std.get(cik), stb.get(cik)) if v)
