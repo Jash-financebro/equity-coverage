@@ -8,8 +8,8 @@
  "city": "Atlanta",
  "state": "GA",
  "website": "https://www.coca-colacompany.com",
- "generated_at": "2026-11-24T02:40:12Z",
- "version": 3,
+ "generated_at": "2026-11-24T02:55:42Z",
+ "version": 4,
  "price": 95.88,
  "price_date": "2026-11-23",
  "target": 112.63,
@@ -52,9 +52,9 @@
  "beta_source": "Yahoo Finance",
  "fiscal_year": "FY2025",
  "files": {
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v3.xlsx",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v3.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v4.xlsx",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v4.pdf"
  },
- "times_generated": 3,
+ "times_generated": 4,
  "first_generated_at": "2026-11-24T02:12:39Z"
 }
