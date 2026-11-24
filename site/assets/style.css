@@ -231,3 +231,6 @@ table.src td a:hover { color: var(--s1); }
   .dhead { gap: 12px; }
   table { font-size: 13px; }
 }
+
+tr.grp td { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); padding-top: 18px; border-bottom: 1px solid var(--line); }
+table.hist th a { text-decoration: none; font-weight: 400; text-transform: none; letter-spacing: 0; }

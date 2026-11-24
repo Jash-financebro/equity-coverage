@@ -343,17 +343,29 @@ def detail_block(model, fin, me, mkt, rec) -> dict:
         src.append({"key": key, "label": label, "concept": concept, "values": vals, "filings": links,
                     "concept_url": (f"https://data.sec.gov/api/xbrl/companyconcept/CIK{int(me['cik']):010d}/us-gaap/"
                                     f"{concept}.json") if concept and " " not in concept else None})
+    # one link per historical year: the EDGAR filing page of the 10-K that reported that year's revenue
+    tenk_links = []
+    for r in ((fin.get("sources", {}).get("revenue") or [])[-hist_n:]):
+        if r and r[1]:
+            nodash = r[1].replace("-", "")
+            tenk_links.append({"filed": r[2], "form": r[3] or "10-K",
+                               "url": f"{SEC_ARCHIVE}/{me['cik']}/{nodash}/{r[1]}-index.htm"})
+        else:
+            tenk_links.append(None)
     hist = mkt.get("history") or []
     return {
         "years": years, "hist_n": hist_n,
-        "is": pick(m["is"], ("revenue", "growth", "gm", "ebit", "ebit_m", "ebitda", "ebitda_m", "ni", "eps")),
+        "is": pick(m["is"], ("revenue", "growth", "gross", "gm", "ebit", "ebit_m", "ebitda", "ebitda_m", "ni", "eps")),
+        "bs": {k: (m["bs"].get(k) or [])[:hist_n] for k in ("cash", "ta", "revolver", "debt", "tl", "equity")},
+        "cf": {k: (m["cf"].get(k) or [])[:hist_n] for k in ("cfo", "capex", "div", "buyback")},
+        "tenk_links": tenk_links,
         "fcf": d["ufcf"], "cases": cases, "dcf_inputs": dcf_inputs,
         "valuation": {"dcf": m["val"]["dcf"], "exit": m["val"]["exit"], "comps": m["val"]["comps"],
                       "w_dcf": m["val"]["w_dcf"], "w_exit": m["val"]["w_exit"], "w_comps": m["val"]["w_comps"],
                       "model_value": m["val"]["model_value"], "anchor": m["val"]["anchor"], "target": m["val"]["target"]},
         "comps": m["comps"], "comps_median": m.get("comps_median"), "comps_self": m.get("comps_self"),
         "wacc": pick(m["wacc"], ("rf", "beta", "erp", "ke", "kd_at", "we", "wd", "wacc")),
-        "sens": m["sens"], "sources": src, "sources_years": labels,
+        "sens": m["sens"],
         "price_history": hist[::5] + ([hist[-1]] if hist and (len(hist) - 1) % 5 else []),
         "dates": {"tenk_filed": m.get("tenk_filed"), "price_date": rec["price_date"],
                   "generated_at": rec["generated_at"]},

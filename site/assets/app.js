@@ -246,6 +246,26 @@
     const target = x.anchored_base * (x.base_model ? model / x.base_model : 1);
     return { dcf, exit, model, target, upside: target / x.price - 1, rev5: rev[5], margin5: ebit5 / rev[5], ufcf };
   }
+  function histRows(d, hn) {
+    const take = (arr) => (arr || []).slice(0, hn);
+    const fcf = take(d.cf?.cfo).map((c, i) => (nz(c) && nz(d.cf?.capex?.[i]) ? c + d.cf.capex[i] : null));
+    const debt = take(d.bs?.debt).map((v, i) => (nz(v) ? v + (d.bs?.revolver?.[i] || 0) : null));
+    const sec = (t) => `<tr class="grp"><td colspan="${hn + 1}">${t}</td></tr>`;
+    const r = (lab, arr, f = mm, tot = false) => `<tr${tot ? ' class="tot"' : ""}><td>${lab}</td>${take(arr).map((v) => `<td class="r num">${f(v)}</td>`).join("")}</tr>`;
+    const neg = (arr) => take(arr).map((v) => (nz(v) ? -v : v));
+    return sec("Income statement")
+      + r("Revenue", d.is?.revenue, mm, true) + r("Revenue growth", d.is?.growth, (v) => (nz(v) && v !== 0 ? pct(v) : "—"))
+      + r("Gross profit", d.is?.gross) + r("Gross margin", d.is?.gm, pct)
+      + r("EBITDA", d.is?.ebitda, mm, true) + r("EBITDA margin", d.is?.ebitda_m, pct)
+      + r("Operating income (EBIT)", d.is?.ebit) + r("Net income to common", d.is?.ni, mm, true)
+      + r("Diluted EPS", d.is?.eps, (v) => usd(v))
+      + sec("Balance sheet")
+      + r("Cash & equivalents", d.bs?.cash) + r("Total debt", debt) + r("Total assets", d.bs?.ta, mm, true)
+      + r("Shareholders' equity", d.bs?.equity, mm, true)
+      + sec("Cash flow")
+      + r("Cash from operations", d.cf?.cfo, mm, true) + r("Capital expenditures", neg(d.cf?.capex))
+      + r("Free cash flow (CFO - capex)", fcf, mm, true) + r("Dividends paid", neg(d.cf?.div)) + r("Share repurchases", neg(d.cf?.buyback));
+  }
   const ratingOf = (u) => (u >= 0.15 ? "Buy" : u <= -0.1 ? "Sell" : "Hold");
 
   function historyChart(el, series, hist) {
@@ -376,13 +396,12 @@
           <tr class="tot"><td>${esc(m.ticker)}</td><td class="hide-sm"></td><td class="r num">${usd(m.price)}</td><td></td><td class="r num">${mult(d.comps_self?.ev_ebitda)}</td><td class="r num">${mult(d.comps_self?.pe)}</td></tr>
         </tbody></table></div></section>
 
-      <section class="section card"><div class="card-h"><h2>Where every historical number comes from</h2><span class="note"><a href="${esc(d.filings_index)}" target="_blank" rel="noopener">all ${esc(m.ticker)} 10-K filings on EDGAR ↗</a></span></div>
-        <div class="scroll"><table class="src"><thead><tr><th>Line item</th><th>XBRL tag</th>${(d.sources_years || []).map((y) => `<th class="r">${esc(y)}</th>`).join("")}</tr></thead><tbody>
-          ${(d.sources || []).map((s) => `<tr><td>${esc(s.label)}</td><td class="mono">${s.concept_url ? `<a href="${esc(s.concept_url)}" target="_blank" rel="noopener">${esc(s.concept)}</a>` : esc(s.concept || "")}</td>
-            ${(s.values || []).map((val, i) => { const f = s.filings?.[i]; const txt = s.key === "eps_diluted" ? usd(val) : mm(val);
-              return `<td class="r num">${f ? `<a href="${esc(f.url)}" target="_blank" rel="noopener" title="${esc(f.form)} filed ${esc(f.filed)} · ${esc(f.accn)}">${txt}</a>` : txt}</td>`; }).join("")}</tr>`).join("")}
+      <section class="section card"><div class="card-h"><h2>Historical financials</h2><span class="note">$mm except per share · straight from the Excel model · <a href="${esc(d.filings_index)}" target="_blank" rel="noopener">all 10-K filings ↗</a></span></div>
+        <div class="scroll"><table class="fin hist"><thead><tr><th></th>${years.slice(0, hn).map((y, i) => { const l = d.tenk_links?.[i];
+            return `<th class="r">${esc(y)}${l ? `<br><a class="note" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.form)} ↗</a>` : ""}</th>`; }).join("")}</tr></thead><tbody>
+          ${histRows(d, hn)}
         </tbody></table></div>
-        <p class="note" style="padding:10px 18px 14px">Each figure links to the 10-K it was taken from (latest filing wins, so restatements are picked up); each tag links to SEC's raw XBRL data for that line. Prices and consensus come from Yahoo Finance as of ${esc(m.price_date)}.</p></section>`;
+        <p class="note" style="padding:10px 18px 14px">Figures come from each company's 10-K filings on SEC EDGAR (XBRL data; when a later filing restates a year, the restated number is used). The link under each year opens that 10-K on EDGAR.</p></section>`;
 
     footballChart(document.getElementById("ff"), ff, m.price, m.target);
     historyChart(document.getElementById("hist"), ph, m.history);
@@ -479,7 +498,7 @@
       <h1>Methodology</h1>
       <p class="muted">How a generated model gets from a ticker to a price target, and what it can't do.</p>
       <h2>1. Data</h2>
-      <p>Historical financials come only from the company's 10-K filings, read from SEC EDGAR's XBRL company facts. When a company restates, the latest filing wins. Every figure on a model page links back to the filing it came from. Prices, beta and analyst consensus come from Yahoo Finance; the 10-year Treasury yield is the risk-free rate.</p>
+      <p>Historical financials come only from the company's 10-K filings, read from SEC EDGAR's XBRL company facts. When a company restates, the latest filing wins. Each model page lists the key historical figures exactly as they sit in the Excel model, with a link to each year's 10-K. Prices, beta and analyst consensus come from Yahoo Finance; the 10-year Treasury yield is the risk-free rate.</p>
       <h2>2. The workbook</h2>
       <p>Each model is a real, formula-driven Excel file built to one layout: Cover, Scenarios, Revenue Build, Income Statement, Balance Sheet, Cash Flow, Schedules (PP&amp;E, D&amp;A, retained earnings, revolver and interest), WACC, DCF, Comps, Target Price and Financial Ratios, with the raw SEC pull in a hidden tab. Blue cells are typed inputs, black are formulas on the same tab, green are links from another tab. The balance sheet balances in every year; a check row proves it.</p>
       <h2>3. Drivers</h2>

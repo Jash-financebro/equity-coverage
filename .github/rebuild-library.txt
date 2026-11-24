@@ -1,1 +1,1 @@
-Rebuild requested 2026-11-24: peers ranked on full pool with Yahoo revenue.
+Rebuild requested 2026-11-24: historical financials table on model pages.
