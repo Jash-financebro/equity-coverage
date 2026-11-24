@@ -1,0 +1,61 @@
+{
+ "ticker": "CB",
+ "name": "Chubb Ltd",
+ "cik": 896159,
+ "sector": "Financials",
+ "industry": "Fire, Marine & Casualty Insurance",
+ "sic": "6331",
+ "city": "Zurich",
+ "state": "V8",
+ "website": "https://www.chubb.com",
+ "generated_at": "2026-11-24T16:21:42Z",
+ "version": 1,
+ "price": 375.35,
+ "price_date": "2026-11-24",
+ "target": 439.42,
+ "upside": 0.1707,
+ "rating": "Buy",
+ "scenarios": {
+  "bear": 344.86,
+  "base": 439.42,
+  "bull": 559.69
+ },
+ "model_scenarios": {
+  "base": 1538.71,
+  "bull": 1959.84,
+  "bear": 1207.58
+ },
+ "dcf_value": 2938.73116123915,
+ "comps_value": 0,
+ "exit_value": 908.047476685026,
+ "model_value": 1538.71145516967,
+ "peer_avg_upside": 0.020674974645769638,
+ "anchor_peers": [
+  "ALL",
+  "TRV",
+  "PGR",
+  "HIG",
+  "AIG"
+ ],
+ "wacc": 0.0619,
+ "peers": [
+  "ALL",
+  "TRV",
+  "PGR",
+  "HIG",
+  "AIG"
+ ],
+ "consensus": {
+  "target_mean": 375.6087,
+  "target_median": 379.0,
+  "analysts": 23
+ },
+ "beta_source": "Yahoo Finance",
+ "fiscal_year": "FY2025",
+ "files": {
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_v1.xlsx",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_report_v1.pdf"
+ },
+ "times_generated": 1,
+ "first_generated_at": "2026-11-24T16:21:42Z"
+}
