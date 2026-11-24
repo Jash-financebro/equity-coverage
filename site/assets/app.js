@@ -150,7 +150,9 @@
       </div>
       <div id="gen-result"></div>
       <section class="section" id="trend-sec" hidden><h2 class="sec">Most generated this week</h2><div class="trend" id="trend"></div></section>
-      <section class="section"><h2 class="sec">Generated in the past 24 hours</h2><div class="card" id="recent"><p class="muted loading" style="padding:14px 18px">Loading…</p></div></section>`;
+      <section class="section"><h2 class="sec">Generated in the past 24 hours</h2><div class="card" id="recent"><p class="muted loading" style="padding:14px 18px">Loading…</p></div></section>
+      <section class="section" id="insights"></section>`;
+    insightsStrip();
 
     recentData(true).then((r) => {
       const el = document.getElementById("recent"); if (!el) return;
@@ -266,6 +268,189 @@
       + r("Cash from operations", d.cf?.cfo, mm, true) + r("Capital expenditures", neg(d.cf?.capex))
       + r("Free cash flow (CFO - capex)", fcf, mm, true) + r("Dividends paid", neg(d.cf?.div)) + r("Share repurchases", neg(d.cf?.buyback));
   }
+  // ------------------------------------------------------------- shared bits for the extra panels
+  const qualityPill = (q) => (q ? `<span class="qpill q-${esc(q.grade)}" title="${esc((q.reasons || []).join("; "))}">Data quality: ${esc(q.grade)}</span>` : "");
+  function impliedGrowth(x, S) {
+    // reverse DCF: the constant growth uplift that makes the perpetuity DCF equal today's price
+    const f = (dg) => valuate(x, { ...S, dg }).dcf - x.price;
+    let lo = -0.5, hi = 0.8, flo = f(lo), fhi = f(hi);
+    if (!(flo < 0 && fhi > 0)) return null;
+    for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2, fm = f(mid); if (fm > 0) hi = mid; else lo = mid; }
+    const r = valuate(x, { ...S, dg: (lo + hi) / 2 });
+    return (r.rev5 / x.rev0) ** (1 / 5) - 1;
+  }
+  const baseCagr = (x) => (x.rev[4] / x.rev0) ** (1 / 5) - 1;
+
+  function quarterPanel(m) {
+    const q = m.latest_quarter;
+    if (!q || !q.quarter || !Object.keys(q.quarter).length) return "";
+    const rows = [["revenue", "Revenue", mm], ["operating_income", "Operating income", mm], ["net_income", "Net income", mm],
+                  ["eps_diluted", "Diluted EPS", (v) => usd(v)]].filter(([k]) => q.quarter[k]);
+    const ttm = [["revenue", "Revenue"], ["net_income", "Net income"], ["cfo", "Cash from operations"], ["eps_diluted", "Diluted EPS"]].filter(([k]) => nz(q.ttm?.[k]));
+    return `<section class="section card"><div class="card-h"><h2>Latest quarter</h2><span class="note">${esc(q.label)} · ${q.is_10q ? "from the 10-Q" : "fourth quarter, from the 10-K"}</span></div>
+      <div class="grid2">
+        <div class="scroll"><table><thead><tr><th>$mm</th><th class="r">This quarter</th><th class="r">Year ago</th><th class="r">Change</th></tr></thead><tbody>
+          ${rows.map(([k, lab, f]) => { const r = q.quarter[k]; return `<tr><td>${lab}</td><td class="r num">${f(r.cur)}</td><td class="r num">${nz(r.prior) ? f(r.prior) : "—"}</td><td class="r num">${nz(r.chg) ? signed(r.chg) : "—"}</td></tr>`; }).join("")}
+        </tbody></table></div>
+        <div class="scroll"><table><thead><tr><th>Trailing 12 months</th><th class="r">TTM</th><th class="r">Last fiscal year</th></tr></thead><tbody>
+          ${ttm.map(([k, lab]) => `<tr><td>${lab}</td><td class="r num">${k === "eps_diluted" ? usd(q.ttm[k]) : mm(q.ttm[k])}</td><td class="r num">${k === "eps_diluted" ? usd(q.fy?.[k]) : mm(q.fy?.[k])}</td></tr>`).join("")}
+          ${nz(m.pe_ttm) ? `<tr class="tot"><td>P/E on TTM EPS</td><td class="r num">${mult(m.pe_ttm)}</td><td></td></tr>` : ""}
+        </tbody></table></div>
+      </div></section>`;
+  }
+  function guidancePanel(m) {
+    const g = m.guidance;
+    if (!g || !(g.sentences || []).length) return "";
+    const rng = g.revenue_growth_range;
+    const cmp = rng && nz(g.model_growth) ? `<p class="${g.flag ? "warn" : "note"}" style="margin:10px 18px">${g.flag ? "<b>Model and guidance disagree.</b> " : ""}Guidance points to revenue growth of ${rng[0] === rng[1] ? pct(rng[0]) : pct(rng[0]) + " to " + pct(rng[1])}; the model's base case has ${pct(g.model_growth)} for next year.</p>` : "";
+    return `<section class="section card"><div class="card-h"><h2>Management guidance</h2><span class="note">latest earnings release, filed ${esc(g.filed)} · <a href="${esc(g.url)}" target="_blank" rel="noopener">read it ↗</a></span></div>
+      <div class="prose">${g.sentences.map((s) => `<blockquote>${esc(s)}</blockquote>`).join("")}</div>${cmp}</section>`;
+  }
+  function changesPanel(m) {
+    const t = m.track, ch = m.changes || [];
+    if (!ch.length && !t) return "";
+    return `<section class="section card"><div class="card-h"><h2>Since the last build</h2>${m.rebuilt_for ? `<span class="note">auto-rebuilt on a new filing</span>` : ""}</div>
+      <div class="prose">${ch.length ? `<ul class="tight">${ch.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
+      ${t ? `<p><b>Track record.</b> On ${esc(t.call_date)} (v${t.version}) the call was ${pill(t.rating)} at ${usd(t.call_price)} with a ${usd(t.call_target)} target. ${t.days} days later the stock is ${usd(t.mark)}, ${signed(t.ret)}${nz(t.spy_ret) ? ` vs ${signed(t.spy_ret)} for the S&amp;P 500` : ""}: ${t.hit ? "the call is working." : "the call isn't working so far."}</p>` : ""}</div></section>`;
+  }
+
+  // ------------------------------------------------------------- compare
+  async function comparePage(arg) {
+    const tickers = [...new Set(String(arg || "").toUpperCase().split(/[,\s]+/).filter(Boolean))].slice(0, 4);
+    document.title = "Compare · " + SITE;
+    const base = await apiBase();
+    app.innerHTML = `<a class="crumb" href="#/">← Generate</a><section class="hero"><h1>Compare models</h1><p>Up to four companies side by side. Only models that have been generated can be compared.</p></section>
+      <form id="cmp-f" class="gen-row" autocomplete="off"><div class="gen-input"><input id="cmp-t" value="${esc(tickers.join(", "))}" placeholder="Tickers, e.g. KO, PEP, KDP" aria-label="Tickers to compare"></div><button class="btn primary" type="submit">Compare</button></form>
+      <div id="cmp" class="section"></div>`;
+    document.getElementById("cmp-f").addEventListener("submit", (e) => { e.preventDefault(); location.hash = "#/compare/" + encodeURIComponent(document.getElementById("cmp-t").value.replace(/\s+/g, "")); });
+    if (!tickers.length) return;
+    const ms = await Promise.all(tickers.map((t) => fetch(`${base}/api/model?ticker=${encodeURIComponent(t)}`).then(async (r) => (r.ok ? r.json() : { ticker: t, missing: true })).catch(() => ({ ticker: t, missing: true }))));
+    const rows = [
+      ["Price target", (m) => `<b>${usd(m.target)}</b>`], ["Rating", (m) => pill(m.rating)], ["Upside", (m) => signed(m.upside)],
+      ["Price", (m) => usd(m.price)], ["Bear / Base / Bull", (m) => `${usd(m.scenarios?.bear, 0)} / ${usd(m.scenarios?.base, 0)} / ${usd(m.scenarios?.bull, 0)}`],
+      ["Model value", (m) => usd(m.model_value)], ["Street median", (m) => usd(m.consensus?.target_median)],
+      ["EV / EBITDA", (m) => mult(m.ev_ebitda)], ["P / E (TTM)", (m) => mult(m.pe_ttm)], ["EBITDA margin", (m) => pct(m.ebitda_margin)],
+      ["Revenue growth, next year (base)", (m) => pct(m.growth_next)],
+      ["Latest quarter revenue growth", (m) => (nz(m.latest_quarter?.quarter?.revenue?.chg) ? signed(m.latest_quarter.quarter.revenue.chg) : "—")],
+      ["WACC", (m) => pct(m.wacc, 2)], ["Data quality", (m) => esc(m.quality?.grade || "—")], ["Generated", (m) => esc(ago(m.generated_at))],
+    ];
+    document.getElementById("cmp").innerHTML = `<div class="card"><div class="scroll"><table class="cmp"><thead><tr><th></th>${ms.map((m) => `<th class="r">${m.missing ? esc(m.ticker) : `<a class="tk" href="#/m/${esc(m.ticker)}">${esc(m.ticker)}</a><span class="co">${esc(m.name)}</span>`}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(([lab, f]) => `<tr><td>${lab}</td>${ms.map((m) => `<td class="r num">${m.missing ? (lab === "Price target" ? `<a href="#/" data-gen="${esc(m.ticker)}">Generate ${esc(m.ticker)}</a>` : "") : f(m)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>`;
+    document.querySelectorAll("[data-gen]").forEach((a) => a.addEventListener("click", () => sessionStorage.setItem("mb_prefill", a.dataset.gen)));
+  }
+
+  // ------------------------------------------------------------- update an existing model
+  async function updateView() {
+    document.title = "Update a model · " + SITE;
+    const base = await apiBase();
+    app.innerHTML = `<section class="hero"><h1>Update an existing model</h1>
+        <p>Upload an Excel model you already have. We keep your structure and formulas, and bring it up to date: the latest 10-K figures and market data go into a new Live_Data tab, your share price, share count, risk-free rate and beta inputs are refreshed, restated historicals are corrected, and an Update Log tab lists every change, your old and new target, and how your projections compare with what the company has since reported.</p></section>
+      <div class="card gen-box"><form id="up-f" autocomplete="off">
+        <div class="gen-row"><div class="gen-input"><input id="up-t" placeholder="Ticker the model is for, e.g. KO" aria-label="Ticker" autocapitalize="characters" required></div>
+          <label class="btn file-btn"><input id="up-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required><span id="up-name">Choose .xlsx…</span></label>
+          <button class="btn primary big" id="up-go" type="submit">Update model</button></div>
+        <p class="note">.xlsx up to 10 MB. Your file is stored privately for six hours to process it, then deleted; it is never published or added to the library. Macros and some chart formatting may not survive the round trip, so keep your original.</p>
+      </form><div id="up-status"></div></div><div id="up-result"></div>`;
+    const file = document.getElementById("up-file");
+    file.addEventListener("change", () => { document.getElementById("up-name").textContent = file.files[0]?.name || "Choose .xlsx…"; });
+    document.getElementById("up-f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const stat = document.getElementById("up-status"), out = document.getElementById("up-result"), btn = document.getElementById("up-go");
+      const t = document.getElementById("up-t").value.trim().toUpperCase().replace(/[./]/g, "-"), f = file.files[0];
+      out.innerHTML = "";
+      if (!f) return;
+      if (!base) { stat.innerHTML = `<div class="warn">The service isn't connected yet.</div>`; return; }
+      btn.disabled = true;
+      const t0 = Date.now();
+      const draw = (msg) => { stat.innerHTML = `<p class="note loading">${esc(msg)} · ${Math.round((Date.now() - t0) / 1000)}s</p>`; };
+      try {
+        draw("Uploading");
+        const r = await fetch(`${base}/api/update?ticker=${encodeURIComponent(t)}`, { method: "POST", body: f, headers: { "X-Filename": f.name } });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || r.status);
+        for (let i = 0; i < 120; i++) {
+          await new Promise((res) => setTimeout(res, 4000));
+          const s = await fetch(`${base}/api/update/status/${j.id}?token=${j.token}`).then((x) => x.json());
+          if (s.status === "ready") { stat.innerHTML = ""; out.innerHTML = updateResult(s.summary, `${base}/api/update/file/${j.id}?token=${j.token}`, f.name); return; }
+          if (s.status === "failed") throw new Error(esc(s.summary?.error || "The update failed.") + (s.summary?.run_url ? ` <a href="${esc(s.summary.run_url)}" target="_blank" rel="noopener">Log</a>` : ""));
+          draw(s.status === "running" ? "Reading your workbook and pulling the latest SEC and market data" : "Waiting for a runner");
+        }
+        throw new Error("This is taking longer than usual. Try again in a few minutes.");
+      } catch (err) { stat.innerHTML = `<div class="warn">${String(err.message || err)}</div>`; }
+      finally { btn.disabled = false; }
+    });
+  }
+  function updateResult(s, href, fname) {
+    const d = nz(s.old_target) && nz(s.new_target) ? s.new_target / s.old_target - 1 : null;
+    const ch = s.changes || [], cmp = s.compare || [];
+    const fmt = (v) => (nz(v) ? (Math.abs(v) < 1 ? Number(v).toFixed(4) : Number(v).toLocaleString("en-US", { maximumFractionDigits: 2 })) : esc(v ?? ""));
+    return `<div class="card result"><div class="card-h"><h2>${esc(s.name)} (${esc(s.ticker)}) · updated</h2><span class="note">10-K ${esc(s.latest_fy)} filed ${esc(s.tenk_filed)} · priced ${esc(s.price_date)}</span></div>
+      <div class="kpis" style="padding:18px">
+        <div class="kpi hero-n"><div class="k">Your target, now</div><div class="v">${usd(s.new_target)}</div><div class="n">was ${usd(s.old_target)}${nz(d) ? " · " + signed(d) : ""} · cell ${esc(s.target_cell || "not found")}</div></div>
+        <div class="kpi"><div class="k">Share price</div><div class="v">${usd(s.price)}</div></div>
+        <div class="kpi"><div class="k">Inputs changed</div><div class="v">${ch.length}</div></div>
+        <div class="kpi"><div class="k">Projections vs actuals</div><div class="v">${cmp.length}</div></div>
+      </div>
+      ${s.model_builder_file ? `<p class="note" style="padding:0 18px">This is a Model Builder workbook, so every tab now reads the refreshed data.</p>` : ""}
+      ${s.stale ? `<div class="warn" style="margin:0 18px 14px">Your latest actual year is FY${s.stale.model_latest_actual}, and FY${s.stale.available} has since been reported. The new figures are in the Live_Data tab; roll the model forward to use them, or <a href="#/" data-gen="${esc(s.ticker)}">build a fresh model</a>.</div>` : ""}
+      <div class="gen-actions"><a class="btn sm primary" href="${esc(href)}" download>⤓ ${esc(fname.replace(/\.xlsx$/i, ""))}_updated.xlsx</a><span class="note">available for six hours</span></div></div>
+      <section class="section card"><div class="card-h"><h2>What changed</h2><span class="note">also in the Update Log tab</span></div><div class="scroll"><table><thead><tr><th>What</th><th>Where</th><th>Label</th><th class="r">Before</th><th class="r">After</th></tr></thead><tbody>
+        ${ch.map((c) => `<tr><td>${esc(c.kind)}</td><td class="mono">${esc(c.sheet)}!${esc(c.cell)}</td><td>${esc(String(c.label).slice(0, 60))}</td><td class="r num">${fmt(c.old)}</td><td class="r num">${fmt(c.new)}</td></tr>`).join("") || `<tr><td colspan="5" class="note">No typed inputs needed changing. The latest data is in the Live_Data tab.</td></tr>`}
+      </tbody></table></div></section>
+      ${cmp.length ? `<section class="section card"><div class="card-h"><h2>Your projections vs what was reported</h2></div><div class="scroll"><table><thead><tr><th>Line</th><th>Year</th><th>Where</th><th class="r">Your model</th><th class="r">Actual</th><th class="r">Difference</th></tr></thead><tbody>
+        ${cmp.map((c) => `<tr><td>${esc(c.line)}</td><td>FY${c.year}</td><td class="mono">${esc(c.sheet)}!${esc(c.cell)}</td><td class="r num">${fmt(c.model)}</td><td class="r num">${fmt(c.actual)}</td><td class="r num">${signed(c.diff)}</td></tr>`).join("")}</tbody></table></div></section>` : ""}`;
+  }
+
+  // ------------------------------------------------------------- home strips: totals, track record, sectors
+  async function insightsStrip() {
+    const el = document.getElementById("insights"); if (!el) return;
+    const base = await apiBase();
+    let d; try { d = await fetch(base + "/api/insights").then((r) => r.json()); } catch { return; }
+    if (!d || !d.totals) return;
+    const t = d.track || {};
+    const sec = (d.sectors || []).slice(0, 8);
+    el.innerHTML = `<p class="note stat-line">${d.totals.generations.toLocaleString()} models generated for ${d.totals.companies.toLocaleString()} companies across ${d.totals.sectors} sectors.</p>
+      <div class="grid2">
+        <div class="card"><div class="card-h"><h2>Track record</h2><span class="note">calls scored 30+ days after they're made</span></div>
+          ${t.scored ? `<div class="kvrow" style="border:0;padding:14px 18px">
+            <div><div class="note">Calls scored</div><b>${t.scored}</b></div><div><div class="note">Working</div><b>${pct(t.hit_rate, 0)}</b></div>
+            <div><div class="note">Avg. return since call</div><b>${signed(t.avg_return)}</b></div><div><div class="note">vs S&amp;P 500</div><b>${nz(t.avg_excess) ? signed(t.avg_excess) : "—"}</b></div></div>`
+          : `<p class="note" style="padding:14px 18px">Each call is checked against the share price 30 days after it's made, and against the S&amp;P 500. The first results appear once calls are a month old.</p>`}</div>
+        <div class="card"><div class="card-h"><h2>Sector snapshot</h2><span class="note">medians across models</span></div>
+          <div class="scroll"><table><thead><tr><th>Sector</th><th class="r">Models</th><th class="r">Upside</th><th class="r">Buy</th><th class="r hide-sm">EV/EBITDA</th></tr></thead><tbody>
+            ${sec.map((s) => `<tr><td>${esc(s.name)}</td><td class="r num">${s.n}</td><td class="r num">${signed(s.median_upside)}</td><td class="r num">${pct(s.buy_share, 0)}</td><td class="r num hide-sm">${mult(s.median_ev_ebitda)}</td></tr>`).join("")}
+          </tbody></table></div></div>
+      </div>`;
+  }
+
+  // ------------------------------------------------------------- theme + keyboard shortcuts
+  function initChrome() {
+    const root = document.documentElement;
+    const saved = store.get("mb_theme"); if (saved) root.dataset.theme = saved;
+    const nav = document.getElementById("nav");
+    if (nav && !document.getElementById("theme-btn")) {
+      nav.insertAdjacentHTML("beforeend", `<button id="theme-btn" class="theme-btn" aria-label="Toggle dark mode" title="Toggle dark mode (t)">◐</button>`);
+      document.getElementById("theme-btn").addEventListener("click", toggleTheme);
+    }
+    document.addEventListener("keydown", (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
+      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method" }[e.key];
+      if (e.key === "/") { e.preventDefault(); if (location.hash.replace(/^#\/?/, "")) { location.hash = "#/"; setTimeout(() => document.getElementById("tk")?.focus(), 300); } else document.getElementById("tk")?.focus(); }
+      else if (e.key === "t") toggleTheme();
+      else if (go) location.hash = go;
+    });
+    const tok = INDEX?.site?.analytics_token;
+    if (tok && !document.getElementById("cf-beacon")) {
+      const s = document.createElement("script"); s.id = "cf-beacon"; s.defer = true; s.src = "https://static.cloudflareinsights.com/beacon.min.js";
+      s.setAttribute("data-cf-beacon", JSON.stringify({ token: tok })); document.head.appendChild(s);
+    }
+  }
+  function toggleTheme() {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark"; store.set("mb_theme", root.dataset.theme);
+  }
+
   const ratingOf = (u) => (u >= 0.15 ? "Buy" : u <= -0.1 ? "Sell" : "Hold");
 
   function historyChart(el, series, hist) {
@@ -334,8 +519,8 @@
       <div class="dhead">
         <div><div class="note">${esc(m.exchange || "NYSE")}: ${esc(m.ticker)} · ${esc(m.sector)} · ${esc(m.industry || "")}</div>
           <h1 class="dname">${esc(m.name)}</h1>
-          <div class="note">Version ${m.version} · generated ${ago(m.generated_at)} · 10-K filed ${esc(d.dates?.tenk_filed || "n/a")} · priced ${esc(m.price_date)}</div></div>
-        <div class="actions">${dl(m)} <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a></div>
+          <div class="note">Version ${m.version} · generated ${ago(m.generated_at)} · 10-K filed ${esc(d.dates?.tenk_filed || "n/a")} · priced ${esc(m.price_date)} ${qualityPill(m.quality)}</div></div>
+        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a></div>
       </div>
       <div class="kpis">
         <div class="kpi hero-n"><div class="k">12-month price target</div><div class="v">${usd(m.target)}</div><div class="n">${pill(m.rating)} &nbsp;${signed(m.upside)} vs ${usd(m.price)}</div></div>
@@ -351,6 +536,7 @@
           <div><div class="note">FFO / share (approx.)</div><b>${usd(chk.ffo_ps)}</b></div><div><div class="note">P/FFO</div><b>${mult(chk.pffo)}</b></div>
           <div><div class="note">Peer median P/FFO</div><b>${mult(chk.peer_multiple)}</b></div><div><div class="note">Implied value</div><b>${usd(chk.implied_value)}</b></div>`}</div></div>` : ""}
 
+      ${changesPanel(m)}
       <section class="section card"><div class="card-h"><h2>Valuation range</h2><span class="note">bars show ranges; the dashed line is the target</span></div><div class="chart-wrap" id="ff"></div></section>
 
       <section class="section card"><div class="card-h"><h2>Share price and model target over time</h2><span class="note">blue: price · orange: target at each build</span></div><div class="chart-wrap" id="hist"></div>
@@ -379,8 +565,11 @@
           <label>Exit EV/EBITDA multiple <output id="o-x"></output><input type="range" id="s-x" min="4" max="30" step="0.5"></label>
         </div>
         <div class="kpis slout" id="sl-out"></div>
+        <p class="rdcf" id="rdcf"></p>
         <p class="note" style="padding:0 18px 16px">At base settings this matches the Excel model exactly (target ${usd(x.check?.target)}). Away from base it re-runs the same DCF, exit-multiple and comps blend and the street/peer anchoring; it usually lands within 1% of the Excel engine (a few percent at most), since the workbook also re-runs its PP&amp;E, debt and interest schedules.</p></section>` : ""}
 
+      ${quarterPanel(m)}
+      ${guidancePanel(m)}
       <section class="section card"><div class="card-h"><h2>Financial summary</h2><span class="note">$mm except per share · shaded columns are projections (base case)</span></div>
         <div class="scroll"><table class="fin"><thead><tr><th></th>${years.map((y, i) => `<th class="r${i >= hn ? " proj" : ""}">${esc(y)}</th>`).join("")}</tr></thead><tbody>
           ${row("Revenue", d.is?.revenue, mm)}${row("Revenue growth", d.is?.growth, pct, 1)}${row("Gross margin", d.is?.gm, pct)}
@@ -428,6 +617,8 @@
           <div class="kpi"><div class="k">DCF (exit multiple)</div><div class="v">${usd(r.exit)}</div></div>
           <div class="kpi"><div class="k">Model value</div><div class="v">${usd(r.model)}</div></div>
           <div class="kpi"><div class="k">Year-5 revenue · margin</div><div class="v" style="font-size:17px">${big(r.rev5)} · ${pct(r.margin5)}</div></div>`;
+        const ig = impliedGrowth(x, S);
+        el("rdcf").innerHTML = nz(ig) ? `<b>Reverse DCF.</b> At this WACC, margin and terminal growth, today's ${usd(x.price)} share price implies revenue growth of <b>${pct(ig)} a year</b> for five years. The model's base case has ${pct(baseCagr(x))}${S.dg ? `, and your setting gives ${pct((r.rev5 / x.rev0) ** 0.2 - 1)}` : ""}.` : "";
       };
       const preset = (c) => {
         const k = cs[c] || {};
@@ -510,9 +701,13 @@
         <li><b>Guardrail.</b> The upside is then kept within 15 points of the peers' average analyst upside, so no call stands far outside its industry. Bull and bear targets scale from that anchored base by each case's model value.</li>
         <li><b>Rating.</b> Buy at 15%+ upside, Sell at 10%+ downside, otherwise Hold.</li>
       </ol>
-      <h2>5. Peers</h2>
+      <h2>5. Current data, guidance and checks</h2>
+      <p>Each model page adds the latest quarter and trailing-twelve-month figures from the most recent 10-Q, the outlook sentences from the latest earnings release (with a flag when the model's growth sits outside management's range), a reverse DCF showing the growth today's price implies, and a data-quality grade. Every workbook ends with an Audit tab of live checks: the balance sheet balances, cash ties out, and historicals tie to the 10-K.</p>
+      <h2>6. Track record</h2>
+      <p>Every build is saved. Each weekday the site marks every model to market; once a call is 30 days old it is scored (a Buy is working if the stock is up, a Sell if it's down, a Hold if it's within 10%) and compared with the S&amp;P 500. When a company files a new 10-K or 10-Q, its model rebuilds automatically.</p>
+      <h2>7. Peers</h2>
       <p>Up to five NYSE or Nasdaq companies, chosen in tiers: first the same Yahoo Finance industry, then the same 4-digit SEC industry code and sector, then the same code, then a related (3-digit) code in the same sector. Candidates come from the SEC code hierarchy plus Yahoo's similar-companies list. A broad 2-digit code group only contributes companies that also share the Yahoo industry, so an appliance maker isn't benchmarked against chip makers. Affiliates (a parent and its listed partnership), blank-check shells and the company's own share classes are excluded. Within a tier the closest in revenue wins: 0.1–10× for same-industry matches, 0.2–5× otherwise. Each model page says why every peer was picked.</p>
-      <h2>6. Limits</h2>
+      <h2>8. Limits</h2>
       <ul>
         <li>Revenue is modelled at the consolidated level: segment detail isn't in standardized XBRL.</li>
         <li>No management guidance, backlog, pricing or one-offs. A company in transition can be badly mispriced.</li>
@@ -559,13 +754,16 @@
     }
     const h = location.hash.replace(/^#\/?/, "");
     navLib();
-    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "library", "built"].includes(h) ? h : h.startsWith("m/") ? "__" : "")));
+    if (!window.__mbChrome) { window.__mbChrome = true; initChrome(); }
+    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "library", "built", "update"].includes(h) ? h : h.startsWith("m/") ? "__" : "")));
     window.scrollTo(0, 0);
     if (!h || h === "coverage" || h === "fund") { if (h) history.replaceState(null, "", "#/"); generateView(); }
     else if (h === "library") libraryView();
     else if (h === "owner") ownerView();
     else if (h === "method") method();
     else if (h === "built") built();
+    else if (h === "update") updateView();
+    else if (h === "compare" || h.startsWith("compare/")) comparePage(decodeURIComponent(h.slice(8)));
     else if (h.startsWith("m/")) modelPage(decodeURIComponent(h.slice(2)));
     else modelPage(decodeURIComponent(h));
   }

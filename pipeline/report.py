@@ -525,3 +525,99 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
                             title=f"{name} ({T}) - Automated Initiation", author="Automated equity research")
     doc.build(story, onFirstPage=frame, onLaterPages=frame)
     return dest
+
+
+# ------------------------------------------------------------------ one-page tear sheet
+def tearsheet(dest, rec, m, fin, mkt, peers):
+    """The page an analyst hands a PM: call, chart, cases, valuation blend, peers, key numbers."""
+    T, name = rec["ticker"], rec["name"]
+    price, target, up = rec["price"], rec["target"], rec.get("upside")
+    val, cs = m["val"], m["val"]["cases"]
+    yrs = m["years"]
+    rating_col = {"Buy": "#1a7f37", "Sell": "#cf222e"}.get(rec.get("rating"), "#9a6700")
+    head = Table([[P(f"<b>{name}</b> ({rec.get('exchange', 'NYSE')}: {T})", "title"),
+                   Paragraph(f"<font color='{rating_col}'><b>{(rec.get('rating') or '').upper()}</b></font>",
+                             ParagraphStyle("r", fontName="Helvetica-Bold", fontSize=16, leading=20, alignment=TA_RIGHT))],
+                  [P(f"{rec['sector']} · {rec.get('industry') or ''} · priced {rec['price_date']}", "sub"), ""]],
+                 colWidths=[5.4 * inch, 1.9 * inch])
+    head.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                              ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    kp = [["12-mo target", "Price", "Upside", "Bear / Base / Bull", "Model value", "Street median", "WACC"],
+          [usd(target), usd(price), pct(up), f"{usd(cs['bear']['target'], 0)} / {usd(cs['base']['target'], 0)} / "
+           f"{usd(cs['bull']['target'], 0)}", usd(val['model_value']),
+           usd((rec.get('consensus') or {}).get('target_median')), pct(rec.get('wacc'))]]
+    kt = Table(kp, colWidths=[0.95 * inch, 0.85 * inch, 0.8 * inch, 1.55 * inch, 1.0 * inch, 1.05 * inch, 0.9 * inch])
+    kt.setStyle(TableStyle([("FONT", (0, 0), (-1, 0), "Helvetica", 7), ("TEXTCOLOR", (0, 0), (-1, 0), GREY),
+                            ("FONT", (0, 1), (-1, 1), "Helvetica-Bold", 10.5), ("BACKGROUND", (0, 0), (-1, -1), LIGHT),
+                            ("FONT", (0, 1), (0, 1), "Helvetica-Bold", 13), ("TEXTCOLOR", (0, 1), (0, 1), NAVY),
+                            ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 4)]))
+    mk = lambda k: [num(v) for v in m["is"][k]]  # noqa: E731
+    fin_rows = [["Revenue", *mk("revenue")], ["EBITDA", *mk("ebitda")],
+                ["EBITDA margin", *[pct(v) for v in m["is"]["ebitda_m"]]], ["Net income", *mk("ni")],
+                ["Diluted EPS", *[usd(v) for v in m["is"]["eps"]]]]
+    ft = table(["$mm", *[str(y) for y in yrs]], fin_rows, [1.1 * inch] + [0.775 * inch] * len(yrs), font=7)
+    case_rows = [["Revenue growth, year 1", *[pct(cs[k].get("g1")) for k in ("bear", "base", "bull")]],
+                 ["Terminal growth", *[pct(cs[k].get("tg")) for k in ("bear", "base", "bull")]],
+                 ["Model value", *[usd(cs[k]["model"]) for k in ("bear", "base", "bull")]],
+                 ["Final target", *[usd(cs[k]["target"]) for k in ("bear", "base", "bull")]],
+                 ["Upside", *[pct(cs[k]["upside"]) for k in ("bear", "base", "bull")]]]
+    ct = table(["Scenario", "Bear", "Base", "Bull"], case_rows, [1.35 * inch, 0.7 * inch, 0.7 * inch, 0.7 * inch],
+               bold=("Final target",), font=7)
+    an = val.get("anchor") or {}
+    blend_rows = [["DCF, perpetuity", usd(val["dcf"]), pct(val["w_dcf"], 0)],
+                  ["DCF, exit multiple", usd(val["exit"]), pct(val["w_exit"], 0)],
+                  ["Trading comps", usd(val["comps"]), pct(val["w_comps"], 0)],
+                  ["Model value", usd(val["model_value"]), pct(an.get("w_model"), 0)],
+                  ["Street median", usd(an.get("street")), pct(an.get("w_street"), 0)],
+                  ["Peer-relative", usd(an.get("peer_value")), pct(an.get("w_peer"), 0)],
+                  ["Final target", usd(target), ""]]
+    bt = table(["Valuation", "$/share", "Weight"], blend_rows, [1.35 * inch, 0.75 * inch, 0.6 * inch],
+               bold=("Model value", "Final target"), font=7)
+    side = Table([[ct], [Spacer(1, 6)], [bt]], colWidths=[3.5 * inch])
+    side.setStyle(TableStyle([("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+    chart = Image(price_chart(mkt.get("history") or [], target, T), width=3.75 * inch, height=1.95 * inch)
+    mid = Table([[chart, side]], colWidths=[3.85 * inch, 3.45 * inch])
+    mid.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+    peer_rows = [[p.get("ticker"), (p.get("name") or "")[:26], usd(p.get("price")),
+                  mult((p["price"] * p["shares"] + (p.get("net_debt") or 0)) / p["ebitda"])
+                  if p.get("ebitda") and p.get("price") and p.get("shares") and p["ebitda"] > 0 else "—",
+                  (p.get("match") or "")[:34]] for p in peers]
+    pt = table(["Peer", "Company", "Price", "EV/EBITDA", "Why it's a peer"], peer_rows,
+               [0.55 * inch, 1.9 * inch, 0.75 * inch, 0.8 * inch, 3.3 * inch], align_left=(0, 1, 4), font=7) \
+        if peer_rows else P("No usable peers.", "small")
+    lq = rec.get("latest_quarter") or {}
+    q = lq.get("quarter", {})
+    qline = ""
+    if q.get("revenue"):
+        r_ = q["revenue"]
+        qline = (f"<b>Latest quarter</b> ({lq.get('label', '')}): revenue {bn(r_['cur'])}"
+                 + (f", {pct(r_['chg'])} year on year" if nz(r_.get("chg")) else "") + ".")
+    qual = rec.get("quality") or {}
+    thesis = (f"<b>The call.</b> {rec.get('rating')} with a {usd(target)} 12-month target, {pct(up)} versus "
+              f"{usd(price)}. The model values {T} at {usd(val['model_value'])} (40% perpetuity DCF, 40% exit-multiple "
+              f"DCF, 20% comps); the target anchors that to the street median and the peers' average analyst upside. "
+              f"Bear to bull spans {usd(cs['bear']['target'], 0)} to {usd(cs['bull']['target'], 0)}. {qline} "
+              f"<b>Data quality:</b> {qual.get('grade', 'n/a')}"
+              + (f" ({'; '.join(qual.get('reasons', [])[:2])})." if qual.get("reasons") else "."))
+    story = [head, Spacer(1, 6), kt, Spacer(1, 8), P(thesis), mid, Spacer(1, 8),
+             P("Financial summary (base case; projections from year 4)", "h2"), ft, Spacer(1, 8),
+             P("Peers", "h2"), pt, Spacer(1, 8),
+             P("Built automatically from SEC EDGAR 10-K XBRL data and Yahoo Finance prices and consensus. Full Excel "
+               "model, five-page report and live model page available on Model Builder. For information and "
+               "education only, not investment advice.", "small")]
+
+    def frame(c, d):
+        c.saveState()
+        c.setFont("Helvetica", 7)
+        c.setFillColor(GREY)
+        c.drawString(0.6 * inch, 10.62 * inch, "MODEL BUILDER · TEAR SHEET")
+        c.drawRightString(7.9 * inch, 10.62 * inch, f"{T} · {rec['generated_at'][:10]} · v{rec.get('version')}")
+        c.setStrokeColor(RULE)
+        c.line(0.6 * inch, 10.56 * inch, 7.9 * inch, 10.56 * inch)
+        c.restoreState()
+
+    doc = SimpleDocTemplate(str(dest), pagesize=letter, leftMargin=0.6 * inch, rightMargin=0.6 * inch,
+                            topMargin=0.6 * inch, bottomMargin=0.5 * inch, title=f"{name} ({T}) - Tear sheet",
+                            author="Model Builder")
+    doc.build(story, onFirstPage=frame)
+    return dest

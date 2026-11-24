@@ -697,8 +697,9 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
 
     _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF)
     SN = _scenarios(wb, T, label, live, d, RB, IS, DC, VS)
+    AU = _audit(wb, T, label, live, IS, BS, CF, VS)
     order = [f"{T} Cover", SN.title, RB.title, IS.title, BS.title, CF.title, SC.title, WA.title, DC.title, CO.title,
-             VS.title, FR.title, "Live_Data"]
+             VS.title, FR.title, AU.title, "Live_Data"]
     wb._sheets.sort(key=lambda w: order.index(w.title) if w.title in order else 99)
     wb.active = 0
 
@@ -722,6 +723,63 @@ def _big(sheet, cell, value, fmt, size, bold=True, fill=None):
     if fill:
         c.fill = PatternFill("solid", fgColor=fill)
     return c
+
+
+def _audit(wb, T, label, live, IS, BS, CF, VS):
+    """Live integrity checks: anyone opening the file can confirm it is sound in ten seconds."""
+    AU = Sheet(wb, f"{T} Audit", label, f"{live['company']} ({T}) - Model Audit: integrity checks")
+    ws = AU.ws
+    ws.column_dimensions["E"].width = 16
+    ws.column_dimensions["F"].width = 70
+    is_, bs, cf, vs = IS.ref, BS.ref, CF.ref, VS.ref
+    absmax = lambda cells: "MAX(" + ",".join(f"ABS({c})" for c in cells) + ")"  # noqa: E731
+    checks = [
+        ("Balance sheet balances in every year (max |assets - liabilities & equity|, $mm)",
+         absmax([bs(f"{c}21") for c in ALL]), 0.5,
+         "Balance Sheet row 21 must be zero in all eight columns."),
+        ("Cash flow ending cash = balance sheet cash, projections ($mm)",
+         absmax([f"{cf(c + '27')}-{bs(c + '5')}" for c in PROJ]), 0.5,
+         "The cash flow statement and the balance sheet agree on cash every projected year."),
+        ("Historical revenue ties to the 10-K ($mm)",
+         absmax([f"{is_(c + '5')}-{L('revenue', c)}" for c in HIST]), 0.5,
+         "Income Statement revenue equals the SEC XBRL figure in the hidden Live_Data tab."),
+        ("Historical net income ties to the 10-K ($mm)",
+         absmax([f"{is_(c + '23')}-{L('net_income', c)}" for c in HIST]), 0.5,
+         "Net income to common equals the reported figure."),
+        ("Historical total assets tie to the 10-K ($mm)",
+         absmax([f"{bs(c + '10')}-{L('total_assets', c)}" for c in HIST]), 0.5,
+         "Total assets equal the reported balance sheet."),
+        ("Projected cash never negative (lowest projected cash, $mm)",
+         "MIN(" + ",".join(bs(c + "5") for c in PROJ) + ")", None,
+         "The revolver funds any shortfall, so cash should stay at or above zero."),
+        ("Cover target = Target Price tab ($/share)",
+         f"ABS('{T} Cover'!$C$6-{vs('$D$43')})", 0.005,
+         "The headline on the Cover is the anchored final target."),
+    ]
+    AU.put("B4", "Check")
+    AU.put("D4", "Result")
+    AU.put("E4", "Status")
+    AU.put("F4", "What it means")
+    banner(ws, 4, fill=NAVY2)
+    for i, (lab, f, tol, why) in enumerate(checks):
+        r = 5 + i
+        AU.put(f"B{r}", lab)
+        AU.put(f"D{r}", f"={f}", NUM)
+        AU.put(f"E{r}", f'=IF(D{r}>=-0.5,"PASS","CHECK")' if tol is None else f'=IF(D{r}<={tol},"PASS","CHECK")')
+        AU.put(f"F{r}", why)
+        ws[f"E{r}"].alignment = Alignment(horizontal="right")
+    last = 5 + len(checks) - 1
+    AU.put(f"B{last + 2}", "Overall")
+    AU.put(f"E{last + 2}", f'=IF(COUNTIF(E5:E{last},"CHECK")=0,"ALL PASS","REVIEW")')
+    ws[f"E{last + 2}"].alignment = Alignment(horizontal="right")
+    ws[f"E{last + 2}"].fill = PatternFill("solid", fgColor=HILITE)
+    AU.put(f"B{last + 4}", "Hardcoded inputs are blue, same-tab formulas black, links from other tabs green. "
+                           "Every check above is a live formula: change an input and it re-tests.")
+    pass_fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
+    fail_fill = PatternFill(start_color="FCE4D6", end_color="FCE4D6", fill_type="solid")
+    ws.conditional_formatting.add(f"E5:E{last + 2}", FormulaRule(formula=['OR(E5="PASS",E5="ALL PASS")'], fill=pass_fill))
+    ws.conditional_formatting.add(f"E5:E{last + 2}", FormulaRule(formula=['OR(E5="CHECK",E5="REVIEW")'], fill=fail_fill))
+    return AU
 
 
 ACTIVE_FILL = PatternFill(start_color=HILITE, end_color=HILITE, fill_type="solid")

@@ -6,6 +6,7 @@ site:
   linkedin: ""        # e.g. https://www.linkedin.com/in/your-handle
   portfolio: ""       # link to your Bloomberg-terminal-style portfolio site
   email: ""
+  analytics_token: ""   # Cloudflare Web Analytics site token (free): dash.cloudflare.com → Analytics & Logs → Web Analytics
 equity_risk_premium: 0.055   # used for the market-data WACC (Live_Data) and built models
 ratings:              # rating = f(upside to target) unless a model's .yml sets `rating:`
   buy_above: 0.15

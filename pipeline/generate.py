@@ -373,6 +373,85 @@ def detail_block(model, fin, me, mkt, rec) -> dict:
     }
 
 
+KEY_ITEMS = ("revenue", "operating_income", "net_income", "cfo", "capex", "total_assets", "equity", "d_and_a",
+             "shares_diluted")
+
+
+def quality_badge(fin, peers, rec, model) -> dict:
+    """High / Medium / Low: how far to trust this automated model, with the reasons."""
+    score, why = 3.0, []
+    n_years = len(fin.get("labels") or [])
+    if n_years < 3:
+        score -= 1
+        why.append(f"only {n_years} years of annual XBRL data")
+    missing = [k for k in KEY_ITEMS if any(v is None for v in (fin["items"].get(k) or [None])[-3:])]
+    if missing:
+        score -= 0.5 * min(len(missing), 3)
+        why.append("gaps in " + ", ".join(fundamentals_label(k) for k in missing[:3]))
+    strong = sum(1 for p in peers if (p.get("match") or "").startswith("Same industry"))
+    if len(peers) < 3:
+        score -= 1
+        why.append(f"only {len(peers)} usable peers")
+    elif strong < 2:
+        score -= 0.5
+        why.append("few same-industry peers")
+    if rec.get("sector_check"):
+        score -= 1
+        why.append("business model doesn't fit EV/EBITDA and free cash flow")
+    street = (rec.get("consensus") or {}).get("target_median")
+    mv = model["val"]["model_value"]
+    if street and mv and abs(mv / street - 1) > 0.5:
+        score -= 0.5
+        why.append("model value far from the street before anchoring")
+    grade = "High" if score >= 2.5 else "Medium" if score >= 1.5 else "Low"
+    return {"grade": grade, "score": round(score, 1),
+            "reasons": why or ["clean 10-K data, same-industry peers and a business that fits the DCF"]}
+
+
+def fundamentals_label(key):
+    return next((lab.lower() for k, lab, *_ in fundamentals.LINE_ITEMS if k == key), key)
+
+
+def explain_changes(prev: dict, rec: dict) -> list[str]:
+    """Plain-English reasons the call moved since the previous build."""
+    if not prev or not prev.get("target") or not rec.get("target"):
+        return []
+    out = []
+    t0, t1 = prev["target"], rec["target"]
+    since = f"since v{prev.get('version')} on {str(prev.get('generated_at', ''))[:10]}"
+    if abs(t1 - t0) < 0.005:
+        out.append(f"Target unchanged at ${t1:,.2f} {since}.")
+    else:
+        out.append(f"Target {'rose' if t1 > t0 else 'fell'} from ${t0:,.2f} to ${t1:,.2f} ({t1 / t0 - 1:+.1%}) {since}.")
+    if prev.get("price") and rec.get("price") and abs(rec["price"] / prev["price"] - 1) >= 0.005:
+        out.append(f"Share price moved {rec['price'] / prev['price'] - 1:+.1%} (${prev['price']:,.2f} to "
+                   f"${rec['price']:,.2f}), which moves the peer-relative value and the anchoring band with it.")
+    if prev.get("fiscal_year") and prev["fiscal_year"] != rec.get("fiscal_year"):
+        out.append(f"A new 10-K is in: the model now runs from {rec['fiscal_year']} actuals (was {prev['fiscal_year']}).")
+    pf, rf = (prev.get("last_filing") or {}), (rec.get("last_filing") or {})
+    if rf.get("accession") and pf.get("accession") and rf["accession"] != pf["accession"]:
+        out.append(f"New {rf['form']} filed {rf['filed']}.")
+    if prev.get("model_value") and rec.get("model_value") and abs(rec["model_value"] / prev["model_value"] - 1) >= 0.01:
+        out.append(f"Model value (DCF, exit multiple and comps) moved {rec['model_value'] / prev['model_value'] - 1:+.1%} "
+                   f"to ${rec['model_value']:,.2f}.")
+    s0, s1 = (prev.get("consensus") or {}).get("target_median"), (rec.get("consensus") or {}).get("target_median")
+    if s0 and s1 and abs(s1 / s0 - 1) >= 0.005:
+        out.append(f"Street median target moved {s1 / s0 - 1:+.1%} to ${s1:,.2f}.")
+    p0, p1 = set(prev.get("peers") or []), set(rec.get("peers") or [])
+    if p0 != p1:
+        add, rem = sorted(p1 - p0), sorted(p0 - p1)
+        out.append("Peer set changed" + (f": added {', '.join(add)}" if add else "")
+                   + (f"{';' if add else ':'} removed {', '.join(rem)}" if rem else "") + ".")
+    u0, u1 = prev.get("peer_avg_upside"), rec.get("peer_avg_upside")
+    if u0 is not None and u1 is not None and abs(u1 - u0) >= 0.01:
+        out.append(f"Peers' average analyst upside went from {u0:.1%} to {u1:.1%}.")
+    if prev.get("wacc") and rec.get("wacc") and abs(rec["wacc"] - prev["wacc"]) >= 0.001:
+        out.append(f"WACC moved from {prev['wacc']:.2%} to {rec['wacc']:.2%}.")
+    if prev.get("rating") and prev["rating"] != rec.get("rating"):
+        out.append(f"Rating changed from {prev['rating']} to {rec['rating']}.")
+    return out
+
+
 def share_card(path: Path, rec: dict):
     """1200x630 PNG used as the link-preview image when a model page is shared."""
     import matplotlib
@@ -405,7 +484,7 @@ def update_index():
     for meta in LIB.glob("*/*/meta.json"):
         try:
             e = json.loads(meta.read_text())
-            for k in ("detail", "history"):
+            for k in ("detail", "history", "guidance", "changes", "latest_quarter"):
                 e.pop(k, None)
             entries.append(e)
         except Exception:  # noqa: BLE001
@@ -419,22 +498,8 @@ def update_index():
          "sectors": {k: sorted(v) for k, v in sorted(by_sector.items())}, "models": entries}, indent=1))
 
 
-def generate(ticker: str, allow_any: bool = False) -> dict:
-    import builder
-    import excel
-    import report
-
-    T = ticker.upper().strip().replace(".", "-").replace("/", "-")
-    uni = universe.load()["companies"]
-    me = next((c for c in uni if c["ticker"] == T or T in c.get("other_tickers", [])), None)
-    if me is None:
-        if not allow_any:
-            raise SystemExit(f"{T} is not an NYSE- or Nasdaq-listed SEC filer")
-        cik, name = sources.cik_for(T)
-        me = {"ticker": T, "cik": cik, "name": name, "sic": None, "industry": "", "sector": "Other"}
-    now = dt.datetime.now(dt.timezone.utc)
-    print(f"→ {T}  {me['name']}  [{me['sector']} · {me['industry']}]")
-
+def market_inputs(T: str, me: dict, now) -> dict:
+    """Latest 10-K financials, price, consensus, rates and the Live_Data payload for one company."""
     facts = sources.company_facts(me["cik"])
     subs = sources.submissions(me["cik"])
     try:
@@ -475,6 +540,29 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
                    "street_high": qs.get("target_high"), "street_low": qs.get("target_low"),
                    "analysts": qs.get("analysts")},
     }
+    return dict(locals())
+
+
+def generate(ticker: str, allow_any: bool = False, rebuild: bool = False, reason: str | None = None) -> dict:
+    import builder
+    import excel
+    import report
+
+    T = ticker.upper().strip().replace(".", "-").replace("/", "-")
+    uni = universe.load()["companies"]
+    me = next((c for c in uni if c["ticker"] == T or T in c.get("other_tickers", [])), None)
+    if me is None:
+        if not allow_any:
+            raise SystemExit(f"{T} is not an NYSE- or Nasdaq-listed SEC filer")
+        cik, name = sources.cik_for(T)
+        me = {"ticker": T, "cik": cik, "name": name, "sic": None, "industry": "", "sector": "Other"}
+    now = dt.datetime.now(dt.timezone.utc)
+    print(f"→ {T}  {me['name']}  [{me['sector']} · {me['industry']}]")
+
+    _x = market_inputs(T, me, now)
+    facts, subs, fin, shares, mkt, qs, rates, price, rt = (_x[k] for k in ("facts", "subs", "fin", "shares", "mkt",
+                                                                            "qs", "rates", "price", "rt"))
+    beta_src, wacc, items, filings, name, live = (_x[k] for k in ("beta_src", "wacc", "items", "filings", "name", "live"))
     print("  peers…")
     peers = pick_peers(me, uni, items["revenue"][-1])
     print(f"  peers: {', '.join(p['ticker'] for p in peers) or 'none'}")
@@ -527,29 +615,58 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
         "beta_source": beta_src, "fiscal_year": fin["labels"][-1],
     }
     rec["sector_check"] = sector_check(me, fin, facts, price, shares, peers)
+    try:
+        rec["latest_quarter"] = fundamentals.latest_quarter(facts, fin)
+    except Exception as exc:  # noqa: BLE001
+        print("  ! latest quarter unavailable:", exc)
+        rec["latest_quarter"] = None
+    lq = rec["latest_quarter"] or {}
+    if lq.get("ttm", {}).get("eps_diluted"):
+        rec["pe_ttm"] = round(price / lq["ttm"]["eps_diluted"], 2) if lq["ttm"]["eps_diluted"] > 0 else None
+    import guidance
+    next_g = (model["rb_cases"]["growth"]["base"] or [None])[0]
+    rec["guidance"] = None if sources.FIXTURES else guidance.latest(subs, me["cik"], next_g)
+    recent = sources.recent_filings(subs, me["cik"], forms=("10-K", "10-K/A", "10-Q", "10-Q/A"), limit=1)
+    rec["last_filing"] = recent[0] if recent else None
+    rec["ev_ebitda"] = (model.get("comps_self") or {}).get("ev_ebitda")
+    rec["ebitda_margin"] = (model["is"]["ebitda_m"] or [None] * 3)[2]
+    rec["growth_next"] = next_g
+    rec["quality"] = quality_badge(fin, peers, rec, model)
     rec["detail"] = detail_block(model, fin, me, mkt, rec)
     prev_meta = json.loads((folder / "meta.json").read_text()) if (folder / "meta.json").exists() else {}
+    rec["changes"] = explain_changes(prev_meta, rec)
     rec["history"] = ((prev_meta.get("history") or [])
                       + [{"date": rec["generated_at"][:10], "version": n, "price": rec["price"], "target": rec["target"],
                           "rating": rec["rating"]}])[-40:]
     pdf = folder / f"{T}_report_v{n}.pdf"
     report.make(pdf, rec, model, fin, rt, mkt, filings, sources.recent_filings(subs, me["cik"]), qs, peers, subs)
+    sheet = folder / f"{T}_tearsheet_v{n}.pdf"
+    try:
+        report.tearsheet(sheet, rec, model, fin, mkt, peers)
+    except Exception as exc:  # noqa: BLE001
+        print("  ! tear sheet skipped:", exc)
     try:
         share_card(folder / "card.png", rec)
     except Exception as e:  # noqa: BLE001
         print("  share card skipped:", e)
     rec["files"] = {"card": f"{REPO_RAW}/library/{slug(me['sector'])}/{T}/card.png",
                     "xlsx": f"{REPO_RAW}/library/{slug(me['sector'])}/{T}/{label}.xlsx",
+                    "tearsheet": f"{REPO_RAW}/library/{slug(me['sector'])}/{T}/{sheet.name}",
                     "pdf": f"{REPO_RAW}/library/{slug(me['sector'])}/{T}/{pdf.name}"}
     prev = json.loads((folder / "meta.json").read_text()) if (folder / "meta.json").exists() else {}
     # a maintenance rebuild (--rebuild) refreshes the model without counting as a visitor generation
-    rec["times_generated"] = (prev.get("times_generated") or 0) + (0 if "--rebuild" in sys.argv else 1) or 1
+    rebuild = rebuild or "--rebuild" in sys.argv
+    rec["times_generated"] = (prev.get("times_generated") or 0) + (0 if rebuild else 1) or 1
+    if reason:
+        rec["rebuilt_for"] = reason
+        rec["changes"] = [reason] + (rec.get("changes") or [])
     rec["first_generated_at"] = prev.get("first_generated_at") or rec["generated_at"]
     (folder / "meta.json").write_text(json.dumps(rec, indent=1, default=str))
     # keep only the 3 newest versions per ticker to keep the repo light
     for old in sorted(folder.glob(f"{T}_v*.xlsx"), key=lambda f: int(re.search(r"_v(\d+)$", f.stem).group(1)))[:-3]:
         old.unlink()
         (folder / old.name.replace(f"{T}_v", f"{T}_report_v").replace(".xlsx", ".pdf")).unlink(missing_ok=True)
+        (folder / old.name.replace(f"{T}_v", f"{T}_tearsheet_v").replace(".xlsx", ".pdf")).unlink(missing_ok=True)
     update_index()
     shutil.rmtree(work, ignore_errors=True)
     print(f"  {label}: target ${target:,.2f} vs ${price:,.2f} ({rec['rating']}) | scenarios {rec['scenarios']}")

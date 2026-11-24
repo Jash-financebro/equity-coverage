@@ -1,0 +1,52 @@
+name: Update model
+run-name: Update ${{ inputs.id }}
+
+# Started by the website's API when a visitor uploads an existing model on the "Update a model" tab.
+# The upload is fetched from private Worker storage, updated, and sent back there. Nothing is committed.
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: "Upload id"
+        required: true
+      ticker:
+        description: "Ticker the model is for"
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    container:
+      image: ghcr.io/jash-financebro/equity-coverage-runner:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - name: Update the workbook
+        env:
+          ID: ${{ inputs.id }}
+          T: ${{ inputs.ticker }}
+          TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: |
+          echo "$ID" | grep -Eq '^[0-9a-f]{32}$' || { echo "bad id"; exit 1; }
+          echo "$T" | grep -Eq '^[A-Z][A-Z0-9-]{0,6}$' || { echo "bad ticker"; exit 1; }
+          API=$(python3 -c "import json; print(json.load(open('site/api.json'))['api'])")
+          mkdir -p /tmp/u && cd /tmp/u
+          code=$(curl -s -o in.xlsx -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "$API/api/update/input/$ID")
+          [ "$code" = 200 ] || { echo "upload not found ($code)"; exit 1; }
+          python3 "$GITHUB_WORKSPACE/pipeline/update.py" in.xlsx "$T" out.xlsx summary.json || true
+          if [ -s out.xlsx ] && grep -q '"status": "ok"' summary.json; then
+            curl -sf -X PUT -H "Authorization: Bearer $TOKEN" --data-binary @out.xlsx "$API/api/update/result/$ID?part=file"
+          fi
+          [ -s summary.json ] || echo '{"status": "failed", "error": "The update job crashed."}' > summary.json
+          curl -sf -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data-binary @summary.json "$API/api/update/result/$ID?part=summary"
+          rm -f in.xlsx out.xlsx

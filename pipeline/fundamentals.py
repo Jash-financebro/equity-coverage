@@ -219,3 +219,94 @@ def latest_annual(facts: dict, concepts: list[str], kind: str = "stock") -> floa
         if vals:
             return round(vals[max(vals)][0] / 1e6, 3)
     return None
+
+
+# ------------------------------------------------------------------ latest quarter / trailing twelve months
+QUARTER_ITEMS = ("revenue", "operating_income", "net_income", "eps_diluted", "cfo", "capex")
+
+
+def _all_rows(facts: dict, concept: str, unit: str) -> list[dict]:
+    node = facts.get("facts", {}).get("us-gaap", {}).get(concept)
+    if not node:
+        return []
+    return [r for r in node.get("units", {}).get(unit, []) if "start" in r and r.get("form", "").startswith(("10-K", "10-Q"))]
+
+
+def _durations(rows):
+    """(start, end) -> value, latest filing wins."""
+    best = {}
+    for r in rows:
+        k = (r["start"], r["end"])
+        if k not in best or r.get("filed", "") >= best[k][1]:
+            best[k] = (float(r["val"]), r.get("filed", ""), r.get("form", ""))
+    return best
+
+
+def latest_quarter(facts: dict, fin: dict) -> dict | None:
+    """Latest reported quarter vs the same quarter a year ago, and trailing-twelve-month figures from 10-Q + 10-K
+    data. Returns None when the company files no usable quarterly XBRL."""
+    out = {"quarter": {}, "ttm": {}, "fy": {}}
+    anchor = None
+    for key in QUARTER_ITEMS:
+        concept = (fin.get("concepts", {}).get(key) or "").split(" (")[0]
+        if not concept:
+            continue
+        unit = "USD/shares" if key in PER_SHARE else "USD"
+        d = _durations(_all_rows(facts, concept, unit))
+        if not d:
+            continue
+        scale = (lambda v: round(v, 4)) if key in PER_SHARE else (lambda v: round(v / 1e6, 3))
+        days = lambda k: (_d(k[1]) - _d(k[0])).days  # noqa: E731
+        fys = sorted((k for k in d if 340 <= days(k) <= 380), key=lambda k: k[1])
+        if not fys:
+            continue
+        fy = fys[-1]
+        last_end = max(k[1] for k in d)
+        if key == "revenue":
+            anchor = {"end": last_end, "fy_end": fy[1]}
+        # discrete quarter ending last_end, and the one a year earlier
+        q = [k for k in d if k[1] == last_end and 80 <= days(k) <= 100]
+        if not q and last_end == fy[1]:  # Q4 is rarely tagged on its own: FY minus nine-month YTD
+            ytd9 = [k for k in d if k[0] == fy[0] and 260 <= days(k) <= 290]
+            q_val = d[fy][0] - d[ytd9[0]][0] if ytd9 else None
+        else:
+            q_val = d[q[0]][0] if q else None
+        prior_end = _d(last_end) - dt.timedelta(days=364)
+        pq = [k for k in d if abs((_d(k[1]) - prior_end).days) <= 10 and 80 <= days(k) <= 100]
+        if not pq:
+            pfys = [k for k in fys if abs((_d(k[1]) - prior_end).days) <= 10]
+            if pfys:
+                p9 = [k for k in d if k[0] == pfys[0][0] and 260 <= days(k) <= 290]
+                pq_val = d[pfys[0]][0] - d[p9[0]][0] if p9 else None
+            else:
+                pq_val = None
+        else:
+            pq_val = d[pq[0]][0]
+        if q_val is not None:
+            out["quarter"][key] = {"cur": scale(q_val), "prior": scale(pq_val) if pq_val is not None else None,
+                                   "chg": (q_val / pq_val - 1) if pq_val not in (None, 0) and pq_val > 0 else None}
+        # trailing twelve months: FY + current YTD - prior-year YTD
+        if last_end == fy[1]:
+            ttm = d[fy][0]
+        else:
+            ytd = [k for k in d if k[1] == last_end and k[0] > fy[1]]
+            ytd = max(ytd, key=days) if ytd else None
+            prior_ytd = None
+            if ytd:
+                for k in d:
+                    if abs((_d(k[1]) - prior_end).days) <= 10 and abs(days(k) - days(ytd)) <= 10:
+                        prior_ytd = k
+                        break
+            ttm = d[fy][0] + d[ytd][0] - d[prior_ytd][0] if ytd and prior_ytd else None
+        if ttm is not None and key != "eps_diluted":
+            out["ttm"][key] = scale(ttm)
+        if key == "eps_diluted" and ttm is not None:
+            out["ttm"][key] = scale(ttm)
+        out["fy"][key] = scale(d[fy][0])
+    if not anchor or not out["quarter"]:
+        return None
+    end = _d(anchor["end"])
+    out["as_of"] = anchor["end"]
+    out["is_10q"] = anchor["end"] != anchor["fy_end"]
+    out["label"] = f"Quarter ended {end.strftime('%b %d, %Y')}"
+    return out

@@ -1,0 +1,92 @@
+"""Management guidance from the latest earnings release (8-K, Item 2.02, Exhibit 99).
+
+Pulls the outlook / guidance sentences verbatim (short, with a link) and, when the release gives a revenue
+growth range, compares it with the model's next-year revenue growth."""
+from __future__ import annotations
+
+import html
+import re
+
+import sources
+
+KEYWORDS = re.compile(r"\b(guidance|outlook|expects?|expected|anticipates?|forecasts?|targets?|reaffirm\w*|raises?|"
+                      r"narrows?|lowers?)\b", re.I)
+METRICS = re.compile(r"\b(revenue|revenues|net sales|sales|organic|EPS|earnings per share|operating income|"
+                     r"operating margin|free cash flow|EBITDA)\b", re.I)
+NUMBER = re.compile(r"\d")
+NOISE = re.compile(r"forward-looking|safe harbor|risks and uncertainties|non-gaap|reconciliation|conference call|"
+                   r"webcast|press release|investor relations", re.I)
+
+
+def _text(raw: str) -> str:
+    raw = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", raw)
+    raw = re.sub(r"(?i)<br\s*/?>|</p>|</div>|</tr>|</li>", ". ", raw)
+    raw = re.sub(r"<[^>]+>", " ", raw)
+    raw = html.unescape(raw).replace("\xa0", " ")
+    return re.sub(r"\s+", " ", raw)
+
+
+def _sentences(text: str):
+    for s in re.split(r"(?<=[.!?])\s+(?=[A-Z(\"“])", text):
+        s = s.strip(" .")
+        if 40 <= len(s) <= 320 and KEYWORDS.search(s) and METRICS.search(s) and NUMBER.search(s) and not NOISE.search(s):
+            yield s + "."
+
+
+def revenue_growth_range(sentences: list[str]):
+    """(low, high) revenue growth guidance as decimals, if a sentence states one."""
+    for s in sentences:
+        if not re.search(r"revenue|net sales|sales", s, re.I) or not re.search(r"grow|growth|increase", s, re.I):
+            continue
+        m = re.search(r"(-?\d+(?:\.\d+)?)\s*%?\s*(?:to|-|–|and)\s*(-?\d+(?:\.\d+)?)\s*%", s)
+        if m:
+            lo, hi = sorted((float(m.group(1)) / 100, float(m.group(2)) / 100))
+            if -0.5 < lo < 1 and -0.5 < hi < 1:
+                return lo, hi
+        m = re.search(r"(?:approximately|about|around|roughly)?\s*(-?\d+(?:\.\d+)?)\s*%", s)
+        if m and -50 < float(m.group(1)) < 100:
+            v = float(m.group(1)) / 100
+            return v, v
+    return None
+
+
+def latest(subs: dict, cik: int, model_growth: float | None = None) -> dict | None:
+    """Guidance block for the model page, or None when no recent earnings release has outlook language."""
+    recent = subs.get("filings", {}).get("recent", {})
+    for i, form in enumerate(recent.get("form", [])):
+        if form != "8-K" or "2.02" not in (recent.get("items", [""] * (i + 1))[i] or ""):
+            continue
+        accn = recent["accessionNumber"][i]
+        base = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accn.replace('-', '')}"
+        try:
+            idx = sources._sec(f"{base}/index.json")
+            names = [it["name"] for it in idx.get("directory", {}).get("item", [])]
+            ex = [n for n in names if re.search(r"ex-?99", n, re.I) and n.lower().endswith((".htm", ".html", ".txt"))]
+            if not ex:
+                return None
+            raw = sources._get(f"{base}/{ex[0]}", headers={"User-Agent": sources.SEC_UA}, as_json=False)
+            text = _text(raw if isinstance(raw, str) else raw.decode("utf-8", "ignore"))
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ! guidance unavailable: {exc}")
+            return None
+        found, seen = [], set()
+        for s in _sentences(text):
+            k = s[:60].lower()
+            if k not in seen:
+                seen.add(k)
+                found.append(s)
+            if len(found) >= 4:
+                break
+        if not found:
+            return None
+        rng = revenue_growth_range(found)
+        out = {"filed": recent["filingDate"][i], "url": f"{base}/{ex[0]}", "sentences": found,
+               "revenue_growth_range": rng}
+        if rng and model_growth is not None:
+            lo, hi = rng
+            gap = model_growth - hi if model_growth > hi else (model_growth - lo if model_growth < lo else 0.0)
+            out["model_growth"] = model_growth
+            out["gap"] = gap
+            out["flag"] = abs(gap) > 0.02
+        return out
+    return None

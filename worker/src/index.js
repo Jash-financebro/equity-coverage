@@ -5,6 +5,10 @@
 // GET  /api/model?ticker=T         one model's full meta (summary page, sliders, sources)
 // GET  /api/library                full library index - owner only (X-Owner-Key header)
 // GET  /m/T                        share page with Open Graph tags, redirects to the model page
+// GET  /api/insights               track record, sector snapshot, totals (aggregates only, no tickers)
+// POST /api/update?ticker=T        upload an existing model (.xlsx) to be refreshed; returns {id, token}
+// GET  /api/update/status|file/ID  poll / download (token required). Runner endpoints use the GH token.
+// Uploads live in KV (binding UPLOADS) for 6 hours and never touch the public repo.
 // GET  /api/health
 // Secrets/vars: GH_TOKEN (fine-grained PAT: Actions RW, Contents R), GH_REPO, ALLOWED_ORIGINS (comma list)
 
@@ -24,6 +28,8 @@ export default {
         if (!(await isOwner(req, env))) return json({ error: "The library is private." }, 403, cors);
         return json(await indexFresh(env), 200, cors);
       }
+      if (url.pathname === "/api/insights" && req.method === "GET") return json(await insights(env, ctx), 200, cors, 300);
+      if (url.pathname.startsWith("/api/update")) return await updateRoutes(req, url, env, ctx, cors);
       if (url.pathname === "/api/recent" && req.method === "GET") return json(await recent(env, ctx), 200, cors, 30);
       if (url.pathname === "/api/model" && req.method === "GET") return json(await model(url, env, ctx), 200, cors, 60);
       if (url.pathname.startsWith("/m/") && req.method === "GET") return sharePage(url, env, ctx);
@@ -43,7 +49,7 @@ function corsHeaders(req, env) {
   const allowed = (env.ALLOWED_ORIGINS || "*").split(",").map((s) => s.trim());
   const ok = allowed.includes("*") || allowed.includes(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin);
   return { "Access-Control-Allow-Origin": ok ? origin || "*" : allowed[0], "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-           "Access-Control-Allow-Headers": "Content-Type, X-Owner-Key", Vary: "Origin" };
+           "Access-Control-Allow-Headers": "Content-Type, X-Owner-Key, X-Filename", "Access-Control-Expose-Headers": "Content-Disposition", Vary: "Origin" };
 }
 function json(obj, status, headers, maxAge = 0) {
   return new Response(JSON.stringify(obj), { status, headers: { ...headers, "Content-Type": "application/json",
@@ -81,11 +87,12 @@ const listed = (env, ctx) => cached(ctx, "universe-v2", 6 * 3600, async () => {
 const indexFresh = (env) => rawFile(env, "library/index.json").then((x) => x || { models: [], sectors: {}, count: 0 });
 const library = (env, ctx) => cached(ctx, "library-v1", 20, () => indexFresh(env));
 
-async function runsFor(env, ticker, sinceIso) {
-  const r = await gh(env, `/repos/${env.GH_REPO}/actions/workflows/${WORKFLOW}/runs?per_page=30&event=workflow_dispatch`);
+async function runsFor(env, ticker, sinceIso, workflow = WORKFLOW) {
+  const r = await gh(env, `/repos/${env.GH_REPO}/actions/workflows/${workflow}/runs?per_page=30&event=workflow_dispatch`);
   if (!r.ok) fail(`GitHub ${r.status} listing runs`, 502);
   const { workflow_runs = [] } = await r.json();
-  return workflow_runs.filter((w) => w.display_title === `Generate ${ticker}` && (!sinceIso || w.created_at >= sinceIso));
+  const title = ticker.startsWith("Update ") ? ticker : `Generate ${ticker}`;
+  return workflow_runs.filter((w) => w.display_title === title && (!sinceIso || w.created_at >= sinceIso));
 }
 
 async function rateLimit(req, ctx) {
@@ -118,6 +125,107 @@ const metaPath = (m) => {
 };
 
 // ------------------------------------------------------------------ routes
+const median = (xs) => { const a = xs.filter((v) => typeof v === "number" && isFinite(v)).sort((p, q) => p - q);
+  if (!a.length) return null; const k = a.length >> 1; return a.length % 2 ? a[k] : (a[k - 1] + a[k]) / 2; };
+
+async function insights(env, ctx) {
+  const idx = await library(env, ctx);
+  const ms = idx.models || [];
+  const tracks = ms.map((m) => m.track).filter(Boolean);
+  const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+  const byRating = {};
+  for (const t of tracks) { const r = (byRating[t.rating] ||= { n: 0, hits: 0, rets: [] }); r.n++; r.hits += t.hit ? 1 : 0; r.rets.push(t.ret); }
+  const sectors = {};
+  for (const m of ms) (sectors[m.sector] ||= []).push(m);
+  return {
+    updated_at: idx.updated_at,
+    totals: { companies: ms.length, generations: ms.reduce((a, m) => a + (m.times_generated || 1), 0),
+              sectors: Object.keys(sectors).length },
+    track: { scored: tracks.length, hit_rate: tracks.length ? tracks.filter((t) => t.hit).length / tracks.length : null,
+             avg_return: avg(tracks.map((t) => t.ret)), avg_excess: avg(tracks.map((t) => t.excess).filter((v) => v != null)),
+             avg_days: avg(tracks.map((t) => t.days)),
+             by_rating: Object.fromEntries(Object.entries(byRating).map(([k, v]) => [k, { n: v.n, hit_rate: v.hits / v.n, avg_return: avg(v.rets) }])) },
+    sectors: Object.entries(sectors).map(([name, xs]) => ({ name, n: xs.length, median_upside: median(xs.map((m) => m.upside)),
+      buy_share: xs.filter((m) => m.rating === "Buy").length / xs.length, median_ev_ebitda: median(xs.map((m) => m.ev_ebitda)),
+      median_wacc: median(xs.map((m) => m.wacc)), median_growth: median(xs.map((m) => m.growth_next)) }))
+      .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)),
+  };
+}
+
+// ------------------------------------------------------------------ model updates (upload an existing workbook)
+const UPDATE_WORKFLOW = "update-model.yml";
+const MAX_UPLOAD = 10 * 1024 * 1024;
+const UPLOAD_TTL = 6 * 3600;
+const rid = (n = 16) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, "0")).join("");
+const isRunner = (req, env) => (req.headers.get("Authorization") || "") === `Bearer ${env.GH_TOKEN}`;
+
+async function updateRoutes(req, url, env, ctx, cors) {
+  if (!env.UPLOADS) return json({ error: "Model updates aren't switched on yet (upload storage is not set up)." }, 503, cors);
+  const parts = url.pathname.split("/").filter(Boolean); // api, update, [action], [id]
+  const [, , action, id] = parts;
+  if (!action && req.method === "POST") return json(await startUpdate(req, url, env, ctx), 200, cors);
+  if (!id || !/^[0-9a-f]{32}$/.test(id)) return json({ error: "bad id" }, 400, cors);
+  const meta = await env.UPLOADS.get(`meta:${id}`, "json");
+  if (!meta) return json({ error: "This update has expired. Upload the model again." }, 404, cors);
+  // runner side (GitHub Actions, authenticated with the dispatch token)
+  if (action === "input" && req.method === "GET") {
+    if (!isRunner(req, env)) return json({ error: "forbidden" }, 403, cors);
+    const buf = await env.UPLOADS.get(`in:${id}`, "arrayBuffer");
+    if (!buf) return json({ error: "gone" }, 404, cors);
+    return new Response(buf, { headers: { "Content-Type": "application/octet-stream", "X-Ticker": meta.ticker, "X-Filename": meta.filename } });
+  }
+  if (action === "result" && req.method === "PUT") {
+    if (!isRunner(req, env)) return json({ error: "forbidden" }, 403, cors);
+    const part = url.searchParams.get("part");
+    if (part === "file") await env.UPLOADS.put(`out:${id}`, await req.arrayBuffer(), { expirationTtl: UPLOAD_TTL });
+    else await env.UPLOADS.put(`sum:${id}`, await req.text(), { expirationTtl: UPLOAD_TTL });
+    if (part !== "file") await env.UPLOADS.delete(`in:${id}`);
+    return json({ ok: true }, 200, cors);
+  }
+  // visitor side
+  if (url.searchParams.get("token") !== meta.token) return json({ error: "forbidden" }, 403, cors);
+  if (action === "status") {
+    const sum = await env.UPLOADS.get(`sum:${id}`, "json");
+    if (sum) return json({ status: sum.status === "failed" ? "failed" : "ready", summary: sum }, 200, cors);
+    const runs = await runsFor(env, `Update ${id}`, meta.created, UPDATE_WORKFLOW);
+    const w = runs[0];
+    if (w && w.status === "completed" && w.conclusion !== "success") return json({ status: "failed", summary: { error: "The update job failed.", run_url: w.html_url } }, 200, cors);
+    return json({ status: w ? (w.status === "in_progress" ? "running" : "queued") : "queued" }, 200, cors);
+  }
+  if (action === "file") {
+    const buf = await env.UPLOADS.get(`out:${id}`, "arrayBuffer");
+    if (!buf) return json({ error: "Not ready" }, 404, cors);
+    const base = String(meta.filename || "model.xlsx").replace(/\.xlsx?$/i, "").replace(/[^A-Za-z0-9 _.-]/g, "_").slice(0, 80);
+    return new Response(buf, { headers: { ...cors, "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="${base}_updated.xlsx"`, "Cache-Control": "no-store" } });
+  }
+  return json({ error: "not found" }, 404, cors);
+}
+
+async function startUpdate(req, url, env, ctx) {
+  const ticker = String(url.searchParams.get("ticker") || "").toUpperCase().trim().replace(/[./]/g, "-");
+  if (!/^[A-Z][A-Z0-9-]{0,6}$/.test(ticker)) fail("Enter the ticker the model is for, e.g. KO");
+  const list = await listed(env, ctx);
+  if (!list[ticker]) fail(`${ticker} isn't an NYSE- or Nasdaq-listed SEC filer in our universe.`, 404);
+  const buf = await req.arrayBuffer();
+  if (!buf.byteLength) fail("Choose an .xlsx file to upload.");
+  if (buf.byteLength > MAX_UPLOAD) fail("That file is over 10 MB. Remove pasted data or images and try again.", 413);
+  const sig = new Uint8Array(buf.slice(0, 4));
+  if (!(sig[0] === 0x50 && sig[1] === 0x4b)) fail("That doesn't look like an .xlsx workbook (Excel 2007 or later).", 415);
+  await rateLimit(req, ctx);
+  const id = rid(), token = rid();
+  const filename = String(req.headers.get("X-Filename") || "model.xlsx").slice(0, 120);
+  await env.UPLOADS.put(`in:${id}`, buf, { expirationTtl: UPLOAD_TTL });
+  await env.UPLOADS.put(`meta:${id}`, JSON.stringify({ ticker, filename, token, created: new Date(Date.now() - 5000).toISOString() }), { expirationTtl: UPLOAD_TTL });
+  const d = await gh(env, `/repos/${env.GH_REPO}/actions/workflows/${UPDATE_WORKFLOW}/dispatches`, {
+    method: "POST", body: JSON.stringify({ ref: "main", inputs: { id, ticker } }), headers: { "Content-Type": "application/json" } });
+  if (d.status !== 204) {
+    let msg = ""; try { msg = (await d.json()).message || ""; } catch (_) {}
+    fail(`Could not start the update (GitHub ${d.status}${msg ? ": " + msg : ""})`, 502);
+  }
+  return { status: "queued", id, token, ticker, name: list[ticker].name };
+}
+
 async function recent(env, ctx) {
   const idx = await library(env, ctx);
   const now = Date.now();

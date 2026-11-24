@@ -47,6 +47,9 @@ jobs:
           python3 tests/test_offline.py
           python3 tests/test_generate.py
           python3 tests/test_peers.py
+          python3 tests/test_quarter.py
+          python3 tests/test_guidance.py
+          python3 tests/test_update.py
 
       - name: NYSE + Nasdaq universe for the Generate tab (rebuilt weekly from SEC bulk data)
         env:

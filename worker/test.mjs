@@ -14,7 +14,10 @@ globalThis.fetch = async (url, init = {}) => {
   return new Response("nope", { status: 404 });
 };
 import { createHash } from "node:crypto";
-const env = { GH_TOKEN: "x", GH_REPO: "o/r", ALLOWED_ORIGINS: "https://jash-financebro.github.io",
+const kv = new Map();
+const UPLOADS = { get: async (k, t) => { const v = kv.get(k); if (v == null) return null; return t === "json" ? JSON.parse(v) : t === "arrayBuffer" ? v : v; },
+                  put: async (k, v) => kv.set(k, v), delete: async (k) => kv.delete(k) };
+const env = { UPLOADS, GH_TOKEN: "x", GH_REPO: "o/r", ALLOWED_ORIGINS: "https://jash-financebro.github.io",
               OWNER_KEY_SHA256: createHash("sha256").update("secret-key").digest("hex"), SITE_URL: "https://site/" };
 const ctx = { waitUntil: (p) => p };
 const call = async (path, body) => { const r = await worker.fetch(new Request("https://w.dev" + path, body ? { method: "POST", body: JSON.stringify(body), headers: { Origin: "https://jash-financebro.github.io", "CF-Connecting-IP": "1.2.3.4" } } : { headers: { Origin: "https://jash-financebro.github.io" } }), env, ctx); return [r.status, await r.json(), r.headers.get("access-control-allow-origin")]; };
@@ -38,4 +41,21 @@ index = { models: [{ ticker: "XOM", name: "Exxon", sector: "Energy", generated_a
   ok(r.status === 200 && h.includes('og:title" content="XOM · $120.00 target · Buy') && h.includes("og:image") && h.includes("https://site/#/m/XOM"), "share page"); }
 for (let i = 0; i < 9; i++) { runs = []; [s, b] = await call("/api/generate", { ticker: "KO", force: true }); }
 ok(s === 429, "rate limit " + s + JSON.stringify(b));
-console.log("OK  worker: private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");
+[s, b] = await call("/api/insights"); ok(s === 200 && b.totals.companies === 2 && b.sectors[0].name === "Energy" && !JSON.stringify(b).includes("XOM"), "insights without tickers " + JSON.stringify(b));
+// model updates: upload -> runner fetch -> runner result -> visitor status + file
+{ const xlsx = new Uint8Array([0x50, 0x4b, 3, 4, 9, 9]);
+  let r = await worker.fetch(new Request("https://w.dev/api/update?ticker=ko", { method: "POST", body: xlsx, headers: { Origin: "https://jash-financebro.github.io", "X-Filename": "My KO model.xlsx", "CF-Connecting-IP": "9.9.9.9" } }), env, ctx);
+  const up = await r.json(); ok(r.status === 200 && up.id && up.token && dispatched.at(-1).inputs.id === up.id, "update queued " + JSON.stringify(up));
+  r = await worker.fetch(new Request(`https://w.dev/api/update/input/${up.id}`), env, ctx); ok(r.status === 403, "runner auth required");
+  r = await worker.fetch(new Request(`https://w.dev/api/update/input/${up.id}`, { headers: { Authorization: "Bearer x" } }), env, ctx);
+  ok(r.status === 200 && r.headers.get("X-Ticker") === "KO" && (await r.arrayBuffer()).byteLength === 6, "runner gets the upload");
+  r = await worker.fetch(new Request(`https://w.dev/api/update/status/${up.id}?token=nope`), env, ctx); ok(r.status === 403, "status needs token");
+  await worker.fetch(new Request(`https://w.dev/api/update/result/${up.id}?part=file`, { method: "PUT", body: new Uint8Array([1, 2, 3]), headers: { Authorization: "Bearer x" } }), env, ctx);
+  await worker.fetch(new Request(`https://w.dev/api/update/result/${up.id}?part=summary`, { method: "PUT", body: JSON.stringify({ status: "ok", new_target: 99 }), headers: { Authorization: "Bearer x" } }), env, ctx);
+  r = await worker.fetch(new Request(`https://w.dev/api/update/status/${up.id}?token=${up.token}`), env, ctx); const st = await r.json();
+  ok(st.status === "ready" && st.summary.new_target === 99 && !kv.has(`in:${up.id}`), "update ready, upload deleted " + JSON.stringify(st));
+  r = await worker.fetch(new Request(`https://w.dev/api/update/file/${up.id}?token=${up.token}`), env, ctx);
+  ok(r.status === 200 && /My KO model_updated\.xlsx/.test(r.headers.get("Content-Disposition")), "download name");
+  r = await worker.fetch(new Request("https://w.dev/api/update?ticker=KO", { method: "POST", body: new Uint8Array([1, 2, 3]), headers: { "CF-Connecting-IP": "8.8.8.8" } }), env, ctx);
+  ok(r.status === 415, "non-xlsx rejected " + r.status); }
+console.log("OK  worker: insights, model updates, private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");
