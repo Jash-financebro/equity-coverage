@@ -2,9 +2,9 @@
  "ticker": "LNG",
  "name": "Cheniere Energy, Inc.",
  "cik": 3570,
- "website": null,
+ "website": "https://www.cheniere.com",
  "sector": "Energy",
- "industry": null,
+ "industry": "Oil & Gas Midstream",
  "analyst": "Jash (JJ) Rajgandhi",
  "thesis": "Cheniere is the largest U.S. LNG exporter, and most of its Sabine Pass and Corpus Christi capacity is sold under long-term fixed-fee contracts, so cash flow depends far more on volumes than on commodity prices. Our blended $316 target (40% perpetuity DCF, 40% exit-multiple DCF, 20% trading comps) points to upside as the Corpus Christi Stage 3 trains ramp volumes, while buybacks of more than $10B authorized through 2030 and a 10%-a-year dividend growth commitment return the excess cash.",
  "catalysts": [
@@ -33,7 +33,19 @@
   "bear": 218.02,
   "bull": 437.86
  },
- "consensus": {},
+ "consensus": {
+  "target_mean": 340.8,
+  "target_median": 347.0,
+  "target_high": 377.0,
+  "target_low": 275.0,
+  "analysts": 20,
+  "recommendation": "strong_buy",
+  "beta": 0.004,
+  "sector": "Energy",
+  "industry": "Oil & Gas Midstream",
+  "website": "https://www.cheniere.com",
+  "source": "Yahoo Finance"
+ },
  "wacc": {
   "risk_free": 0.04918,
   "beta": 1.0,
@@ -45,7 +57,7 @@
   "weight_equity": 0.7256308859980396,
   "weight_debt": 0.2743691140019604,
   "wacc": 0.08666537032327479,
-  "beta_source": "default 1.0; 1Y regression -0.40 not meaningful"
+  "beta_source": "default 1.0; 1Y regression -0.36 not meaningful"
  },
  "peers": {
   "rows": [
@@ -62,9 +74,9 @@
     "rev_growth": 0.2721,
     "roe": 0.6734,
     "net_debt_ebitda": 2.0797,
-    "street_mean": null,
-    "street_median": null,
-    "street_upside": null,
+    "street_mean": 340.8,
+    "street_median": 347.0,
+    "street_upside": 0.1744398564949572,
     "model_target": 339.9707621194654
    },
    {
@@ -79,9 +91,9 @@
     "rev_growth": 1.7693,
     "roe": 0.4053,
     "net_debt_ebitda": 5.2239,
-    "street_mean": null,
-    "street_median": null,
-    "street_upside": null,
+    "street_mean": 17.77778,
+    "street_median": 18.0,
+    "street_upside": 0.5151515151515151,
     "status": "ok"
    },
    {
@@ -96,9 +108,9 @@
     "rev_growth": 0.1378,
     "roe": 0.2044,
     "net_debt_ebitda": 4.1652,
-    "street_mean": null,
-    "street_median": null,
-    "street_upside": null,
+    "street_mean": 85.41667,
+    "street_median": 85.0,
+    "street_upside": 0.29909827296347236,
     "status": "ok"
    },
    {
@@ -113,9 +125,9 @@
     "rev_growth": 0.1217,
     "roe": 0.0981,
     "net_debt_ebitda": 4.4503,
-    "street_mean": null,
-    "street_median": null,
-    "street_upside": null,
+    "street_mean": 37.5,
+    "street_median": 38.0,
+    "street_upside": 0.24304874059535497,
     "status": "ok"
    },
    {
@@ -130,9 +142,9 @@
     "rev_growth": 0.0395,
     "roe": 0.6268,
     "net_debt_ebitda": 3.5627,
-    "street_mean": null,
-    "street_median": null,
-    "street_upside": null,
+    "street_mean": 333.5238,
+    "street_median": 335.0,
+    "street_upside": 0.2082086053305443,
     "status": "ok"
    },
    {
@@ -147,9 +159,9 @@
     "rev_growth": 0.5499,
     "roe": 0.1509,
     "net_debt_ebitda": 4.3994,
-    "street_mean": null,
-    "street_median": null,
-    "street_upside": null,
+    "street_mean": 102.42857,
+    "street_median": 100.0,
+    "street_upside": 0.19560019129603057,
     "status": "ok"
    }
   ],
@@ -161,7 +173,7 @@
    "rev_growth": 0.1378,
    "roe": 0.2044,
    "net_debt_ebitda": 4.3994,
-   "street_upside": null
+   "street_upside": 0.24304874059535497
   },
   "implied": {
    "ev_ebitda": {
@@ -176,8 +188,8 @@
    },
    "average": 340.26595561301446
   },
-  "peer_avg_street_upside": null,
-  "peer_street_median_count": 0,
+  "peer_avg_street_upside": 0.29222146506738345,
+  "peer_street_median_count": 5,
   "basis": "model-adjusted EBITDA / net debt incl. minority interest"
  },
  "football": [
@@ -186,6 +198,12 @@
    "low": 188.83,
    "high": 330.32,
    "mid": null
+  },
+  {
+   "label": "Street targets (20 analysts)",
+   "low": 275.0,
+   "high": 377.0,
+   "mid": 347.0
   },
   {
    "label": "Peer EV/EBITDA (25th\u201375th pct)",
@@ -554,6 +572,13 @@
     -4180.0,
     -4451.0,
     -4130.0
+   ],
+   "equity_investments": [
+    56.0,
+    16.0,
+    111.0,
+    129.0,
+    78.0
    ]
   },
   "meta": {
@@ -672,6 +697,10 @@
    "cff": {
     "label": "Cash from financing",
     "kind": "flow"
+   },
+   "equity_investments": {
+    "label": "Equity-method & long-term investments",
+    "kind": "stock"
    }
   },
   "concepts": {
@@ -702,7 +731,8 @@
    "debt_repaid": "RepaymentsOfDebt",
    "debt_issued": "ProceedsFromIssuanceOfDebt",
    "cfi": "NetCashProvidedByUsedInInvestingActivities",
-   "cff": "NetCashProvidedByUsedInFinancingActivities"
+   "cff": "NetCashProvidedByUsedInFinancingActivities",
+   "equity_investments": "EquityMethodInvestments"
   }
  },
  "filings": [
@@ -1809,6 +1839,10 @@
   [
    "2026-11-20",
    294.84
+  ],
+  [
+   "2026-11-23",
+   295.46
   ]
  ],
  "target_history": [
@@ -1873,6 +1907,6 @@
  "model_file": "LNG_Final_1.xlsx",
  "model_built": false,
  "model_updated": "2026-11-23",
- "refreshed_at": "2026-11-24 02:09 UTC",
+ "refreshed_at": "2026-11-24 02:28 UTC",
  "status": "ok"
 }
