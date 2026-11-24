@@ -116,7 +116,11 @@ async function generate(req, env, ctx) {
   const since = new Date(Date.now() - 5000).toISOString();
   const d = await gh(env, `/repos/${env.GH_REPO}/actions/workflows/${WORKFLOW}/dispatches`, {
     method: "POST", body: JSON.stringify({ ref: "main", inputs: { ticker } }), headers: { "Content-Type": "application/json" } });
-  if (d.status !== 204) fail(`Could not start the build (GitHub ${d.status})`, 502);
+  if (d.status !== 204) {
+    let msg = ""; try { msg = (await d.json()).message || ""; } catch (_) {}
+    console.log("dispatch failed", d.status, msg);
+    fail(`Could not start the build (GitHub ${d.status}${msg ? ": " + msg : ""})`, 502);
+  }
   return { status: "queued", ticker, since, name: co.name, sector: co.sector };
 }
 
