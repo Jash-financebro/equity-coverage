@@ -668,11 +668,80 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.put("B46", "The final target blends the model with what the street and the industry's analysts see, then keeps the "
                   "upside within 15 points of the peer average so no single call stands far outside its industry.")
 
+    _cover(wb, T, label, live, ctx, VS, WA, RB)
+
     wb.defined_names["Scenario"] = DefinedName("Scenario", attr_text=f"{RB.ref('$D$5')}")
     wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{VS.ref('$D$43')}")
     dest.parent.mkdir(parents=True, exist_ok=True)
     wb.save(dest)
     return dest
+
+
+def _big(sheet, cell, value, fmt, size, bold=True):
+    c = sheet.put(cell, value, fmt, bold=bold)
+    c.font = Font(name=FONT, size=size, bold=bold, color=c.font.color)
+    return c
+
+
+def _cover(wb, T, label, live, ctx, VS, WA, RB):
+    """First tab: the final target price, rating and the key numbers behind them, readable at a glance."""
+    CV = Sheet(wb, f"{T} Cover", label, f"{live['company']} ({T})")
+    ws = CV.ws
+    wb.move_sheet(ws, offset=-(len(wb.sheetnames) - 1))
+    wb.active = 0
+    ws.column_dimensions["B"].width = 50
+    ws.column_dimensions["C"].width = 2
+    for c in "DEF":
+        ws.column_dimensions[c].width = 15
+    ws.page_setup.orientation = "portrait"
+    ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 1
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.print_area = "A1:F30"
+    ws["B2"].font = Font(name=FONT, size=18, bold=True)
+    CV.put("B3", f"Three-statement model, DCF and valuation | {ctx.get('sector') or 'Sector n/a'} | NYSE")
+
+    CV.put("B5", "12-MONTH PRICE TARGET", bold=True)
+    _big(CV, "B6", f"={VS.ref('$D$43')}", '$#,##0.00', 36)
+    CV.put("D5", "RATING", bold=True)
+    _big(CV, "D6", '=IF(D10>=0.15,"BUY",IF(D10<=-0.1,"SELL","HOLD"))', None, 28)
+    CV.put("F5", "UPSIDE", bold=True)
+    _big(CV, "F6", "=D10", PCT, 20)
+    for c in ("B6", "D6", "F6"):
+        ws[c].alignment = Alignment(horizontal="left", vertical="center")
+    ws.row_dimensions[6].height = 48
+    CV.put("B7", "Rating rule: Buy at 15%+ upside, Sell at 10%+ downside, otherwise Hold.")
+
+    CV.section(9, "Price and target")
+    CV.line(10, "Upside / (downside) to target", {"D": f"={VS.ref('$D$44')}"}, PCT)
+    CV.line(11, "Current share price", {"D": "=Live_Data!$B$6"}, PS)
+    CV.line(12, "Price date", {"D": "=Live_Data!$B$7"}, None)
+    CV.line(13, "Model value before anchoring", {"D": f"={VS.ref('$D$13')}"}, PS)
+    CV.line(14, "Street median price target", {"D": f"={VS.ref('$D$30')}"}, PS)
+    CV.line(15, "Industry peers' average analyst upside", {"D": f"={VS.ref('$D$31')}"}, PCT)
+
+    CV.section(17, "Scenarios (final target per case)")
+    for col, name in zip("DEF", ("Bear", "Base", "Bull")):
+        CV.put(f"{col}17", name, bold=True)
+        ws[f"{col}17"].alignment = Alignment(horizontal="right")
+    CV.line(18, "Price target", {c: f"={VS.ref(f'${c}$24')}" for c in "DEF"}, PS)
+    CV.line(19, "Upside / (downside)", {c: f"={VS.ref(f'${c}$25')}" for c in "DEF"}, PCT)
+
+    CV.section(21, "Key inputs")
+    CV.line(22, "WACC", {"D": f"={WA.ref('$D$23')}"}, PCT)
+    CV.line(23, "Market cap ($mm)", {"D": "=Live_Data!$B$9"}, NUM)
+    CV.line(24, "Net debt, latest FY ($mm)", {"D": "=Live_Data!$B$10"}, NUM)
+    CV.line(25, "Latest 10-K filed", {"D": "=Live_Data!$B$11"}, None)
+    CV.line(26, "Active case (Revenue Build D5: 1 bull, 2 base, 3 bear)", {"D": f"={RB.ref('$D$5')}"}, "0")
+
+    CV.put("B28", "How the target is set: a 40/40/20 blend of perpetuity DCF, exit-multiple DCF and comps gives the "
+                  "model value; the final target anchors it to the street median and the peers' average analyst "
+                  "upside (see the Valuation Summary tab).")
+    CV.put("B29", "Sources: SEC EDGAR (10-K XBRL) for financials; Yahoo Finance for prices, beta and consensus. "
+                  "Automated model for educational use, not investment advice.")
+    for r in (28, 29):
+        ws[f"B{r}"].alignment = Alignment(wrap_text=True, vertical="top")
+        ws.merge_cells(f"B{r}:F{r}")
+        ws.row_dimensions[r].height = 30
 
 
 # ------------------------------------------------------------------ verify

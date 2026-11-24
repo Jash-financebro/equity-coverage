@@ -243,7 +243,8 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
     label = f"{T}_v{n}"
     work = Path(tempfile.mkdtemp())
     built = work / f"{label}.xlsx"
-    builder.build(T, built, {"live": live, "fin": fin, "peers": peers, "anchor": anchor}, stance="Balanced")
+    builder.build(T, built, {"live": live, "fin": fin, "peers": peers, "anchor": anchor,
+                                  "sector": me.get("sector")}, stance="Balanced")
     live["model_label"] = label
     vs = f"'{T} Valuation Summary'"
     calc = excel.Calc(port=int(os.environ.get("LO_PORT", "2002")))
