@@ -57,7 +57,7 @@
   "weight_equity": 0.7256308859980396,
   "weight_debt": 0.2743691140019604,
   "wacc": 0.08666537032327479,
-  "beta_source": "1Y daily regression vs SPY"
+  "beta_source": "default 1.0; 1Y regression -0.40 not meaningful"
  },
  "peers": {
   "rows": [
@@ -149,7 +149,7 @@
    },
    {
     "ticker": "OKE",
-    "name": "Oneok Inc /New/",
+    "name": "Oneok Inc",
     "price": 83.64,
     "market_cap": 52730.838,
     "pe": 15.4317,
@@ -1891,6 +1891,6 @@
  "model_file": "LNG_Final_1.xlsx",
  "model_built": false,
  "model_updated": "2026-11-23",
- "refreshed_at": "2026-11-24 01:16 UTC",
+ "refreshed_at": "2026-11-24 01:21 UTC",
  "status": "ok"
 }
