@@ -20,7 +20,7 @@ import universe  # noqa: E402
 
 OUT = universe.OUT.parent / "screener.json"
 FIELDS = ["ticker", "name", "sector", "exchange", "price", "chg_1y", "beta", "mcap", "pe", "ev_ebitda", "rev_growth",
-          "gross_m", "op_m", "net_m", "div_yield", "payout", "de", "fcf", "fcf_m", "fin", "fy"]
+          "gross_m", "op_m", "net_m", "div_yield", "payout", "de", "fcf", "fcf_m", "fin", "fy", "country"]
 REVENUE = ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax",
            "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet", "SalesRevenueGoodsNet"]
 
@@ -66,6 +66,29 @@ def spark(symbols: list[str]) -> dict[str, list[float]]:
     return out
 
 
+def nasdaq_caps() -> dict[str, tuple]:
+    """Market cap ($mm) and country for every NYSE/Nasdaq stock from Nasdaq's public screener list (one request)."""
+    try:
+        d = sources._get("https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10000&download=true",
+                         headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like "
+                                                "Gecko) Chrome/124.0 Safari/537.36", "Accept": "application/json"}, tries=2)
+        rows = (d.get("data") or {}).get("rows") or []
+        out = {}
+        for r in rows:
+            t = str(r.get("symbol", "")).strip().upper().replace("/", "-").replace("^", "-P")
+            try:
+                cap = float(str(r.get("marketCap") or "").replace(",", "")) / 1e6
+            except ValueError:
+                cap = None
+            if t:
+                out[t] = (cap if cap and cap > 0 else None, (r.get("country") or "").strip())
+        print(f"  nasdaq list: {len(out)} symbols")
+        return out
+    except Exception as exc:  # noqa: BLE001
+        print(f"  · nasdaq list unavailable: {str(exc)[:80]}")
+        return {}
+
+
 def beta(stock: list[float], mkt: list[float]):
     n = min(len(stock), len(mkt))
     if n < 30:
@@ -109,6 +132,7 @@ def main():
         for k, v in frame("dei", "EntityCommonStockSharesOutstanding", "shares", p).items():
             shares.setdefault(k, v)
 
+    caps = nasdaq_caps()
     comps = [c for c in universe.load()["companies"] if c.get("sic") and c["sic"] != "0000"]
     syms = [c["ticker"] for c in comps]
     print(f"prices for {len(syms)} tickers…")
@@ -132,10 +156,12 @@ def main():
         # consistency check: share count x EPS should be close to net income. ADRs (one ADS = several shares) and
         # splits/spin-offs break that, and then market cap, P/E and yield would all be wrong, so leave them blank
         e = eps.get(cik)
-        if mcap and e and n_ and abs(e) > 0.01 and abs(n_) > 1e6:
-            ratio = sh * e / n_
-            if not (0.67 <= ratio <= 1.5):
-                mcap = None
+        if mcap and e and n_ and abs(e) > 0.01 and abs(n_) > 1e6 and not (0.67 <= sh * e / n_ <= 1.5):
+            mcap = None
+        # an independent market value (Nasdaq's list) beats price x SEC share count: ADRs, splits and spin-offs
+        ncap, country = caps.get(t, (None, ""))
+        if ncap:
+            mcap = ncap if (r1 or n_ is not None) else None
         r1, r0, n_ = rev1.get(cik), rev0.get(cik), ni.get(cik)
         m = lambda v: v / 1e6 if v is not None else None  # noqa: E731
         debt = sum(v for v in (ltd.get(cik), std.get(cik), stb.get(cik)) if v)
@@ -159,7 +185,7 @@ def main():
             "payout": rnd(divs[cik] / n_) if cik in divs and n_ and n_ > 0 else None,
             "de": rnd(debt / eq[cik], 2) if cik in eq and eq[cik] > 0 else None,
             "fcf": rnd(m(fcf), 1), "fcf_m": rnd(fcf / r1) if fcf is not None and r1 and r1 > 0 else None,
-            "fin": fin, "fy": y1 if (r1 or n_) else None,
+            "fin": fin, "fy": y1 if (r1 or n_) else None, "country": country or None,
         }
         # sanity: drop absurd values from tagging errors
         for k, lo, hi in (("pe", 2, 2000), ("ev_ebitda", 1, 500), ("rev_growth", -0.95, 20), ("div_yield", 0, 0.15),
