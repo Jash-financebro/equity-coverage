@@ -44,6 +44,8 @@ def peer_snapshot(ticker: str) -> dict:
         qs = sources.quote_summary(t)
         g = rt["groups"]
         med = qs.get("target_median")
+        import re
+        name = re.sub(r"\s*/[A-Za-z]{2,}/?\s*$", "", name)
         out = {
             "ticker": t, "name": name.title() if name.isupper() else name, "price": round(mkt["price"], 2),
             "market_cap": rt["snapshot"]["market_cap"],

@@ -176,13 +176,19 @@ def process(calc, path: Path | None, cfg: dict, now: str, ctx: dict) -> dict:
     rt = ratios.compute(fin, price, shares)
     beta, beta_src = qs.get("beta"), "Yahoo Finance"
     if not beta or not 0.2 < beta < 3.5:
-        beta = analytics.regression_beta(mkt["history"], (ctx.get("spy") or {}).get("history"))
-        beta_src = "1Y daily regression vs SPY"
+        reg = analytics.regression_beta(mkt["history"], (ctx.get("spy") or {}).get("history"))
+        if reg is not None and 0.2 < reg < 3.5:
+            beta, beta_src = reg, "1Y daily regression vs SPY"
+        else:
+            beta = 1.0
+            beta_src = ("default 1.0; 1Y regression " + (f"{reg:.2f}" if reg is not None else "n/a")
+                        + " not meaningful")
     wacc = analytics.market_wacc(fin, rt["snapshot"], beta, ctx["rates"]["rf_10y"],
                                  SETTINGS.get("equity_risk_premium", 0.055))
     wacc["beta_source"] = beta_src
 
     sec_title = subs.get("name") or sec_name
+    sec_title = re.sub(r"\s*/[A-Z]{2,}/?\s*$", "", sec_title)  # SEC suffixes like "/NEW/" or "/DE/"
     if sec_title.isupper():
         sec_title = " ".join(w if "&" in w else w.title() for w in sec_title.split())
     items = fin["items"]
