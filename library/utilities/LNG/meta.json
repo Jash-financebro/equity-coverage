@@ -4,45 +4,43 @@
  "cik": 3570,
  "sector": "Utilities",
  "industry": "Natural Gas Distribution",
+ "exchange": "NYSE",
  "sic": "4924",
  "city": "Houston",
  "state": "TX",
  "website": "https://www.cheniere.com",
- "generated_at": "2026-11-24T03:10:47Z",
- "version": 1,
- "price": 295.46,
- "price_date": "2026-11-23",
- "target": 333.6,
- "upside": 0.1291,
+ "generated_at": "2026-11-24T17:09:37Z",
+ "version": 2,
+ "price": 294.95,
+ "price_date": "2026-11-24",
+ "target": 313.13,
+ "upside": 0.0616,
  "rating": "Hold",
  "scenarios": {
-  "bear": 273.16,
-  "base": 333.6,
-  "bull": 399.11
+  "bear": 256.35,
+  "base": 313.13,
+  "bull": 374.7
  },
  "model_scenarios": {
-  "base": 273.54,
-  "bull": 327.25,
-  "bear": 223.98
+  "base": 274.12,
+  "bull": 328.02,
+  "bear": 224.41
  },
- "dcf_value": 284.742151224466,
- "comps_value": 332.06411308038,
- "exit_value": 233.079729380935,
- "model_value": 273.541574858236,
- "peer_avg_upside": 0.27910005402603155,
+ "dcf_value": 286.240097139882,
+ "comps_value": 331.89075853903,
+ "exit_value": 233.114890520529,
+ "model_value": 274.12014677197,
+ "peer_avg_upside": 0.21130059790147193,
  "anchor_peers": [
-  "TRGP",
-  "KMI",
-  "TRP",
-  "VG"
- ],
- "wacc": 0.0867,
- "peers": [
-  "TRGP",
-  "KMI",
-  "TRP",
   "VG",
-  "TCPA"
+  "CQP",
+  "ATO"
+ ],
+ "wacc": 0.0864,
+ "peers": [
+  "VG",
+  "CQP",
+  "ATO"
  ],
  "consensus": {
   "target_mean": 340.8,
@@ -51,9 +49,1485 @@
  },
  "beta_source": "default 1.0",
  "fiscal_year": "FY2025",
+ "sector_check": null,
+ "detail": {
+  "years": [
+   "FY2023A",
+   "FY2024A",
+   "FY2025A",
+   "FY2026E",
+   "FY2027E",
+   "FY2028E",
+   "FY2029E",
+   "FY2030E"
+  ],
+  "hist_n": 3,
+  "is": {
+   "revenue": [
+    20394,
+    15703,
+    19976,
+    19770.2472,
+    19766.29315056,
+    19960.0028234355,
+    20357.2068796219,
+    20967.9230860105
+   ],
+   "growth": [
+    null,
+    -0.230018632931254,
+    0.272113608864548,
+    -0.0102999999999999,
+    -0.000199999999999978,
+    0.00980000000000003,
+    0.0199,
+    0.03
+   ],
+   "gm": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "ebit": [
+    15489,
+    6128,
+    9112,
+    9017.20974792,
+    9015.40630597042,
+    9103.75728776893,
+    9284.92205779553,
+    9563.46971952939
+   ],
+   "ebit_m": [
+    0.759488084730803,
+    0.390243902439024,
+    0.456147376852223,
+    0.4561,
+    0.4561,
+    0.4561,
+    0.4561,
+    0.4561
+   ],
+   "ebitda": [
+    16685,
+    7348,
+    10441,
+    10433.10774792,
+    10486.79825012,
+    10628.4233031788,
+    10861.8455949278,
+    11192.822803013
+   ],
+   "ebitda_m": [
+    0.818132784152202,
+    0.467936063172642,
+    0.522677212655186,
+    0.527717617406423,
+    0.530539447646658,
+    0.532486062111161,
+    0.533562666978683,
+    0.533806937248861
+   ],
+   "ni": [
+    9881,
+    3252,
+    5330,
+    5228.16424051858,
+    5249.70251242159,
+    5329.29300445341,
+    5469.40507578928,
+    5673.7103969985
+   ],
+   "eps": [
+    40.7295960428689,
+    14.1946748144915,
+    24.1942805265547,
+    24.9050488661369,
+    26.2437288915532,
+    27.9584519117523,
+    30.1117699909727,
+    32.7805346370597
+   ]
+  },
+  "fcf": [
+   5984.76051269878,
+   6049.83170186584,
+   6158.03753857654,
+   6312.66080725575,
+   6517.42370956222
+  ],
+  "cases": {
+   "bull": {
+    "growth": [
+     0.0197,
+     0.0298,
+     0.0398,
+     0.0499,
+     0.06
+    ],
+    "growth_delta": [
+     0.03,
+     0.03,
+     0.030000000000000002,
+     0.03,
+     0.03
+    ],
+    "cogs": 0,
+    "margin_delta": 0,
+    "tg": 0.03,
+    "exit_factor": 1.1,
+    "model": 328.018390650508,
+    "target": 374.696440897887,
+    "upside": 0.270372744186769
+   },
+   "base": {
+    "growth": [
+     -0.0103,
+     -0.0002,
+     0.0098,
+     0.0199,
+     0.03
+    ],
+    "growth_delta": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "cogs": 0,
+    "margin_delta": 0,
+    "tg": 0.025,
+    "exit_factor": 1,
+    "model": 274.12014677197,
+    "target": 313.128307135985,
+    "upside": 0.0616318261942201
+   },
+   "bear": {
+    "growth": [
+     -0.0403,
+     -0.0302,
+     -0.0202,
+     -0.0101,
+     0
+    ],
+    "growth_delta": [
+     -0.030000000000000002,
+     -0.030000000000000002,
+     -0.03,
+     -0.03,
+     -0.03
+    ],
+    "cogs": 0.01,
+    "margin_delta": -0.01,
+    "tg": 0.02,
+    "exit_factor": 0.9,
+    "model": 224.413152993635,
+    "target": 256.34785156598,
+    "upside": -0.130876922983625
+   }
+  },
+  "dcf_inputs": {
+   "rev0": 19976,
+   "rev": [
+    19770.2472,
+    19766.29315056,
+    19960.0028234355,
+    20357.2068796219,
+    20967.9230860105
+   ],
+   "ebit": [
+    9017.20974792,
+    9015.40630597042,
+    9103.75728776893,
+    9284.92205779553,
+    9563.46971952939
+   ],
+   "da": [
+    1415.898,
+    1471.3919441496,
+    1524.66601540989,
+    1576.9235371323,
+    1629.35308348357
+   ],
+   "capex": [
+    -2817.260226,
+    -2816.6967739548,
+    -2844.30040233956,
+    -2900.90198034611,
+    -2987.9290397565
+   ],
+   "nwc": [
+    -10.6944175200001,
+    -0.201261116495516,
+    9.85982234936228,
+    20.2176864598855,
+    31.0854549051833
+   ],
+   "tax": [
+    0.1797,
+    0.1797,
+    0.1797,
+    0.1797,
+    0.1797
+   ],
+   "wacc": 0.0864152508622623,
+   "g": 0.025,
+   "ev_ebitda_now": 7.8482875011972,
+   "debt": -22813,
+   "cash": 1177,
+   "nci_ratio": -0.21550000000000025,
+   "shares": 204.204,
+   "comps_value": 331.89075853903,
+   "w_dcf": 0.4,
+   "w_exit": 0.4,
+   "w_comps": 0.2,
+   "anchored_base": 313.128307135985,
+   "base_model": 274.12014677197,
+   "price": 294.95,
+   "check": {
+    "dcf": 286.240097139882,
+    "exit": 233.114890520529,
+    "model": 274.12014677197,
+    "target": 313.128307135985
+   }
+  },
+  "valuation": {
+   "dcf": 286.240097139882,
+   "exit": 233.114890520529,
+   "comps": 331.89075853903,
+   "w_dcf": 0.4,
+   "w_exit": 0.4,
+   "w_comps": 0.2,
+   "model_value": 274.12014677197,
+   "anchor": {
+    "street": 347,
+    "peer_up": 0.2113,
+    "peer_value": 357.272935,
+    "w_model": 0.5,
+    "w_street": 0.25,
+    "w_peer": 0.25,
+    "anchored": 313.128307135985,
+    "band": 0.15,
+    "lo": 313.030435,
+    "hi": 401.515435,
+    "upside": 0.0616318261942201
+   },
+   "target": 313.128307135985
+  },
+  "comps": [
+   {
+    "name": "Venture Global, Inc.",
+    "ticker": "VG",
+    "price": 11.87,
+    "mcap": 31277.45,
+    "ev": 63127.45,
+    "ebitda": 6097,
+    "ev_ebitda": 10.3538543546006,
+    "pe": 13.8023255813953
+   },
+   {
+    "name": "Cheniere Energy Partners, L.P.",
+    "ticker": "CQP",
+    "price": 57.02,
+    "mcap": 27601.1012,
+    "ev": 41886.1012,
+    "ebitda": 4394,
+    "ev_ebitda": 9.53256741010469,
+    "pe": null
+   },
+   {
+    "name": "Atmos Energy Corp",
+    "ticker": "ATO",
+    "price": 171.9,
+    "mcap": 29259.099,
+    "ev": 39199.799,
+    "ebitda": 2659.1,
+    "ev_ebitda": 14.7417543529766,
+    "pe": 20.2473498233216
+   }
+  ],
+  "comps_median": {
+   "ev_ebitda": 10.3538543546006,
+   "pe": 17.0248377023585
+  },
+  "comps_self": {
+   "ev_ebitda": 7.8482875011972,
+   "pe": 12.1908977485929
+  },
+  "wacc": {
+   "rf": 0.04894,
+   "beta": 1,
+   "erp": 0.055,
+   "ke": 0.10394,
+   "kd_at": 0.0401471093938662,
+   "we": 0.725286799653931,
+   "wd": 0.27471320034607,
+   "wacc": 0.0864152508622623
+  },
+  "sens": {
+   "g": [
+    0.015,
+    0.02,
+    0.025,
+    0.03,
+    0.035
+   ],
+   "wacc": [
+    0.0764152508622623,
+    0.0814152508622623,
+    0.0864152508622623,
+    0.0914152508622623,
+    0.0964152508622623
+   ],
+   "grid": [
+    [
+     299.006613254615,
+     325.920879266,
+     358.069830620745,
+     397.145158706739,
+     445.655496184792
+    ],
+    [
+     270.109751821306,
+     292.551705208801,
+     318.971652674933,
+     350.530143087575,
+     388.887797530655
+    ],
+    [
+     245.261786633099,
+     264.208438095013,
+     286.240097139882,
+     312.17702270544,
+     343.158545959541
+    ],
+    [
+     223.667873189761,
+     239.835399705692,
+     258.437235556606,
+     280.067934041759,
+     305.532825968322
+    ],
+    [
+     204.728425698826,
+     218.653213432608,
+     234.527835069605,
+     252.792663990455,
+     274.031482053158
+    ]
+   ]
+  },
+  "sources": [
+   {
+    "key": "revenue",
+    "label": "Revenue",
+    "concept": "Revenues",
+    "values": [
+     20394.0,
+     15703.0,
+     19976.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/Revenues.json"
+   },
+   {
+    "key": "operating_income",
+    "label": "Operating income",
+    "concept": "OperatingIncomeLoss",
+    "values": [
+     15489.0,
+     6128.0,
+     9112.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/OperatingIncomeLoss.json"
+   },
+   {
+    "key": "d_and_a",
+    "label": "Depreciation & amortization",
+    "concept": "DepreciationDepletionAndAmortization",
+    "values": [
+     1196.0,
+     1220.0,
+     1329.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/DepreciationDepletionAndAmortization.json"
+   },
+   {
+    "key": "interest_expense",
+    "label": "Interest expense",
+    "concept": "InterestExpenseNonoperating",
+    "values": [
+     1141.0,
+     1010.0,
+     948.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/InterestExpenseNonoperating.json"
+   },
+   {
+    "key": "pretax_income",
+    "label": "Pre-tax income",
+    "concept": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+    "values": [
+     14578.0,
+     5303.0,
+     8282.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest.json"
+   },
+   {
+    "key": "income_tax",
+    "label": "Income tax expense",
+    "concept": "IncomeTaxExpenseBenefit",
+    "values": [
+     2519.0,
+     811.0,
+     1488.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/IncomeTaxExpenseBenefit.json"
+   },
+   {
+    "key": "net_income",
+    "label": "Net income",
+    "concept": "NetIncomeLoss",
+    "values": [
+     9881.0,
+     3252.0,
+     5330.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/NetIncomeLoss.json"
+   },
+   {
+    "key": "eps_diluted",
+    "label": "Diluted EPS ($)",
+    "concept": "EarningsPerShareDiluted",
+    "values": [
+     40.72,
+     14.2,
+     24.13
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/EarningsPerShareDiluted.json"
+   },
+   {
+    "key": "shares_diluted",
+    "label": "Diluted shares (mm)",
+    "concept": "WeightedAverageNumberOfDilutedSharesOutstanding",
+    "values": [
+     242.6,
+     229.1,
+     220.3
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/WeightedAverageNumberOfDilutedSharesOutstanding.json"
+   },
+   {
+    "key": "cfo",
+    "label": "Cash from operations",
+    "concept": "NetCashProvidedByUsedInOperatingActivities",
+    "values": [
+     8418.0,
+     5394.0,
+     5539.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/NetCashProvidedByUsedInOperatingActivities.json"
+   },
+   {
+    "key": "capex",
+    "label": "Capital expenditures",
+    "concept": "PaymentsToAcquirePropertyPlantAndEquipment",
+    "values": [
+     2121.0,
+     2238.0,
+     3078.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/PaymentsToAcquirePropertyPlantAndEquipment.json"
+   },
+   {
+    "key": "dividends",
+    "label": "Dividends paid",
+    "concept": "PaymentsOfDividends",
+    "values": [
+     393.0,
+     412.0,
+     451.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/PaymentsOfDividends.json"
+   },
+   {
+    "key": "cash",
+    "label": "Cash & equivalents",
+    "concept": "CashAndCashEquivalentsAtCarryingValue",
+    "values": [
+     4066.0,
+     2638.0,
+     1099.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/CashAndCashEquivalentsAtCarryingValue.json"
+   },
+   {
+    "key": "current_assets",
+    "label": "Current assets",
+    "concept": "AssetsCurrent",
+    "values": [
+     6331.0,
+     4801.0,
+     3692.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/AssetsCurrent.json"
+   },
+   {
+    "key": "total_assets",
+    "label": "Total assets",
+    "concept": "Assets",
+    "values": [
+     43076.0,
+     43858.0,
+     47882.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/Assets.json"
+   },
+   {
+    "key": "current_liabilities",
+    "label": "Current liabilities",
+    "concept": "LiabilitiesCurrent",
+    "values": [
+     3888.0,
+     4441.0,
+     3916.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/LiabilitiesCurrent.json"
+   },
+   {
+    "key": "total_liabilities",
+    "label": "Total liabilities",
+    "concept": "Liabilities",
+    "values": [
+     34056.0,
+     33798.0,
+     34804.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/Liabilities.json"
+   },
+   {
+    "key": "short_term_debt",
+    "label": "Short-term debt",
+    "concept": "LongTermDebtCurrent",
+    "values": [
+     300.0,
+     351.0,
+     306.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/LongTermDebtCurrent.json"
+   },
+   {
+    "key": "long_term_debt",
+    "label": "Long-term debt",
+    "concept": "LongTermDebtNoncurrent",
+    "values": [
+     23397.0,
+     22554.0,
+     22507.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/LongTermDebtNoncurrent.json"
+   },
+   {
+    "key": "equity",
+    "label": "Shareholders' equity",
+    "concept": "StockholdersEquity",
+    "values": [
+     5060.0,
+     5699.0,
+     7915.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/StockholdersEquity.json"
+   },
+   {
+    "key": "ppe_net",
+    "label": "PP&E, net",
+    "concept": "PropertyPlantAndEquipmentNet",
+    "values": [
+     32456.0,
+     33552.0,
+     35755.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/PropertyPlantAndEquipmentNet.json"
+   },
+   {
+    "key": "sga",
+    "label": "SG&A",
+    "concept": "SellingGeneralAndAdministrativeExpense",
+    "values": [
+     474.0,
+     441.0,
+     383.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/SellingGeneralAndAdministrativeExpense.json"
+   },
+   {
+    "key": "buybacks",
+    "label": "Share repurchases",
+    "concept": "PaymentsForRepurchaseOfCommonStock",
+    "values": [
+     1473.0,
+     2262.0,
+     2724.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/PaymentsForRepurchaseOfCommonStock.json"
+   },
+   {
+    "key": "debt_repaid",
+    "label": "Debt repayments",
+    "concept": "RepaymentsOfDebt",
+    "values": [
+     2598.0,
+     3521.0,
+     2092.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/RepaymentsOfDebt.json"
+   },
+   {
+    "key": "debt_issued",
+    "label": "Debt issued",
+    "concept": "ProceedsFromIssuanceOfDebt",
+    "values": [
+     1397.0,
+     2725.0,
+     1987.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/ProceedsFromIssuanceOfDebt.json"
+   },
+   {
+    "key": "cfi",
+    "label": "Cash from investing",
+    "concept": "NetCashProvidedByUsedInInvestingActivities",
+    "values": [
+     -2202.0,
+     -2279.0,
+     -3012.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/NetCashProvidedByUsedInInvestingActivities.json"
+   },
+   {
+    "key": "cff",
+    "label": "Cash from financing",
+    "concept": "NetCashProvidedByUsedInFinancingActivities",
+    "values": [
+     -4180.0,
+     -4451.0,
+     -4130.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/NetCashProvidedByUsedInFinancingActivities.json"
+   },
+   {
+    "key": "equity_investments",
+    "label": "Equity-method & long-term investments",
+    "concept": "EquityMethodInvestments",
+    "values": [
+     111.0,
+     129.0,
+     78.0
+    ],
+    "filings": [
+     {
+      "form": "10-K",
+      "filed": "2025-02-20",
+      "accn": "0000003570-25-000033",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357025000033/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     },
+     {
+      "form": "10-K",
+      "filed": "2026-02-26",
+      "accn": "0000003570-26-000005",
+      "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000005/"
+     }
+    ],
+    "concept_url": "https://data.sec.gov/api/xbrl/companyconcept/CIK0000003570/us-gaap/EquityMethodInvestments.json"
+   }
+  ],
+  "sources_years": [
+   "FY2023",
+   "FY2024",
+   "FY2025"
+  ],
+  "price_history": [
+   [
+    "2025-11-24",
+    204.58
+   ],
+   [
+    "2025-12-02",
+    209.28
+   ],
+   [
+    "2025-12-09",
+    198.72
+   ],
+   [
+    "2025-12-16",
+    189.28
+   ],
+   [
+    "2025-12-23",
+    191.7
+   ],
+   [
+    "2025-12-31",
+    194.39
+   ],
+   [
+    "2026-01-08",
+    196.5
+   ],
+   [
+    "2026-01-15",
+    202.74
+   ],
+   [
+    "2026-01-23",
+    207.35
+   ],
+   [
+    "2026-01-30",
+    211.52
+   ],
+   [
+    "2026-02-06",
+    213.11
+   ],
+   [
+    "2026-02-13",
+    220.79
+   ],
+   [
+    "2026-02-23",
+    223.35
+   ],
+   [
+    "2026-03-02",
+    248.93
+   ],
+   [
+    "2026-03-09",
+    250.8
+   ],
+   [
+    "2026-03-16",
+    251.29
+   ],
+   [
+    "2026-03-23",
+    287.2
+   ],
+   [
+    "2026-03-30",
+    293.64
+   ],
+   [
+    "2026-04-07",
+    284.27
+   ],
+   [
+    "2026-04-14",
+    259.68
+   ],
+   [
+    "2026-04-21",
+    257.78
+   ],
+   [
+    "2026-04-28",
+    264.98
+   ],
+   [
+    "2026-05-05",
+    269.52
+   ],
+   [
+    "2026-05-12",
+    244.31
+   ],
+   [
+    "2026-05-19",
+    246.77
+   ],
+   [
+    "2026-05-27",
+    230.97
+   ],
+   [
+    "2026-06-03",
+    235.37
+   ],
+   [
+    "2026-06-10",
+    241.81
+   ],
+   [
+    "2026-06-17",
+    231.41
+   ],
+   [
+    "2026-06-25",
+    235.1
+   ],
+   [
+    "2026-07-02",
+    245.97
+   ],
+   [
+    "2026-07-10",
+    258.64
+   ],
+   [
+    "2026-07-17",
+    262.6
+   ],
+   [
+    "2026-07-24",
+    269.72
+   ],
+   [
+    "2026-07-31",
+    263.57
+   ],
+   [
+    "2026-08-07",
+    256.14
+   ],
+   [
+    "2026-08-14",
+    271.64
+   ],
+   [
+    "2026-08-21",
+    277.51
+   ],
+   [
+    "2026-08-28",
+    282.33
+   ],
+   [
+    "2026-09-04",
+    292.0
+   ],
+   [
+    "2026-09-14",
+    274.28
+   ],
+   [
+    "2026-09-21",
+    274.98
+   ],
+   [
+    "2026-09-28",
+    269.65
+   ],
+   [
+    "2026-10-05",
+    274.93
+   ],
+   [
+    "2026-10-12",
+    282.49
+   ],
+   [
+    "2026-10-19",
+    286.6
+   ],
+   [
+    "2026-10-26",
+    300.59
+   ],
+   [
+    "2026-11-02",
+    311.67
+   ],
+   [
+    "2026-11-09",
+    284.95
+   ],
+   [
+    "2026-11-16",
+    305.2
+   ],
+   [
+    "2026-11-23",
+    295.46
+   ],
+   [
+    "2026-11-24",
+    294.95
+   ]
+  ],
+  "dates": {
+   "tenk_filed": "2026-02-26",
+   "price_date": "2026-11-24",
+   "generated_at": "2026-11-24T17:09:37Z"
+  },
+  "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=3570&type=10-K"
+ },
+ "history": [
+  {
+   "date": "2026-11-24",
+   "version": 2,
+   "price": 294.95,
+   "target": 313.13,
+   "rating": "Hold"
+  }
+ ],
  "files": {
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v1.xlsx",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v1.pdf"
+  "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/card.png",
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v2.xlsx",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v2.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T03:10:47Z"
