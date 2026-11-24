@@ -135,6 +135,66 @@
     });
   }
 
+
+  function footballChart(el, rows, price, target) {
+    if (!rows || !rows.length) { el.innerHTML = `<p class="empty">Valuation ranges appear once peers, consensus and scenarios are available.</p>`; return; }
+    const W = 1040, rowH = 34, L = 250, R = 30, T = 26, B = 46, H = T + B + rowH * rows.length;
+    const vals = rows.flatMap((r) => [r.low, r.high]).concat([price, target].filter(nz));
+    const ticks = niceTicks(Math.min(...vals) * 0.95, Math.max(...vals) * 1.05, 6);
+    const mn = ticks[0], mx = ticks[ticks.length - 1];
+    const x = (v) => L + ((v - mn) / (mx - mn)) * (W - L - R);
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Football field valuation ranges">
+      <style>.ax{font:11px var(--mono);fill:var(--ink-3)} .lb{font:12px var(--sans);fill:var(--ink-2)}</style>
+      ${ticks.map((t) => `<line x1="${x(t)}" x2="${x(t)}" y1="${T - 6}" y2="${H - B}" stroke="var(--line-2)"/><text class="ax" x="${x(t)}" y="${H - B + 16}" text-anchor="middle">$${t.toLocaleString()}</text>`).join("")}
+      ${rows.map((r, i) => { const y = T + i * rowH + 6, w = Math.max(2, x(r.high) - x(r.low));
+        return `<text class="lb" x="${L - 12}" y="${y + 15}" text-anchor="end">${esc(r.label)}</text>
+        <rect x="${x(r.low)}" y="${y}" width="${w}" height="20" rx="4" fill="var(--s1)" opacity=".85" data-t="${esc(r.label)}: ${usd(r.low)} – ${usd(r.high)}${nz(r.mid) ? " · mid " + usd(r.mid) : ""}"/>
+        ${nz(r.mid) ? `<line x1="${x(r.mid)}" x2="${x(r.mid)}" y1="${y - 2}" y2="${y + 22}" stroke="var(--panel)" stroke-width="2"/>` : ""}`; }).join("")}
+      ${nz(price) ? `<line x1="${x(price)}" x2="${x(price)}" y1="${T - 10}" y2="${H - B}" stroke="var(--ink)" stroke-width="1.5"/><text x="${x(price)}" y="${T - 14}" text-anchor="middle" style="font:500 11px var(--mono);fill:var(--ink)">Price ${usd(price)}</text>` : ""}
+      ${nz(target) ? `<line x1="${x(target)}" x2="${x(target)}" y1="${T - 2}" y2="${H - B}" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 4"/><text x="${x(target)}" y="${H - 6}" text-anchor="middle" style="font:500 11px var(--mono);fill:var(--s2)">Target ${usd(target)}</text>` : ""}
+    </svg>`;
+    el.querySelectorAll("rect[data-t]").forEach((p) => {
+      p.addEventListener("mousemove", (e) => showTip(esc(p.dataset.t), e.clientX, e.clientY));
+      p.addEventListener("mouseleave", hideTip);
+    });
+  }
+
+  function indexChart(el, idx) {
+    if (!idx || idx.length < 2) { el.innerHTML = `<p class="empty">Not enough history yet.</p>`; return; }
+    const W = 1040, H = 280, L = 50, R = 80, T = 14, B = 28;
+    const all = idx.flatMap((p) => [p[1], p[2]]);
+    const ticks = niceTicks(Math.min(...all), Math.max(...all), 4);
+    const mn = ticks[0], mx = ticks[ticks.length - 1];
+    const x = (i) => L + (i / (idx.length - 1)) * (W - L - R);
+    const y = (v) => T + (1 - (v - mn) / (mx - mn)) * (H - T - B);
+    const path = (k) => idx.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p[k]).toFixed(1)}`).join("");
+    const last = idx[idx.length - 1];
+    let yf = y(last[1]) + 4, ys = y(last[2]) + 4;
+    if (Math.abs(yf - ys) < 13) { const mid = (yf + ys) / 2, up = last[1] >= last[2]; yf = mid + (up ? -7 : 7); ys = mid + (up ? 7 : -7); }
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Portfolio vs S&P 500, indexed to 100">
+      <style>.ax{font:11px var(--mono);fill:var(--ink-3)}</style>
+      ${ticks.map((t) => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line-2)"/><text class="ax" x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${t}</text>`).join("")}
+      <path d="${path(2)}" fill="none" stroke="var(--s2)" stroke-width="2"/>
+      <path d="${path(1)}" fill="none" stroke="var(--s1)" stroke-width="2"/>
+      <text x="${W - R + 6}" y="${yf}" style="font:11px var(--mono);fill:var(--ink-2)">Fund ${last[1].toFixed(1)}</text>
+      <text x="${W - R + 6}" y="${ys}" style="font:11px var(--mono);fill:var(--ink-2)">S&amp;P ${last[2].toFixed(1)}</text>
+      <text class="ax" x="${L}" y="${H - 8}">${esc(idx[0][0])}</text><text class="ax" x="${W - R}" y="${H - 8}" text-anchor="end">${esc(last[0])}</text>
+      <rect id="hit2" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent"/>
+    </svg>`;
+    const svg = el.querySelector("svg");
+    svg.querySelector("#hit2").addEventListener("mousemove", (e) => {
+      const r = svg.getBoundingClientRect(), px = ((e.clientX - r.left) / r.width) * W;
+      const i = Math.max(0, Math.min(idx.length - 1, Math.round(((px - L) / (W - L - R)) * (idx.length - 1))));
+      showTip(`${idx[i][0]}<br>Fund <b>${idx[i][1].toFixed(1)}</b> · S&amp;P 500 <b>${idx[i][2].toFixed(1)}</b>`, e.clientX, e.clientY);
+    });
+    svg.querySelector("#hit2").addEventListener("mouseleave", hideTip);
+  }
+
+  function hbars(items) { // [{label, value}] value 0..1
+    const mx = Math.max(...items.map((i) => i.value), 0.0001);
+    return items.map((i) => `<div class="hb"><span>${esc(i.label)}</span><div class="hb-track"><div class="hb-fill" style="width:${(i.value / mx) * 100}%"></div></div><span class="num">${pct(i.value)}</span></div>`).join("");
+  }
+
   // ------------------------------------------------------------------ views
   function home() {
     const cov = INDEX.coverage || [];
@@ -148,8 +208,9 @@
         <td class="r num">${usd(c.price)}</td>
         <td class="hide-sm">${sparkline(c.spark)}</td>
         <td class="r num"><b>${usd(c.target)}</b>${c.target_stale ? ' <span class="note" title="Last value saved by Excel">*</span>' : ""}</td>
+        <td class="r num hide-sm">${usd(c.street_median)}</td>
         <td class="r num">${signed(c.upside)}</td>
-        <td>${pill(c.rating)}${c.status === "error" ? `<br><span class="err">refresh failed</span>` : ""}</td>
+        <td>${pill(c.rating)}${c.needs_review ? ` <span class="flag" title="New SEC filing since the model was last updated">Review</span>` : ""}${c.status === "error" ? `<br><span class="err">refresh failed</span>` : ""}</td>
         <td class="r num hide-sm">${mult(c.pe)}</td>
         <td class="r num hide-sm">${mult(c.ev_ebitda)}</td>
         <td class="r num hide-sm">${pct(c.op_margin)}</td>
@@ -171,7 +232,7 @@
       <div class="card">
         <div class="card-h"><h2>Coverage</h2><span class="note">Click a row for the full model page</span></div>
         <div class="scroll">${cov.length ? `<table>
-          <thead><tr><th>Company</th><th class="r">Price</th><th class="hide-sm">3M</th><th class="r">Target</th><th class="r">Upside</th><th>Rating</th>
+          <thead><tr><th>Company</th><th class="r">Price</th><th class="hide-sm">3M</th><th class="r">Target</th><th class="r hide-sm">Street med.</th><th class="r">Upside</th><th>Rating</th>
           <th class="r hide-sm">P/E</th><th class="r hide-sm">EV/EBITDA</th><th class="r hide-sm">Op. margin</th><th class="r hide-sm">Mkt cap</th><th class="r">Model</th></tr></thead>
           <tbody>${rows}</tbody></table>` : `<div class="empty">No models yet. Add an Excel model to the <code>models/</code> folder and the next refresh will publish it.</div>`}
         </div>
@@ -183,12 +244,66 @@
     });
   }
 
+
+  function trackHtml(d) {
+    const tr = d.track_record;
+    if (!tr || !tr.calls || !tr.calls.length) return "";
+    return `<div class="card section">
+      <div class="card-h"><h2>Track record · calls vs. S&amp;P 500</h2><span class="note">Each change in rating or target is a call. Hit = Buy beat the S&amp;P, Sell lagged it, Hold within ±10% (after 30 days)</span></div>
+      <div class="kvrow">
+        <div class="kv"><span>Tracking since</span><span class="num">${esc(tr.since)}</span></div>
+        <div class="kv"><span>Stock since then</span><span class="num">${signed(tr.since_return)}</span></div>
+        <div class="kv"><span>S&amp;P 500 since then</span><span class="num">${signed(tr.since_spy)}</span></div>
+        <div class="kv"><span>Hit rate</span><span class="num">${nz(tr.hit_rate) ? pct(tr.hit_rate, 0) + ` (${tr.judged} calls)` : "needs 30+ days"}</span></div>
+      </div>
+      <div class="scroll"><table><thead><tr><th>Date</th><th>Rating</th><th class="r">Target</th><th class="r">Price then</th><th class="r">Return</th><th class="r">S&amp;P 500</th><th class="r">Alpha</th><th>Target hit?</th><th>Call</th></tr></thead>
+      <tbody>${tr.calls.slice(0, 12).map((c) => `<tr><td class="mono">${esc(c.date)}</td><td>${pill(c.rating)}</td><td class="r num">${usd(c.target)}</td><td class="r num">${usd(c.price)}</td><td class="r num">${signed(c.return)}</td><td class="r num">${signed(c.spy_return)}</td><td class="r num">${signed(c.alpha)}</td><td>${c.target_reached === true ? "Yes" : c.target_reached === false ? "Not yet" : "—"}</td><td>${c.hit === true ? '<span class="up">✓ Hit</span>' : c.hit === false ? '<span class="down">✗ Miss</span>' : '<span class="note">open</span>'}</td></tr>`).join("")}</tbody></table></div>
+    </div>`;
+  }
+
+  async function fund() {
+    app.innerHTML = `<p class="muted loading">Loading fund…</p>`;
+    let f;
+    try { f = await getJSON("data/fund.json"); } catch { app.innerHTML = `<p class="empty">Fund dashboard appears after the next refresh.</p>`; return; }
+    const st = f.stats;
+    document.title = "Fund dashboard · " + (INDEX.site?.title || "Equity Coverage");
+    app.innerHTML = `
+      <section class="hero"><h1>${esc(f.name)}</h1>
+        <p>${f.custom ? "Holdings from config.yml" : "Equal-weight portfolio of every covered name. Add your fund's real holdings under <code>portfolio:</code> in config.yml."} Data through ${esc(f.as_of)}.</p></section>
+      <div class="tiles">
+        <div class="tile"><div class="k">1Y return</div><div class="v">${signed(st.return_1y)}</div></div>
+        <div class="tile"><div class="k">S&amp;P 500 1Y</div><div class="v">${signed(st.spy_return_1y)}</div></div>
+        <div class="tile"><div class="k">Sharpe ratio</div><div class="v">${nz(st.sharpe) ? st.sharpe.toFixed(2) : "—"}</div></div>
+        <div class="tile"><div class="k">Beta vs S&amp;P</div><div class="v">${nz(st.beta) ? st.beta.toFixed(2) : "—"}</div></div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><div class="k">Volatility (ann.)</div><div class="v">${pct(st.ann_vol)}</div></div>
+        <div class="tile"><div class="k">Jensen's alpha</div><div class="v">${signed(st.alpha)}</div></div>
+        <div class="tile"><div class="k">Max drawdown</div><div class="v">${pct(st.max_drawdown)}</div></div>
+        <div class="tile"><div class="k">Risk-free (3M T-bill)</div><div class="v">${pct(st.risk_free, 2)}</div></div>
+      </div>
+      <div class="card section"><div class="card-h"><h2>Growth of 100 · fund vs. S&amp;P 500</h2><span class="note">Hover for detail</span></div>
+        <div class="chart-wrap" id="ix"></div>
+        <div class="legend"><span><i style="background:var(--s1)"></i>Fund</span><span><i style="background:var(--s2)"></i>S&amp;P 500 (SPY)</span></div></div>
+      <div class="grid2 section">
+        <div class="card"><div class="card-h"><h2>Sector weights</h2></div><div class="prose">${hbars(f.sectors.map((s) => ({ label: s.sector, value: s.weight })))}</div></div>
+        <div class="card"><div class="card-h"><h2>Holdings</h2></div>
+          ${f.holdings.map((h) => { const c = (f.coverage_targets || []).find((x) => x.ticker === h.ticker);
+            return `<div class="kv"><span><a href="#/${esc(h.ticker)}" class="tk">${esc(h.ticker)}</a> <span class="note">${esc(h.sector)}</span></span><span class="num">${pct(h.weight)}${c ? ` · ${pill(c.rating)} ${signed(c.upside)}` : ""}</span></div>`; }).join("")}
+        </div>
+      </div>
+      <p class="note">Sharpe = (annualized return − 3M T-bill) / annualized volatility, from daily returns. Alpha from CAPM with beta estimated against SPY.</p>`;
+    indexChart(document.getElementById("ix"), f.index);
+  }
+
   async function detail(t) {
     app.innerHTML = `<p class="muted loading">Loading ${esc(t)}…</p>`;
     let d;
     try { d = cache[t] || (cache[t] = await getJSON(`data/${encodeURIComponent(t)}.json`)); }
     catch { app.innerHTML = `<a class="crumb" href="#/">← Coverage</a><p>No model found for ${esc(t)}.</p>`; return; }
     const s = d.snapshot || {};
+    const cons = d.consensus || {};
+    const peerImp = d.peers?.implied?.average;
     const fin = d.financials || { labels: [], items: {}, meta: {} };
     const tenk = (d.filings || [])[0];
     const list = (arr) => (arr && arr.length ? `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
@@ -206,18 +321,37 @@
         </div>
         <div class="actions">
           <a class="btn primary" href="${esc(d.downloads?.live)}" download>⤓ Download live model</a>
+          ${d.report ? `<a class="btn" href="${esc(d.report.pdf || d.report.docx)}" download>Research report</a>` : ""}
+          ${d.downloads?.tearsheet ? `<a class="btn" href="${esc(d.downloads.tearsheet)}" download>Tear sheet (PDF)</a>` : ""}
           <a class="btn" href="${esc(d.downloads?.original)}" download>Original upload</a>
           ${tenk ? `<a class="btn" href="${esc(tenk.url)}" target="_blank" rel="noopener">Latest 10-K ↗</a>` : ""}
         </div>
       </div>
       ${d.status === "error" ? `<div class="warn">The last refresh failed (${esc(d.error)}). Showing the most recent good data.</div>` : ""}
+      ${d.needs_review ? `<div class="warn"><b>Needs review:</b> ${d.new_filings.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.form)} filed ${esc(f.filed)}</a>`).join(", ")} arrived after the model was last updated (${esc(d.model_updated)}).</div>` : ""}
       <div class="kpis">
         <div class="kpi hero-n"><div class="k">Target price</div><div class="v">${usd(d.target)}</div>
           <div class="n">${pill(d.rating)} &nbsp;from ${esc(d.target_cell || "model")}${d.target_stale ? " · last value saved by Excel" : ""}</div></div>
         <div class="kpi"><div class="k">Price</div><div class="v">${usd(d.price)}</div><div class="n">${esc(d.price_date)} · ${esc(d.price_source)}</div></div>
         <div class="kpi"><div class="k">Upside</div><div class="v">${signed(d.upside)}</div></div>
-        <div class="kpi"><div class="k">Market cap</div><div class="v">${big(s.market_cap)}</div></div>
-        <div class="kpi"><div class="k">Enterprise value</div><div class="v">${big(s.enterprise_value)}</div></div>
+        <div class="kpi"><div class="k">Street mean / median</div><div class="v">${usd(cons.target_mean, 0)} / ${usd(cons.target_median, 0)}</div><div class="n">${cons.analysts ? cons.analysts + " analysts · " : ""}${esc(cons.source || "consensus unavailable")}</div></div>
+        <div class="kpi"><div class="k">Peer-implied (avg)</div><div class="v">${usd(peerImp, 2)}</div><div class="n">median EV/EBITDA &amp; P/E</div></div>
+      </div>
+      ${nz(d.published_target) ? `<p class="note" style="margin:-12px 0 18px">Published target ${usd(d.published_target)} · live model now ${usd(d.target)} (${signed(d.target / d.published_target - 1)}) after refreshing market inputs.</p>` : ""}
+
+      ${Object.values(d.scenarios || {}).some(nz) ? `
+      <div class="grid2 section">
+        <div class="card"><div class="card-h"><h2>Scenarios · from the model</h2><span class="note">Bear / base / bull toggle recalculated</span></div>
+          ${["bear", "base", "bull"].filter((k) => nz(d.scenarios[k])).map((k) => `<div class="kv"><span>${k[0].toUpperCase() + k.slice(1)}</span><span class="num">${usd(d.scenarios[k])} &nbsp;${signed(d.scenarios[k] / d.price - 1)}</span></div>`).join("")}
+        </div>
+        <div class="card"><div class="card-h"><h2>Cost of capital · market data</h2><span class="note">vs. model</span></div>
+          ${d.wacc ? [["Risk-free (10Y)", pct(d.wacc.risk_free, 2)], ["Beta", nz(d.wacc.beta) ? d.wacc.beta.toFixed(2) : "—"], ["Cost of equity", pct(d.wacc.cost_of_equity, 2)], ["After-tax cost of debt", pct(d.wacc.after_tax_cost_of_debt, 2)], ["Market-data WACC", pct(d.wacc.wacc, 2)], ["Model WACC", nz((d.model_outputs || {}).WACC) ? pct(d.model_outputs.WACC, 2) : "—"]].map(([k, v]) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`).join("") : ""}
+        </div>
+      </div>` : ""}
+
+      <div class="card section">
+        <div class="card-h"><h2>Football field · valuation ranges</h2><span class="note">Black = price · orange dashed = model target</span></div>
+        <div class="chart-wrap" id="ff"></div>
       </div>
 
       <div class="card section">
@@ -232,6 +366,25 @@
           <div class="rgroup"><h3>${esc(g.name)}</h3>${g.items.map((i) => `<div class="rrow"><span>${esc(i.label)}</span><span class="num">${ratioFmt(i)}</span></div>`).join("")}</div>`).join("")}
         </div></div>
       </section>
+
+      ${d.peers ? `
+      <div class="card section">
+        <div class="card-h"><h2>Peer comparison · SEC 10-K data at current prices</h2><span class="note">Street targets: Yahoo Finance consensus</span></div>
+        <div class="scroll"><table>
+          <thead><tr><th>Company</th><th class="r">Price</th><th class="r">P/E</th><th class="r">EV/EBITDA</th><th class="r">EV/Sales</th><th class="r">Op. margin</th><th class="r">Rev. growth</th><th class="r">ROE</th><th class="r">ND/EBITDA</th><th class="r">Street mean</th><th class="r">Street median</th><th class="r">Upside to median</th></tr></thead>
+          <tbody>${d.peers.rows.map((r) => r.status === "error" ? `<tr><td><span class="tk">${esc(r.ticker)}</span></td><td colspan="11" class="note">data unavailable</td></tr>` : `<tr${r.self ? ' class="selfrow"' : ""}><td><span class="tk">${esc(r.ticker)}</span><span class="co">${esc(r.name)}</span></td>
+            <td class="r num">${usd(r.price)}</td><td class="r num">${mult(r.pe)}</td><td class="r num">${mult(r.ev_ebitda)}</td><td class="r num">${mult(r.ev_sales)}</td><td class="r num">${pct(r.op_margin)}</td><td class="r num">${pct(r.rev_growth)}</td><td class="r num">${pct(r.roe)}</td><td class="r num">${mult(r.net_debt_ebitda)}</td><td class="r num">${usd(r.street_mean)}</td><td class="r num">${usd(r.street_median)}</td><td class="r num">${signed(r.street_upside)}</td></tr>`).join("")}
+          <tr class="medrow"><td>Peer median</td><td></td><td class="r num">${mult(d.peers.medians.pe)}</td><td class="r num">${mult(d.peers.medians.ev_ebitda)}</td><td class="r num">${mult(d.peers.medians.ev_sales)}</td><td class="r num">${pct(d.peers.medians.op_margin)}</td><td class="r num">${pct(d.peers.medians.rev_growth)}</td><td class="r num">${pct(d.peers.medians.roe)}</td><td class="r num">${mult(d.peers.medians.net_debt_ebitda)}</td><td></td><td></td><td class="r num">${signed(d.peers.medians.street_upside)}</td></tr>
+          </tbody></table></div>
+        <div class="kvrow">
+          <div class="kv"><span>Implied at peer-median EV/EBITDA</span><span class="num">${usd(d.peers.implied.ev_ebitda.median)}</span></div>
+          <div class="kv"><span>Implied at peer-median P/E</span><span class="num">${usd(d.peers.implied.pe.median)}</span></div>
+          <div class="kv"><span>Average of peer-implied prices</span><span class="num">${usd(d.peers.implied.average)}</span></div>
+          <div class="kv"><span>Peer average upside to street median target</span><span class="num">${signed(d.peers.peer_avg_street_upside)}</span></div>
+        </div>
+      </div>` : ""}
+
+      ${trackHtml(d)}
 
       ${d.thesis || (d.catalysts || []).length || (d.risks || []).length ? `
       <div class="grid2 section">
@@ -253,13 +406,14 @@
           <div class="kv"><span>Model file</span><span class="mono">${esc(d.model_file)}</span></div>
           ${(d.linked_inputs || []).length ? `<div class="kv"><span>Live links &amp; overrides</span><span class="mono" style="white-space:normal;text-align:right">${d.linked_inputs.map(esc).join("<br>")}</span></div>` : ""}
         </div>
-        <div class="card"><div class="card-h"><h2>Annual filings · SEC EDGAR</h2></div>
-          ${(d.filings || []).map((f) => `<div class="kv"><span>${esc(f.form)} · period ${esc(f.period)}</span><a class="mono" href="${esc(f.url)}" target="_blank" rel="noopener">filed ${esc(f.filed)} ↗</a></div>`).join("") || '<div class="kv"><span>None found</span></div>'}
+        <div class="card"><div class="card-h"><h2>Recent filings · SEC EDGAR</h2></div>
+          ${(d.recent_filings || d.filings || []).map((f) => `<div class="kv"><span>${esc(f.form)} · period ${esc(f.period)}</span><a class="mono" href="${esc(f.url)}" target="_blank" rel="noopener">filed ${esc(f.filed)} ↗</a></div>`).join("") || '<div class="kv"><span>None found</span></div>'}
         </div>
       </div>
       <p class="note">Fundamentals from the company's own XBRL filings with the SEC (CIK ${esc(d.cik)}). Ratios use the latest fiscal year and the current share price. Educational project, not investment advice.</p>`;
 
     priceChart(document.getElementById("pc"), d.price_history, d.target);
+    footballChart(document.getElementById("ff"), d.football, d.price, d.target);
     barsChart(document.getElementById("bc"), fin);
     app.querySelectorAll(".toggle button").forEach((b) => b.addEventListener("click", () => {
       app.querySelectorAll(".toggle button").forEach((x) => x.classList.toggle("on", x === b));
@@ -304,10 +458,11 @@
       document.getElementById("foot-right").textContent = INDEX.owner ? "© " + new Date().getFullYear() + " " + INDEX.owner : "";
     }
     const h = location.hash.replace(/^#\/?/, "");
-    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (h === "method" ? "method" : "")));
+    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "fund"].includes(h) ? h : "")));
     window.scrollTo(0, 0);
     if (!h) { document.title = (INDEX.site?.title || "Equity Coverage"); home(); }
     else if (h === "method") method();
+    else if (h === "fund") fund();
     else detail(decodeURIComponent(h).toUpperCase());
   }
   window.addEventListener("hashchange", route);

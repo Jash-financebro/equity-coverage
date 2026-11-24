@@ -1,0 +1,570 @@
+"""Build a {TICKER}_v{N}.xlsx 3-statement model from SEC EDGAR data.
+
+Follows JJ's three-statement-model-builder conventions:
+* hidden historicals tab (Live_Data) labelled with its source; separate IS / BS / CF tabs,
+  roll-forward schedules (PP&E, D&A, other NCA, equity/retained earnings, debt + revolver sweep,
+  interest), Revenue Build, WACC, DCF and Financial Ratios tabs
+* A1 of every tab = file label (e.g. LNG_v1); column A narrow, labels in B, data from column D
+* blue = hardcoded, black = same-sheet formula, green = cross-sheet link; no SUMPRODUCT/MMULT
+* "$" number format and bold ONLY on summed (total / subtotal) rows
+* balance check row nets to zero; bull / base / bear selector drives the assumptions
+"""
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.comments import Comment
+from openpyxl.styles import Alignment, Font
+from openpyxl.workbook.defined_name import DefinedName
+
+from fundamentals import LINE_ITEMS
+from layout import MARKET, MARKET_HEADER_ROW, SCALARS, YEAR_COLS, item_row
+
+FONT = "Arial"
+BLUE, BLACK, GREEN = "0000FF", "000000", "008000"
+NUM = '#,##0.0_);[Red](#,##0.0)'
+TOT = '$#,##0.0_);[Red]($#,##0.0)'
+PCT = '0.0%;[Red](0.0%)'
+MULT = '0.0"x"'
+PS = '0.00_);[Red](0.00)'
+HIST, PROJ = ["D", "E", "F"], ["G", "H", "I", "J", "K"]
+ALL = HIST + PROJ
+PREV = {c: chr(ord(c) - 1) for c in ALL}
+STANCES = {"bullish": 1, "bull": 1, "balanced": 2, "base": 2, "traditional": 2, "conservative": 2,
+           "bearish": 3, "bear": 3}
+
+
+def _q(sheet: str) -> str:
+    return f"'{sheet}'" if re.search(r"[^A-Za-z0-9_]", sheet) else sheet
+
+
+def L(key: str, col: str) -> str:
+    """Link into the hidden historicals tab."""
+    return f"Live_Data!{col}{item_row(key)}"
+
+
+def LM(key: str) -> str:
+    return f"Live_Data!$B${MARKET[key][0]}"
+
+
+class Sheet:
+    def __init__(self, wb, title, label, heading):
+        self.ws = wb.create_sheet(title)
+        self.title = title
+        ws = self.ws
+        ws.sheet_view.showGridLines = False
+        ws.column_dimensions["A"].width = 2.75
+        ws.column_dimensions["B"].width = 45
+        ws.column_dimensions["C"].width = 8
+        for c in ALL:
+            ws.column_dimensions[c].width = 12
+        self.put("A1", label)
+        self.put("B2", heading, bold=True)
+
+    def ref(self, cell):
+        return f"{_q(self.title)}!{cell}"
+
+    def put(self, cell, value, fmt=None, bold=False, note=None):
+        c = self.ws[cell]
+        c.value = value
+        if isinstance(value, str) and value.startswith("="):
+            color = GREEN if "!" in value else BLACK
+        elif isinstance(value, (int, float)) and not isinstance(value, bool):
+            color = BLUE
+        else:
+            color = BLACK
+        c.font = Font(name=FONT, size=10, bold=bold, color=color)
+        if fmt:
+            c.number_format = fmt
+        if note:
+            c.comment = Comment(note, "Model builder")
+        return c
+
+    def header(self, row, years):
+        self.put(f"B{row}", "Fiscal year ($ in millions, except per-share data)", bold=True)
+        for c, y in zip(ALL, years):
+            self.put(f"{c}{row}", y, bold=True)
+            self.ws[f"{c}{row}"].alignment = Alignment(horizontal="right")
+
+    def line(self, row, label, values: dict, fmt=NUM, total=False, note=None):
+        self.put(f"B{row}", label, bold=total, note=note)
+        for col, v in values.items():
+            if v is None:
+                continue
+            self.put(f"{col}{row}", v, TOT if total and fmt == NUM else fmt, bold=total)
+
+    def section(self, row, text):
+        self.put(f"B{row}", text, bold=True)
+
+
+def _avg(xs):
+    xs = [x for x in xs if x is not None]
+    return sum(xs) / len(xs) if xs else None
+
+
+def _clip(x, lo, hi, default):
+    if x is None:
+        return default
+    return max(lo, min(hi, x))
+
+
+def _drivers(fin: dict, stance: str) -> dict:
+    it = {k: (v[-3:] if v else [None] * 3) for k, v in fin["items"].items()}
+    g = lambda k, i=-1: it[k][i]  # noqa: E731
+    rev = it["revenue"]
+    cagr = None
+    if rev[0] and rev[-1] and rev[0] > 0 and rev[-1] > 0:
+        cagr = (rev[-1] / rev[0]) ** 0.5 - 1
+    base_g = _clip(cagr, -0.05, 0.12, 0.03)
+    cogs = _avg([c / r for c, r in zip(it["cogs"], rev) if c is not None and r])
+    gp = [r - c if r is not None and c is not None else None for r, c in zip(rev, it["cogs"])]
+    opex = _avg([(p - o) / r for p, o, r in zip(gp, it["operating_income"], rev)
+                 if p is not None and o is not None and r]) if cogs is not None else \
+        _avg([(r - o) / r for r, o in zip(rev, it["operating_income"]) if r and o is not None])
+    cogs = cogs or 0.0
+    ppe_mode = g("ppe_net") is not None and (it["ppe_net"][-2] or 0) > 0
+    da_rate = (g("d_and_a") or 0) / it["ppe_net"][-2] if ppe_mode else \
+        _avg([d / r for d, r in zip(it["d_and_a"], rev) if d is not None and r]) or 0
+    debt_now = (g("short_term_debt") or 0) + (g("long_term_debt") or 0)
+    debt_prev = (it["short_term_debt"][-2] or 0) + (it["long_term_debt"][-2] or 0)
+    net_repay = (g("debt_repaid") or 0) - (g("debt_issued") or 0)
+    ni_cons = (g("pretax_income") or 0) - (g("income_tax") or 0)
+    nci = ni_cons - (g("net_income") or 0)
+    shares = it["shares_diluted"]
+    sh_chg = (shares[-1] / shares[0]) ** 0.5 - 1 if shares[0] and shares[-1] else 0
+    d = {
+        "base_growth": base_g,
+        "cogs": cogs, "opex": _clip(opex, -0.5, 1.5, 0.2),
+        "ppe_mode": ppe_mode, "da_rate": _clip(da_rate, 0, 0.5, 0.05),
+        "capex": _clip(_avg([c / r for c, r in zip(it["capex"], rev) if c is not None and r]), 0, 0.8, 0.05),
+        "oca": _clip(((g("current_assets") or 0) - (g("cash") or 0)) / rev[-1] if rev[-1] else None, 0, 2, 0.1),
+        "ocl": _clip(((g("current_liabilities") or 0) - (g("short_term_debt") or 0)) / rev[-1] if rev[-1] else None,
+                     0, 2, 0.1),
+        "tax": _clip((g("income_tax") or 0) / g("pretax_income") if g("pretax_income") else None, 0, 0.35, 0.21),
+        "nci": _clip(nci / ni_cons if ni_cons > 0 else 0, 0, 0.9, 0),
+        "payout": _clip((g("dividends") or 0) / g("net_income") if (g("net_income") or 0) > 0 else 0, 0, 1, 0),
+        "buybacks": round(g("buybacks") or 0, 1),
+        "share_chg": _clip(sh_chg, -0.05, 0.03, 0),
+        "repay": _clip(net_repay / debt_prev if debt_prev else 0, 0, 0.15, 0),
+        "min_cash": round((g("cash") or 0) * 0.5, 1),
+        "rate": _clip((g("interest_expense") or 0) / ((debt_now + debt_prev) / 2) if debt_now + debt_prev else None,
+                      0.02, 0.12, 0.05),
+    }
+    st = stance.lower().split()[0].strip("/")
+    d["selector"] = STANCES.get(st, 2)
+    d["conservative"] = st in ("traditional", "conservative")
+    if d["conservative"]:
+        d["base_growth"] -= 0.01
+    return d
+
+
+def _write_live_data(wb, label, live: dict, fin: dict):
+    ws = wb.create_sheet("Live_Data")
+    ws.sheet_state = "hidden"
+    f = lambda color=BLACK, bold=False: Font(name=FONT, size=10, color=color, bold=bold)  # noqa: E731
+    ws["A1"].value, ws["A1"].font = label, f()
+    ws["A2"].value = ("LIVE DATA (historicals source: SEC EDGAR 10-K XBRL; prices & market data: Yahoo Finance). "
+                      "Refreshed automatically by the pipeline.")
+    ws["A2"].font = f()
+    for key, (row, lab, fmt, _n) in SCALARS.items():
+        ws[f"A{row}"].value, ws[f"A{row}"].font = lab, f()
+        c = ws[f"B{row}"]
+        c.value, c.font = live.get(key), f(BLUE)
+        if fmt:
+            c.number_format = fmt
+    labels, periods = fin["labels"][-5:], fin["periods"][-5:]
+    pad = 5 - len(labels)
+    ws["A15"].value, ws["A15"].font = "($ millions unless noted)", f(bold=True)
+    ws["A16"].value, ws["A16"].font = "Fiscal period end", f()
+    for j, col in enumerate(YEAR_COLS):
+        i = j - pad
+        ws[f"{col}15"].value, ws[f"{col}15"].font = (labels[i] if i >= 0 else None), f(bold=True)
+        ws[f"{col}16"].value, ws[f"{col}16"].font = (periods[i] if i >= 0 else None), f()
+    for key, lab, _k, _c in LINE_ITEMS:
+        r = item_row(key)
+        ws[f"A{r}"].value, ws[f"A{r}"].font = lab, f()
+        vals = fin["items"].get(key, [])[-5:]
+        for j, col in enumerate(YEAR_COLS):
+            i = j - pad
+            v = vals[i] if 0 <= i < len(vals) else None
+            ws[f"{col}{r}"].value, ws[f"{col}{r}"].font = v, f(BLUE)
+            ws[f"{col}{r}"].number_format = NUM
+        ws[f"G{r}"].value, ws[f"G{r}"].font = fin["concepts"].get(key, "n/a"), f()
+    ws[f"A{MARKET_HEADER_ROW}"].value, ws[f"A{MARKET_HEADER_ROW}"].font = "Market data & cost of capital", f(bold=True)
+    mk = live.get("market") or {}
+    for key, (row, lab, fmt, _n) in MARKET.items():
+        ws[f"A{row}"].value, ws[f"A{row}"].font = lab, f()
+        ws[f"B{row}"].value, ws[f"B{row}"].font = mk.get(key), f(BLUE)
+        ws[f"B{row}"].number_format = fmt
+    ws.column_dimensions["A"].width = 40
+
+
+def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
+    live, fin = ctx["live"], ctx["fin"]
+    label = dest.stem
+    T = ticker.upper()
+    d = _drivers(fin, stance)
+    y0 = int(fin["labels"][-1][2:])
+    years = [f"FY{y0 - 2}A", f"FY{y0 - 1}A", f"FY{y0}A"] + [f"FY{y0 + i}E" for i in range(1, 6)]
+
+    wb = Workbook()
+    wb.remove(wb.active)
+    IS = Sheet(wb, f"{T} Income Statement", label, f"{live['company']} ({T}) - Income Statement")
+    BS = Sheet(wb, f"{T} Balance Sheet", label, f"{live['company']} ({T}) - Balance Sheet")
+    CF = Sheet(wb, f"{T} Cash Flow Statement", label, f"{live['company']} ({T}) - Cash Flow Statement")
+    SC = Sheet(wb, f"{T} Schedules", label, f"{live['company']} ({T}) - Supporting Schedules")
+    RB = Sheet(wb, f"{T} Revenue Build", label, f"{live['company']} ({T}) - Revenue Build & Assumptions")
+    WA = Sheet(wb, f"{T} WACC", label, f"{live['company']} ({T}) - Weighted Average Cost of Capital")
+    DC = Sheet(wb, f"{T} DCF", label, f"{live['company']} ({T}) - Discounted Cash Flow")
+    FR = Sheet(wb, f"{T} Financial Ratios", label, f"{live['company']} ({T}) - Financial Ratios")
+    _write_live_data(wb, label, live, fin)
+    for s in (IS, BS, CF, SC, RB, FR):
+        s.header(3, years)
+    DC.header(3, years)
+
+    # --------------------------------------------------------- Revenue Build
+    rb = RB.ref
+    RB.put("B5", "Active scenario (1 = Bull, 2 = Base, 3 = Bear)")
+    RB.put("D5", d["selector"], "0", note="Change to 1 / 2 / 3 to switch the whole model")
+    RB.put("B6", "Model stance")
+    RB.put("D6", {1: "Bullish", 2: "Traditional / Conservative" if d["conservative"] else "Balanced / Base case",
+                  3: "Bearish"}[d["selector"]])
+    RB.section(8, "Revenue growth")
+    fade = [d["base_growth"] + (0.03 - d["base_growth"]) * i / 4 for i in range(5)]
+    RB.line(9, "Bull case growth", {c: round(v + 0.03, 4) for c, v in zip(PROJ, fade)}, PCT)
+    RB.line(10, "Base case growth", {c: round(v, 4) for c, v in zip(PROJ, fade)}, PCT,
+            note="Base: 2-year revenue CAGR from the 10-K (clipped to -5%/+12%), fading to 3% by year 5")
+    RB.line(11, "Bear case growth", {c: round(v - 0.03, 4) for c, v in zip(PROJ, fade)}, PCT)
+    RB.line(12, "Selected revenue growth", {c: f"=CHOOSE($D$5,{c}9,{c}10,{c}11)" for c in PROJ}, PCT)
+    RB.line(14, "Total Revenue", {**{c: f"={L('revenue', c)}" for c in HIST},
+                                  **{c: f"={PREV[c]}14*(1+{c}12)" for c in PROJ}}, total=True)
+    RB.line(15, "Revenue growth", {**{c: f"=IFERROR({c}14/{PREV[c]}14-1,0)" for c in HIST[1:]},
+                                   **{c: f"={c}12" for c in PROJ}}, PCT)
+    RB.put("B16", "Revenue is driven at the consolidated level: segment detail is not in standardized XBRL.")
+
+    RB.section(18, "Operating drivers")
+    cogs_rows = {"bull": d["cogs"] - 0.01, "base": d["cogs"], "bear": d["cogs"] + 0.01}
+    if d["conservative"]:
+        cogs_rows = {k: v + 0.005 for k, v in cogs_rows.items()}
+    RB.line(19, "Cost of revenue % of revenue - bull", {c: round(max(0, cogs_rows["bull"]), 4) for c in PROJ}, PCT)
+    RB.line(20, "Cost of revenue % of revenue - base", {c: round(cogs_rows["base"], 4) for c in PROJ}, PCT,
+            note="3-year average from the 10-K")
+    RB.line(21, "Cost of revenue % of revenue - bear", {c: round(cogs_rows["bear"], 4) for c in PROJ}, PCT)
+    RB.line(22, "Selected cost of revenue % of revenue",
+            {**{c: f"=IFERROR({IS.ref(c + '7')}/{IS.ref(c + '5')},0)" for c in HIST},
+             **{c: f"=CHOOSE($D$5,{c}19,{c}20,{c}21)" for c in PROJ}}, PCT)
+    drivers = [
+        (23, "Operating expenses (incl. D&A) % of revenue", d["opex"], PCT, "3-year average from the 10-K"),
+        (24, "D&A % of beginning PP&E" if d["ppe_mode"] else "D&A % of revenue", d["da_rate"], PCT,
+         "Latest 10-K D&A over prior-year net PP&E" if d["ppe_mode"] else "PP&E not tagged: D&A tied to revenue"),
+        (25, "Capital expenditures % of revenue", d["capex"], PCT, "3-year average from the 10-K"),
+        (26, "Other current assets % of revenue", d["oca"], PCT, "Latest 10-K"),
+        (27, "Current liabilities (excl. debt) % of revenue", d["ocl"], PCT, "Latest 10-K"),
+        (28, "Tax rate", d["tax"], PCT, "Latest 10-K effective rate (clipped 0-35%)"),
+        (29, "Noncontrolling interest share of net income", d["nci"], PCT, "Latest 10-K"),
+        (30, "Dividend payout (% of net income to common)", d["payout"], PCT, "Latest 10-K"),
+        (31, "Share repurchases", d["buybacks"], NUM, "Held flat at the latest 10-K level"),
+        (32, "Diluted share count change", d["share_chg"], PCT, "2-year trend from the 10-K"),
+        (33, "Mandatory debt repayment (% of beginning term debt)", d["repay"], PCT, "Latest 10-K net repayment"),
+        (34, "Minimum cash balance", d["min_cash"], NUM, "50% of latest 10-K cash"),
+        (35, "Interest rate on term debt", d["rate"], PCT, "Latest 10-K interest / average debt"),
+        (36, "Interest rate on revolver", round(d["rate"] + 0.005, 4), PCT, "Term debt rate + 50 bp"),
+    ]
+    for row, lab, v, fmt, note in drivers:
+        RB.line(row, lab, {c: round(v, 4) if fmt == PCT else v for c in PROJ}, fmt, note=note)
+    for row, num, den in ((23, "10", "5"), (28, "19", "18")):
+        for c in HIST:
+            RB.put(f"{c}{row}", f"=IFERROR({IS.ref(c + num)}/{IS.ref(c + den)},0)", PCT)
+    for c in HIST:
+        RB.put(f"{c}25", f"=IFERROR(-{CF.ref(c + '12')}/{IS.ref(c + '5')},0)", PCT)
+    RB.line(37, "Interest rate on cash (10Y Treasury, live)", {c: f"={LM('risk_free')}" for c in PROJ}, PCT)
+    RB.section(39, "Terminal growth rate")
+    RB.line(40, "Bull", {"D": 0.03}, PCT)
+    RB.line(41, "Base", {"D": 0.02 if d["conservative"] else 0.025}, PCT)
+    RB.line(42, "Bear", {"D": 0.02}, PCT)
+    RB.line(43, "Selected terminal growth rate", {"D": "=CHOOSE($D$5,D40,D41,D42)"}, PCT)
+    RB.put("B45", f"Stance note: {RB.ws['D6'].value}. Bull = base growth +3 pts and cost of revenue -1 pt, "
+                  "terminal growth 3.0%; bear = growth -3 pts, cost of revenue +1 pt, terminal growth 2.0%."
+                  + (" Conservative: base growth -1 pt, cost of revenue +0.5 pt, terminal 2.0%." if d["conservative"]
+                     else ""))
+    RB.put("B46", "Historicals source: SEC EDGAR 10-K XBRL company facts (hidden Live_Data tab).")
+
+    # --------------------------------------------------------- Income Statement
+    IS.line(5, "Total Revenue", {c: f"={rb(c + '14')}" for c in ALL}, total=True)
+    IS.line(6, "Revenue growth", {c: f"=IFERROR({c}5/{PREV[c]}5-1,0)" for c in ALL[1:]}, PCT)
+    IS.line(7, "Cost of revenue", {**{c: f"={L('cogs', c)}" for c in HIST},
+                                   **{c: f"={c}5*{rb(c + '22')}" for c in PROJ}})
+    IS.line(8, "Gross Profit", {c: f"={c}5-{c}7" for c in ALL}, total=True)
+    IS.line(9, "Gross margin", {c: f"=IFERROR({c}8/{c}5,0)" for c in ALL}, PCT)
+    IS.line(10, "Operating expenses (incl. D&A)", {**{c: f"={c}8-{L('operating_income', c)}" for c in HIST},
+                                                   **{c: f"={c}5*{rb(c + '23')}" for c in PROJ}})
+    IS.line(11, "Operating Income (EBIT)", {c: f"={c}8-{c}10" for c in ALL}, total=True)
+    IS.line(12, "EBIT margin", {c: f"=IFERROR({c}11/{c}5,0)" for c in ALL}, PCT)
+    IS.line(13, "Depreciation & amortization (memo)", {**{c: f"={L('d_and_a', c)}" for c in HIST},
+                                                       **{c: f"={SC.ref(c + '14')}" for c in PROJ}})
+    IS.line(14, "EBITDA", {c: f"={c}11+{c}13" for c in ALL}, total=True)
+    IS.line(15, "EBITDA margin", {c: f"=IFERROR({c}14/{c}5,0)" for c in ALL}, PCT)
+    IS.line(16, "Interest expense", {**{c: f"={L('interest_expense', c)}" for c in HIST},
+                                     **{c: f"={SC.ref(c + '48')}" for c in PROJ}})
+    IS.line(17, "Interest income & other, net", {**{c: f"={L('pretax_income', c)}-({c}11-{c}16)" for c in HIST},
+                                                 **{c: f"={SC.ref(c + '49')}" for c in PROJ}})
+    IS.line(18, "Pre-Tax Income", {c: f"={c}11-{c}16+{c}17" for c in ALL}, total=True)
+    IS.line(19, "Income tax expense", {**{c: f"={L('income_tax', c)}" for c in HIST},
+                                       **{c: f"={c}18*{rb(c + '28')}" for c in PROJ}})
+    IS.line(20, "Effective tax rate", {c: f"=IFERROR({c}19/{c}18,0)" for c in ALL}, PCT)
+    IS.line(21, "Net Income (consolidated)", {c: f"={c}18-{c}19" for c in ALL}, total=True)
+    IS.line(22, "Less: net income attributable to noncontrolling interests",
+            {**{c: f"={c}21-{L('net_income', c)}" for c in HIST}, **{c: f"={c}21*{rb(c + '29')}" for c in PROJ}})
+    IS.line(23, "Net Income to Common", {c: f"={c}21-{c}22" for c in ALL}, total=True)
+    IS.line(24, "Diluted shares outstanding (mm)", {**{c: f"={L('shares_diluted', c)}" for c in HIST},
+                                                    **{c: f"={PREV[c]}24*(1+{rb(c + '32')})" for c in PROJ}}, '#,##0.0')
+    IS.line(25, "Diluted EPS", {c: f"=IFERROR({c}23/{c}24,0)" for c in ALL}, PS)
+
+    # --------------------------------------------------------- Balance Sheet
+    BS.section(4, "Assets")
+    BS.line(5, "Cash & equivalents", {**{c: f"={L('cash', c)}" for c in HIST}, **{c: f"={SC.ref(c + '43')}" for c in PROJ}})
+    BS.line(6, "Other current assets", {**{c: f"={L('current_assets', c)}-{L('cash', c)}" for c in HIST},
+                                        **{c: f"={IS.ref(c + '5')}*{rb(c + '26')}" for c in PROJ}})
+    BS.line(7, "Total Current Assets", {c: f"={c}5+{c}6" for c in ALL}, total=True)
+    BS.line(8, "PP&E, net", {**{c: f"={L('ppe_net', c)}" for c in HIST}, **{c: f"={SC.ref(c + '9')}" for c in PROJ}})
+    BS.line(9, "Other non-current assets",
+            {**{c: f"={L('total_assets', c)}-{L('current_assets', c)}-{L('ppe_net', c)}" for c in HIST},
+             **{c: f"={SC.ref(c + '20')}" for c in PROJ}})
+    BS.line(10, "Total Assets", {c: f"={c}7+{c}8+{c}9" for c in ALL}, total=True)
+    BS.section(11, "Liabilities & equity")
+    BS.line(12, "Current liabilities (excl. debt)",
+            {**{c: f"={L('current_liabilities', c)}-{L('short_term_debt', c)}" for c in HIST},
+             **{c: f"={IS.ref(c + '5')}*{rb(c + '27')}" for c in PROJ}})
+    BS.line(13, "Revolver", {**{c: 0 for c in HIST}, **{c: f"={SC.ref(c + '42')}" for c in PROJ}})
+    BS.line(14, "Term debt (incl. current portion)",
+            {**{c: f"={L('short_term_debt', c)}+{L('long_term_debt', c)}" for c in HIST},
+             **{c: f"={SC.ref(c + '34')}" for c in PROJ}})
+    BS.line(15, "Other non-current liabilities",
+            {**{c: f"={L('total_liabilities', c)}-{L('current_liabilities', c)}-{L('long_term_debt', c)}" for c in HIST},
+             **{c: f"={PREV[c]}15" for c in PROJ}})
+    BS.line(16, "Total Liabilities", {c: f"=SUM({c}12:{c}15)" for c in ALL}, total=True)
+    BS.line(18, "Total Equity (incl. noncontrolling interests)",
+            {**{c: f"={L('total_assets', c)}-{L('total_liabilities', c)}" for c in HIST},
+             **{c: f"={SC.ref(c + '27')}" for c in PROJ}}, total=True)
+    BS.line(19, "Total Liabilities & Equity", {c: f"={c}16+{c}18" for c in ALL}, total=True)
+    BS.line(21, "Balance check (total assets - total liabilities & equity)", {c: f"=ROUND({c}10-{c}19,3)" for c in ALL})
+
+    # --------------------------------------------------------- Cash Flow
+    def chg(sheet, row, c, live_expr):
+        """change vs prior year; first historical column reaches back into Live_Data column C"""
+        if c == "D":
+            return live_expr
+        return f"{sheet.ref(c + row)}-{sheet.ref(PREV[c] + row)}"
+
+    CF.section(4, "Operating activities")
+    CF.line(5, "Net income (consolidated)", {c: f"={IS.ref(c + '21')}" for c in ALL})
+    CF.line(6, "Depreciation & amortization", {c: f"={IS.ref(c + '13')}" for c in ALL})
+    CF.line(7, "(Increase) / decrease in other current assets", {c: "=-(" + chg(
+        BS, "6", c, f"({L('current_assets', 'D')}-{L('cash', 'D')})-({L('current_assets', 'C')}-{L('cash', 'C')})") + ")"
+        for c in ALL})
+    CF.line(8, "Increase / (decrease) in current liabilities", {c: "=" + chg(
+        BS, "12", c, f"({L('current_liabilities', 'D')}-{L('short_term_debt', 'D')})-"
+                     f"({L('current_liabilities', 'C')}-{L('short_term_debt', 'C')})") for c in ALL})
+    CF.line(9, "Other operating items (historical: reconciles to reported CFO)",
+            {**{c: f"={L('cfo', c)}-SUM({c}5:{c}8)" for c in HIST}, **{c: 0 for c in PROJ}})
+    CF.line(10, "Net Cash from Operating Activities", {c: f"=SUM({c}5:{c}9)" for c in ALL}, total=True)
+    CF.section(11, "Investing activities")
+    CF.line(12, "Capital expenditures", {**{c: f"=-{L('capex', c)}" for c in HIST},
+                                         **{c: f"=-{SC.ref(c + '7')}" for c in PROJ}})
+    CF.line(13, "Other investing", {**{c: f"={L('cfi', c)}-{c}12" for c in HIST},
+                                    **{c: f"=-{SC.ref(c + '19')}" for c in PROJ}})
+    CF.line(14, "Net Cash from Investing Activities", {c: f"={c}12+{c}13" for c in ALL}, total=True)
+    CF.section(15, "Financing activities")
+    CF.line(16, "Debt issued", {**{c: f"={L('debt_issued', c)}" for c in HIST}, **{c: 0 for c in PROJ}})
+    CF.line(17, "Debt repaid", {**{c: f"=-{L('debt_repaid', c)}" for c in HIST},
+                                **{c: f"=-{SC.ref(c + '33')}" for c in PROJ}})
+    CF.line(18, "Revolver draw / (repayment)", {**{c: 0 for c in HIST}, **{c: f"={SC.ref(c + '41')}" for c in PROJ}})
+    CF.line(19, "Dividends paid", {**{c: f"=-{L('dividends', c)}" for c in HIST},
+                                   **{c: f"=-{SC.ref(c + '24')}" for c in PROJ}})
+    CF.line(20, "Share repurchases", {**{c: f"=-{L('buybacks', c)}" for c in HIST},
+                                      **{c: f"=-{SC.ref(c + '25')}" for c in PROJ}})
+    CF.line(21, "Distributions to noncontrolling interests", {**{c: 0 for c in HIST},
+                                                               **{c: f"=-{SC.ref(c + '26')}" for c in PROJ}})
+    CF.line(22, "Other financing (historical: reconciles to reported CFF)",
+            {**{c: f"={L('cff', c)}-SUM({c}16:{c}21)" for c in HIST}, **{c: 0 for c in PROJ}})
+    CF.line(23, "Net Cash from Financing Activities", {c: f"=SUM({c}16:{c}22)" for c in ALL}, total=True)
+    CF.line(25, "Net Change in Cash", {c: f"={c}10+{c}14+{c}23" for c in ALL}, total=True)
+    CF.line(26, "Beginning cash", {c: (f"={L('cash', 'C')}" if c == "D" else f"={BS.ref(PREV[c] + '5')}") for c in ALL})
+    CF.line(27, "Ending Cash", {c: f"={c}26+{c}25" for c in ALL}, total=True)
+    CF.line(28, "Memo: cash per balance sheet", {c: f"={BS.ref(c + '5')}" for c in ALL})
+    CF.line(29, "Memo: difference (historical restricted cash / FX only)", {c: f"={c}27-{c}28" for c in ALL})
+
+    # --------------------------------------------------------- Schedules
+    SC.section(4, "PP&E roll-forward")
+    SC.line(6, "Beginning PP&E, net", {c: (f"={BS.ref('F8')}" if c == "G" else f"={PREV[c]}9") for c in PROJ})
+    SC.line(7, "Plus: capital expenditures", {c: f"={IS.ref(c + '5')}*{rb(c + '25')}" for c in PROJ})
+    SC.line(8, "Less: depreciation & amortization", {c: f"=-{c}14" for c in PROJ})
+    SC.line(9, "Ending PP&E, net", {"F": f"={BS.ref('F8')}", **{c: f"=SUM({c}6:{c}8)" for c in PROJ}}, total=True)
+    SC.section(11, "D&A schedule")
+    SC.line(12, "D&A rate", {c: f"={rb(c + '24')}" for c in PROJ}, PCT)
+    SC.line(13, "Beginning PP&E, net" if d["ppe_mode"] else "Revenue",
+            {c: (f"={c}6" if d["ppe_mode"] else f"={IS.ref(c + '5')}") for c in PROJ})
+    SC.line(14, "Depreciation & amortization", {c: f"={c}12*{c}13" for c in PROJ})
+    SC.section(16, "Other non-current assets roll-forward")
+    SC.line(17, "Other non-current assets % of revenue (latest 10-K)",
+            {"F": f"=IFERROR({BS.ref('F9')}/{IS.ref('F5')},0)"}, PCT)
+    SC.line(18, "Beginning other non-current assets", {c: (f"={BS.ref('F9')}" if c == "G" else f"={PREV[c]}20")
+                                                      for c in PROJ})
+    SC.line(19, "Plus: additions (held at % of incremental revenue)",
+            {c: f"=({IS.ref(c + '5')}-{IS.ref(PREV[c] + '5')})*$F$17" for c in PROJ})
+    SC.line(20, "Ending other non-current assets", {"F": f"={BS.ref('F9')}", **{c: f"={c}18+{c}19" for c in PROJ}},
+            total=True)
+    SC.section(22, "Retained earnings / total equity roll-forward")
+    SC.line(23, "Beginning total equity", {c: (f"={BS.ref('F18')}" if c == "G" else f"={PREV[c]}27") for c in PROJ})
+    SC.line(24, "Dividends to common", {c: f"=MAX(0,{IS.ref(c + '23')}*{rb(c + '30')})" for c in PROJ})
+    SC.line(25, "Share repurchases", {c: f"={rb(c + '31')}" for c in PROJ})
+    SC.line(26, "Distributions to noncontrolling interests", {c: f"=MAX(0,{IS.ref(c + '22')})" for c in PROJ})
+    SC.line(27, "Ending total equity", {"F": f"={BS.ref('F18')}", **{
+        c: f"={c}23+{IS.ref(c + '21')}-{c}24-{c}25-{c}26" for c in PROJ}}, total=True)
+    SC.section(31, "Debt schedule & revolver cash sweep")
+    SC.line(32, "Beginning term debt", {c: (f"={BS.ref('F14')}" if c == "G" else f"={PREV[c]}34") for c in PROJ})
+    SC.line(33, "Mandatory term debt repayment", {c: f"={c}32*{rb(c + '33')}" for c in PROJ})
+    SC.line(34, "Ending term debt", {"F": f"={BS.ref('F14')}", **{c: f"={c}32-{c}33" for c in PROJ}}, total=True)
+    SC.line(35, "Beginning cash", {c: (f"={BS.ref('F5')}" if c == "G" else f"={PREV[c]}43") for c in PROJ})
+    SC.line(36, "Plus: cash from operating and investing activities",
+            {c: f"={CF.ref(c + '10')}+{CF.ref(c + '14')}" for c in PROJ})
+    SC.line(37, "Less: mandatory repayment, dividends, buybacks, NCI distributions",
+            {c: f"=-({c}33+{c}24+{c}25+{c}26)" for c in PROJ})
+    SC.line(38, "Cash Available Before Revolver", {c: f"=SUM({c}35:{c}37)" for c in PROJ}, total=True)
+    SC.line(39, "Minimum cash balance", {c: f"={rb(c + '34')}" for c in PROJ})
+    SC.line(40, "Beginning revolver", {c: (f"={BS.ref('F13')}" if c == "G" else f"={PREV[c]}42") for c in PROJ})
+    SC.line(41, "Revolver draw / (repayment)", {c: f"=MAX({c}39-{c}38,-{c}40)" for c in PROJ})
+    SC.line(42, "Ending revolver", {"F": f"={BS.ref('F13')}", **{c: f"={c}40+{c}41" for c in PROJ}}, total=True)
+    SC.line(43, "Ending Cash", {"F": f"={BS.ref('F5')}", **{c: f"={c}38+{c}41" for c in PROJ}}, total=True)
+    SC.section(45, "Interest expense / income (on beginning balances, no circularity)")
+    SC.line(46, "Interest on term debt", {c: f"={c}32*{rb(c + '35')}" for c in PROJ})
+    SC.line(47, "Interest on revolver", {c: f"={c}40*{rb(c + '36')}" for c in PROJ})
+    SC.line(48, "Total Interest Expense", {c: f"={c}46+{c}47" for c in PROJ}, total=True)
+    SC.line(49, "Interest income on cash", {c: f"={c}35*{rb(c + '37')}" for c in PROJ})
+
+    # --------------------------------------------------------- WACC
+    WA.section(4, "Cost of equity (CAPM)")
+    WA.line(5, "Risk-free rate (10Y Treasury, live)", {"D": f"={LM('risk_free')}"}, PCT)
+    WA.line(6, "Beta (Yahoo Finance)", {"D": f"={LM('beta')}"}, '0.00')
+    WA.line(7, "Equity risk premium", {"D": f"={LM('erp')}"}, PCT)
+    WA.line(8, "Beta x equity risk premium", {"D": "=D6*D7"}, PCT)
+    WA.line(9, "Cost of equity", {"D": "=D5+D8"}, PCT)
+    WA.section(10, "Cost of debt")
+    WA.line(11, "Pre-tax cost of debt (10-K interest / debt)", {"D": f"={LM('pre_tax_cost_of_debt')}"}, PCT)
+    WA.line(12, "Tax rate", {"D": f"={LM('tax_rate')}"}, PCT)
+    WA.line(13, "After-tax cost of debt", {"D": "=D11*(1-D12)"}, PCT)
+    WA.section(14, "Capital structure")
+    WA.line(15, "Market value of equity", {"D": "=Live_Data!$B$9"})
+    WA.line(16, "Total debt (latest 10-K)", {"D": f"={BS.ref('F13')}+{BS.ref('F14')}"})
+    WA.line(17, "Total Capital", {"D": "=D15+D16"}, total=True)
+    WA.line(18, "Weight of equity", {"D": "=IFERROR(D15/D17,1)"}, PCT)
+    WA.line(19, "Weight of debt", {"D": "=IFERROR(D16/D17,0)"}, PCT)
+    WA.line(21, "Weighted cost of equity", {"D": "=D18*D9"}, PCT)
+    WA.line(22, "Weighted cost of debt", {"D": "=D19*D13"}, PCT)
+    WA.line(23, "WACC", {"D": "=D21+D22"}, PCT)
+
+    # --------------------------------------------------------- DCF
+    DC.line(5, "EBIT", {c: f"={IS.ref(c + '11')}" for c in PROJ})
+    DC.line(6, "Tax rate", {c: f"={rb(c + '28')}" for c in PROJ}, PCT)
+    DC.line(7, "NOPAT (EBIT x (1 - tax rate))", {c: f"={c}5*(1-{c}6)" for c in PROJ})
+    DC.line(8, "Plus: depreciation & amortization", {c: f"={IS.ref(c + '13')}" for c in PROJ})
+    DC.line(9, "Less: capital expenditures", {c: f"={CF.ref(c + '12')}" for c in PROJ})
+    DC.line(10, "Less: increase in net working capital", {c: f"={CF.ref(c + '7')}+{CF.ref(c + '8')}" for c in PROJ})
+    DC.line(11, "Unlevered Free Cash Flow", {c: f"={c}7+{c}8+{c}9+{c}10" for c in PROJ}, total=True)
+    DC.line(13, "Discount period (years)", {c: i + 1 for i, c in enumerate(PROJ)}, '0.0')
+    DC.line(14, "WACC", {c: f"={WA.ref('$D$23')}" for c in PROJ}, PCT)
+    DC.line(15, "Discount factor", {c: f"=1/(1+{c}14)^{c}13" for c in PROJ}, '0.0000')
+    DC.line(16, "PV of unlevered free cash flow", {c: f"={c}11*{c}15" for c in PROJ})
+    DC.line(18, "Sum of PV of UFCF", {"D": "=SUM(G16:K16)"}, total=True)
+    DC.line(19, "Terminal growth rate (selected scenario)", {"D": f"={rb('$D$43')}"}, PCT)
+    DC.line(20, "Terminal value (perpetuity growth)", {"D": "=K11*(1+D19)/(K14-D19)"})
+    DC.line(21, "PV of terminal value", {"D": "=D20*K15"})
+    DC.line(22, "Enterprise Value", {"D": "=D18+D21"}, total=True)
+    DC.line(23, "Less: total debt incl. revolver (latest 10-K)", {"D": f"=-({BS.ref('F13')}+{BS.ref('F14')})"})
+    DC.line(24, "Plus: cash (latest 10-K)", {"D": f"={BS.ref('F5')}"})
+    DC.line(25, "Equity Value (incl. noncontrolling interests)", {"D": "=D22+D23+D24"}, total=True)
+    DC.line(26, "Less: noncontrolling interests' share", {"D": f"=-D25*{rb('G29')}"})
+    DC.line(27, "Equity Value to Common", {"D": "=D25+D26"}, total=True)
+    DC.line(28, "Shares outstanding (mm, latest cover page)", {"D": "=Live_Data!$B$8"}, '#,##0.0')
+    DC.line(29, "Target Price (implied value per share)", {"D": "=IFERROR(D27/D28,0)"}, PS)
+    DC.line(30, "Current share price", {"D": "=Live_Data!$B$6"}, PS)
+    DC.line(31, "Implied upside / (downside)", {"D": "=IFERROR(D29/D30-1,0)"}, PCT)
+    DC.line(32, "PV of terminal value as % of enterprise value", {"D": "=IFERROR(D21/D22,0)"}, PCT)
+    DC.line(33, "Implied terminal EV / EBITDA", {"D": f"=IFERROR(D20/{IS.ref('K14')},0)"}, MULT)
+
+    DC.section(35, "Sensitivity - implied value per share: WACC (rows) vs. terminal growth (columns)")
+    DC.put("C36", "WACC \\ g")
+    steps = [-0.01, -0.005, 0, 0.005, 0.01]
+    gcols = ["D", "E", "F", "G", "H"]
+    for gc, s in zip(gcols, steps):
+        DC.put(f"{gc}36", f"=$D$19+({s})" if s else "=$D$19", PCT)
+    for i, s in enumerate(steps):
+        r = 37 + i
+        DC.put(f"C{r}", f"=$K$14+({s})" if s else "=$K$14", PCT)
+        for gc in gcols:
+            w, g = f"$C{r}", f"{gc}$36"
+            pv = "+".join(f"${c}$11/(1+{w})^${c}$13" for c in PROJ)
+            tv = f"($K$11*(1+{g})/({w}-{g}))/(1+{w})^$K$13"
+            DC.put(f"{gc}{r}", f"=IFERROR(({pv}+{tv}+$D$23+$D$24)*(1+$D$26/$D$25)/$D$28,0)", PS)
+
+    # --------------------------------------------------------- Financial Ratios
+    i_, b_ = IS.ref, BS.ref
+    ratio_rows = [
+        ("Gross margin", lambda c: f"={i_(c + '9')}", PCT),
+        ("EBITDA margin", lambda c: f"={i_(c + '15')}", PCT),
+        ("EBIT margin", lambda c: f"={i_(c + '12')}", PCT),
+        ("Net margin (to common)", lambda c: f"=IFERROR({i_(c + '23')}/{i_(c + '5')},0)", PCT),
+        ("Return on equity", lambda c: f"=IFERROR({i_(c + '21')}/{b_(c + '18')},0)", PCT),
+        ("Return on assets", lambda c: f"=IFERROR({i_(c + '21')}/{b_(c + '10')},0)", PCT),
+        ("Current ratio", lambda c: f"=IFERROR({b_(c + '7')}/{b_(c + '12')},0)", MULT),
+        ("Debt / equity", lambda c: f"=IFERROR(({b_(c + '13')}+{b_(c + '14')})/{b_(c + '18')},0)", MULT),
+        ("Net debt / EBITDA", lambda c: f"=IFERROR(({b_(c + '13')}+{b_(c + '14')}-{b_(c + '5')})/{i_(c + '14')},0)", MULT),
+        ("Interest coverage (EBIT / interest)", lambda c: f"=IFERROR({i_(c + '11')}/{i_(c + '16')},0)", MULT),
+        ("Revenue growth", lambda c: f"={i_(c + '6')}", PCT),
+        ("Diluted EPS", lambda c: f"={i_(c + '25')}", PS),
+        ("P / E at current price", lambda c: f"=IFERROR(Live_Data!$B$6/{i_(c + '25')},0)", MULT),
+        ("EV / EBITDA at current price", lambda c: f"=IFERROR((Live_Data!$B$9+{b_(c + '13')}+{b_(c + '14')}-"
+                                                   f"{b_(c + '5')})/{i_(c + '14')},0)", MULT),
+    ]
+    for k, (lab, fn, fmt) in enumerate(ratio_rows):
+        FR.line(5 + k, lab, {c: fn(c) for c in (ALL if lab != "Revenue growth" else ALL[1:])}, fmt)
+
+    wb.defined_names["Scenario"] = DefinedName("Scenario", attr_text=f"{RB.ref('$D$5')}")
+    wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{DC.ref('$D$29')}")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(dest)
+    return dest
+
+
+# ------------------------------------------------------------------ verify
+def verify(path: Path) -> list[str]:
+    """The skill's verification scans. Returns a list of problems (empty = pass)."""
+    issues = []
+    wb = load_workbook(path)
+    label = path.stem
+    for ws in wb:
+        if ws["A1"].value != label:
+            issues.append(f"{ws.title}!A1 is {ws['A1'].value!r}, expected {label!r}")
+        for row in ws.iter_rows():
+            for c in row:
+                v = c.value
+                if isinstance(v, str) and v.startswith("="):
+                    up = v.upper()
+                    if "SUMPRODUCT" in up or "MMULT" in up:
+                        issues.append(f"{ws.title}!{c.coordinate} uses SUMPRODUCT/MMULT")
+                    want = GREEN if "!" in v else BLACK
+                    if (c.font.color.rgb if c.font.color else None) not in (f"00{want}", f"FF{want}", want):
+                        issues.append(f"{ws.title}!{c.coordinate} formula colour {c.font.color.rgb if c.font.color else None}")
+                elif isinstance(v, (int, float)) and not isinstance(v, bool):
+                    if ws.title != "Live_Data" or c.column > 1:
+                        rgb = c.font.color.rgb if c.font.color else None
+                        if rgb not in ("000000FF", "FF0000FF", "0000FF"):
+                            issues.append(f"{ws.title}!{c.coordinate} hardcode colour {rgb}")
+                if "$" in (c.number_format or "").replace('"$"', "$") and c.number_format != "General":
+                    if "$#" in c.number_format and not c.font.bold:
+                        issues.append(f"{ws.title}!{c.coordinate} has $ format but is not bold")
+    if wb["Live_Data"].sheet_state != "hidden":
+        issues.append("Live_Data is not hidden")
+    return issues

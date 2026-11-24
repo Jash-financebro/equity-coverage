@@ -6,6 +6,12 @@ site:
   linkedin: ""        # e.g. https://www.linkedin.com/in/your-handle
   portfolio: ""       # link to your Bloomberg-terminal-style portfolio site
   email: ""
+equity_risk_premium: 0.055   # used for the market-data WACC (Live_Data) and built models
 ratings:              # rating = f(upside to target) unless a model's .yml sets `rating:`
   buy_above: 0.15
   sell_below: -0.10
+
+# Fund dashboard. Leave holdings empty to use an equal-weight portfolio of every covered name.
+portfolio:
+  name: ""            # e.g. "SMIF — $550K actively managed fund"
+  holdings: []        # e.g. [{ticker: LNG, shares: 120, sector: Energy}, {ticker: NEE, shares: 300}]

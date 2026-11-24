@@ -1,0 +1,48 @@
+# Cheniere Energy (LNG) — JJ's 3-statement / DCF / comps model (models/LNG_Final_1.xlsx)
+ticker: LNG
+name: Cheniere Energy, Inc.
+sector: Energy
+published_target: 316.32          # target as pitched (model on 9/30/2026 inputs)
+target_price: "'LNG Comps & Target Price'!E38"   # 40% DCF perpetuity / 40% DCF exit multiple / 20% trading comps
+
+# Live links: these model cells are re-pointed at the Live_Data tab and refresh every trading day.
+# Historical 10-K actuals on 'LNG Historicals' stay exactly as you entered them; a new 10-K / 10-Q
+# raises a "needs review" flag (and a GitHub issue) so you can roll the model yourself.
+inputs:
+  "'LNG Historicals'!C86": price          # current share price
+  "'LNG Historicals'!C89": risk_free      # 10-yr Treasury yield
+  "'LNG Historicals'!E81": shares         # shares outstanding, latest SEC cover page
+  "'LNG Cover'!G33": street_mean          # Wall Street consensus (mean target)
+
+# The model's own scenario toggle: 1 = Bear, 2 = Current, 3 = Bull
+scenarios:
+  bear: {set: {"'LNG Sensitivity Analysis'!D6": 1}}
+  base: {set: {"'LNG Sensitivity Analysis'!D6": 2}}
+  bull: {set: {"'LNG Sensitivity Analysis'!D6": 3}}
+
+peers: [VG, WMB, KMI, TRGP, OKE]          # same peer set as the model's comps tab
+
+outputs:
+  DCF - perpetuity growth: "'LNG DCF'!D50"
+  DCF - exit multiple: "'LNG DCF'!E50"
+  Trading comps (EV/EBITDA): "'LNG Comps & Target Price'!D29"
+  WACC: "'LNG WACC'!D39"
+  Terminal growth: "'LNG DCF'!D22"
+  Exit EV/EBITDA: "'LNG DCF'!D32"
+  Monte Carlo mean (50k trials): "'LNG Monte Carlo'!C12"
+
+thesis: >-
+  Cheniere is the largest U.S. LNG exporter, and most of its Sabine Pass and Corpus Christi capacity
+  is sold under long-term fixed-fee contracts, so cash flow depends far more on volumes than on
+  commodity prices. Our blended $316 target (40% perpetuity DCF, 40% exit-multiple DCF, 20% trading
+  comps) points to upside as the Corpus Christi Stage 3 trains ramp volumes, while buybacks of more
+  than $10B authorized through 2030 and a 10%-a-year dividend growth commitment return the excess cash.
+catalysts:
+  - "Corpus Christi Stage 3 trains reaching substantial completion and lifting volumes"
+  - "FID on Sabine Pass Expansion Phase 1 (bull case adds terminal EBITDA)"
+  - "Continued buybacks under the >$10B authorization through 2030"
+risks:
+  - "Fixed liquefaction fee / margin compression on uncontracted volumes"
+  - "Construction delays or cost overruns on expansion projects"
+  - "Global LNG oversupply later this decade pressuring spot cargo margins"
+  - "Large noncontrolling interest in CQP dilutes value attributable to LNG holders"

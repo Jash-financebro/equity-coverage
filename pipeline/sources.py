@@ -95,16 +95,31 @@ def annual_filings(subs: dict, cik: int, limit: int = 6) -> list[dict]:
     return out
 
 
+def recent_filings(subs: dict, cik: int, forms=("10-K", "10-K/A", "10-Q", "10-Q/A", "20-F", "40-F"), limit=8):
+    recent = subs.get("filings", {}).get("recent", {})
+    out = []
+    for i, form in enumerate(recent.get("form", [])):
+        if form in forms:
+            accn = recent["accessionNumber"][i]
+            base = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accn.replace('-', '')}"
+            out.append({"form": form, "filed": recent["filingDate"][i], "accession": accn,
+                        "period": recent.get("reportDate", [""] * (i + 1))[i],
+                        "url": f"{base}/{recent['primaryDocument'][i]}"})
+            if len(out) >= limit:
+                break
+    return out
+
+
 # ------------------------------------------------------------------ prices
 def price_history(ticker: str) -> dict:
     """1y of daily closes plus the latest price. Yahoo first, Stooq fallback."""
     sym = ticker.upper().replace(".", "-")
     try:
         if FIXTURES:
-            data = _fixture(f"chart_{sym}.json")
+            data = _fixture(f"chart_{_fname(sym)}.json")
         else:
             data = _get(
-                f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=1y&interval=1d",
+                f"https://query1.finance.yahoo.com/v8/finance/chart/{requests.utils.quote(sym)}?range=1y&interval=1d",
                 headers={"User-Agent": "Mozilla/5.0 (ModelPulse)"})
         res = data["chart"]["result"][0]
         closes = res["indicators"]["quote"][0]["close"]
@@ -125,3 +140,64 @@ def price_history(ticker: str) -> dict:
     row = text.strip().splitlines()[1].split(",")
     return {"price": float(row[6]), "as_of": row[1], "currency": "USD",
             "history": [], "source": "Stooq"}
+
+
+# --------------------------------------------------- Yahoo quote summary
+_crumb = None
+
+
+def _fname(sym: str) -> str:
+    return sym.replace("^", "_")
+
+
+def _yahoo_crumb():
+    global _crumb
+    if _crumb is None:
+        h = {"User-Agent": "Mozilla/5.0 (ModelPulse)"}
+        try:
+            _session.get("https://fc.yahoo.com", headers=h, timeout=20)
+        except Exception:  # noqa: BLE001 - it 404s but still sets the cookie
+            pass
+        _crumb = _get("https://query2.finance.yahoo.com/v1/test/getcrumb", headers=h, as_json=False, tries=2)
+    return _crumb
+
+
+def quote_summary(ticker: str) -> dict:
+    """Street consensus targets, beta, sector. Returns {} if Yahoo refuses."""
+    sym = ticker.upper().replace(".", "-")
+    try:
+        if FIXTURES:
+            data = _fixture(f"quoteSummary_{_fname(sym)}.json")
+        else:
+            data = _get(
+                f"https://query2.finance.yahoo.com/v10/finance/quoteSummary/{sym}"
+                f"?modules=financialData,defaultKeyStatistics,summaryProfile&crumb={_yahoo_crumb()}",
+                headers={"User-Agent": "Mozilla/5.0 (ModelPulse)"}, tries=2)
+        res = data["quoteSummary"]["result"][0]
+    except Exception as exc:  # noqa: BLE001
+        if not FIXTURES:
+            print(f"  ! consensus unavailable for {sym}: {exc}")
+        return {}
+    fd, ks, sp = res.get("financialData", {}), res.get("defaultKeyStatistics", {}), res.get("summaryProfile", {})
+    raw = lambda d, k: (d.get(k) or {}).get("raw") if isinstance(d.get(k), dict) else d.get(k)  # noqa: E731
+    return {
+        "target_mean": raw(fd, "targetMeanPrice"), "target_median": raw(fd, "targetMedianPrice"),
+        "target_high": raw(fd, "targetHighPrice"), "target_low": raw(fd, "targetLowPrice"),
+        "analysts": raw(fd, "numberOfAnalystOpinions"), "recommendation": fd.get("recommendationKey"),
+        "beta": raw(ks, "beta"), "sector": sp.get("sector"), "industry": sp.get("industry"),
+        "website": sp.get("website"), "source": "Yahoo Finance",
+    }
+
+
+def rates() -> dict:
+    """10-year Treasury yield and 13-week T-bill yield (decimals)."""
+    out = {}
+    for key, sym in (("rf_10y", "^TNX"), ("tbill_3m", "^IRX")):
+        try:
+            p = price_history(sym)["price"]
+            out[key] = round((p / 10 if p > 20 else p) / 100, 5)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ! {sym} unavailable: {exc}")
+    out.setdefault("rf_10y", 0.042)
+    out.setdefault("tbill_3m", out["rf_10y"])
+    return out

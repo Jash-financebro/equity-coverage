@@ -47,6 +47,20 @@ LINE_ITEMS: list[tuple[str, str, str, list[str]]] = [
     ("equity", "Shareholders' equity", "stock", [
         "StockholdersEquity",
         "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"]),
+    # appended later (keep order: Live_Data rows are fixed)
+    ("ppe_net", "PP&E, net", "stock", [
+        "PropertyPlantAndEquipmentNet",
+        "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization"]),
+    ("sga", "SG&A", "flow", ["SellingGeneralAndAdministrativeExpense", "GeneralAndAdministrativeExpense"]),
+    ("buybacks", "Share repurchases", "flow", ["PaymentsForRepurchaseOfCommonStock"]),
+    ("debt_repaid", "Debt repayments", "flow", ["RepaymentsOfLongTermDebt", "RepaymentsOfDebt"]),
+    ("debt_issued", "Debt issued", "flow", ["ProceedsFromIssuanceOfLongTermDebt", "ProceedsFromIssuanceOfDebt"]),
+    ("cfi", "Cash from investing", "flow", [
+        "NetCashProvidedByUsedInInvestingActivities",
+        "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations"]),
+    ("cff", "Cash from financing", "flow", [
+        "NetCashProvidedByUsedInFinancingActivities",
+        "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations"]),
 ]
 
 PER_SHARE = {"eps_diluted"}
@@ -128,6 +142,17 @@ def build(facts: dict, years: int = 5) -> dict:
     for i in range(len(ends)):
         if items["gross_profit"][i] is None and items["revenue"][i] is not None and items["cogs"][i] is not None:
             items["gross_profit"][i] = round(items["revenue"][i] - items["cogs"][i], 3)
+
+    # total liabilities is often not tagged: derive it from assets - total equity (incl. NCI)
+    if any(v is None for v in items["total_liabilities"]):
+        eq_total = _annual_values(_facts(facts, "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+                                         "USD"), "stock")
+        for i, e in enumerate(ends):
+            if items["total_liabilities"][i] is None and items["total_assets"][i] is not None:
+                eq = eq_total.get(e, (None,))[0]
+                eq = eq / 1e6 if eq is not None else items["equity"][i]
+                if eq is not None:
+                    items["total_liabilities"][i] = round(items["total_assets"][i] - eq, 3)
 
     labels = [f"FY{_d(e).year}" for e in ends]
     return {"periods": ends, "labels": labels, "items": items, "concepts": used,

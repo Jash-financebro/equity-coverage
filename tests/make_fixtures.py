@@ -24,6 +24,10 @@ FLOW = {  # $mm
     "NetCashProvidedByUsedInOperatingActivities": [76740, 89035, 87582, 118548, 136162],
     "PaymentsToAcquirePropertyPlantAndEquipment": [20622, 23886, 28107, 44477, 64551],
     "PaymentsOfDividends": [16521, 18135, 19800, 21771, 24082],
+    "PaymentsForRepurchaseOfCommonStock": [27385, 32696, 22245, 17254, 18420],
+    "RepaymentsOfLongTermDebt": [8250, 9023, 2750, 29070, 2999],
+    "NetCashProvidedByUsedInInvestingActivities": [-27577, -30311, -22680, -96970, -72599],
+    "NetCashProvidedByUsedInFinancingActivities": [-48486, -58876, -43935, -37757, -51699],
 }
 STOCK = {
     "CashAndCashEquivalentsAtCarryingValue": [14224, 13931, 34704, 18315, 30242],
@@ -34,6 +38,7 @@ STOCK = {
     "LongTermDebtCurrent": [8072, 2749, 5247, 2249, 2999],
     "LongTermDebtNoncurrent": [50074, 47032, 41990, 42688, 40152],
     "StockholdersEquity": [141988, 166542, 206223, 268477, 343479],
+    "PropertyPlantAndEquipmentNet": [59715, 74398, 95641, 135591, 204966],
 }
 EPS = [8.05, 9.65, 9.68, 11.80, 13.64]
 SHARES = [7608, 7540, 7472, 7469, 7465]
@@ -66,7 +71,9 @@ facts = {"cik": CIK, "entityName": "MICROSOFT CORP", "facts": {
 (OUT / f"companyfacts_{CIK}.json").write_text(json.dumps(facts))
 
 (OUT / "company_tickers.json").write_text(json.dumps(
-    {"0": {"cik_str": CIK, "ticker": "MSFT", "title": "MICROSOFT CORP"}}))
+    {"0": {"cik_str": CIK, "ticker": "MSFT", "title": "MICROSOFT CORP"},
+     "1": {"cik_str": 1341439, "ticker": "ORCL", "title": "ORACLE CORP"},
+     "2": {"cik_str": 1652044, "ticker": "GOOGL", "title": "ALPHABET INC."}}))
 
 subs = {"cik": str(CIK), "name": "MICROSOFT CORP", "tickers": ["MSFT"], "filings": {"recent": {
     "accessionNumber": [f"0000950170-{y % 100 + 1:02d}-0000{y % 10}" for y in reversed(YEARS)] + ["0000950170-25-000100"],
@@ -84,4 +91,47 @@ chart = {"chart": {"result": [{"meta": {"currency": "USD", "symbol": "MSFT",
                                         "regularMarketPrice": round(closes[-1], 2), "regularMarketTime": stamps[-1]},
                                "timestamp": stamps, "indicators": {"quote": [{"close": closes}]}}]}}
 (OUT / "chart_MSFT.json").write_text(json.dumps(chart))
+
+
+def series(sym, start, drift, amp, period=40):
+    c = [start + amp * math.sin(i / period) + i * drift for i in range(len(stamps))]
+    return {"chart": {"result": [{"meta": {"currency": "USD", "symbol": sym, "regularMarketPrice": round(c[-1], 2),
+                                           "regularMarketTime": stamps[-1]},
+                                  "timestamp": stamps, "indicators": {"quote": [{"close": c}]}}]}}
+
+
+(OUT / "chart_SPY.json").write_text(json.dumps(series("SPY", 590, 0.3, 20, 50)))
+(OUT / "chart__TNX.json").write_text(json.dumps(series("^TNX", 4.3, 0, 0.1)))
+(OUT / "chart__IRX.json").write_text(json.dumps(series("^IRX", 4.0, -0.002, 0.05)))
+(OUT / "chart_ORCL.json").write_text(json.dumps(series("ORCL", 170, 0.2, 25, 30)))
+(OUT / "chart_GOOGL.json").write_text(json.dumps(series("GOOGL", 165, 0.15, 12, 35)))
+
+
+def qs(mean, median, hi, lo, n, beta, sector):
+    return {"quoteSummary": {"result": [{
+        "financialData": {"targetMeanPrice": {"raw": mean}, "targetMedianPrice": {"raw": median},
+                          "targetHighPrice": {"raw": hi}, "targetLowPrice": {"raw": lo},
+                          "numberOfAnalystOpinions": {"raw": n}, "recommendationKey": "buy"},
+        "defaultKeyStatistics": {"beta": {"raw": beta}},
+        "summaryProfile": {"sector": sector, "industry": "Software - Infrastructure", "website": "https://example.com"}}]}}
+
+
+(OUT / "quoteSummary_MSFT.json").write_text(json.dumps(qs(612.5, 625.0, 700, 480, 55, 1.05, "Technology")))
+(OUT / "quoteSummary_ORCL.json").write_text(json.dumps(qs(260, 255, 330, 175, 40, 1.3, "Technology")))
+(OUT / "quoteSummary_GOOGL.json").write_text(json.dumps(qs(240, 238, 290, 185, 60, 1.0, "Communication Services")))
+
+# two peers: same structure, scaled numbers, different CIKs
+for cik, tick, name, k in ((1341439, "ORCL", "ORACLE CORP", 0.22), (1652044, "GOOGL", "ALPHABET INC.", 1.25)):
+    f2 = json.loads(json.dumps(facts))
+    f2["cik"], f2["entityName"] = cik, name
+    for concept in f2["facts"]["us-gaap"].values():
+        for unit, rows in concept["units"].items():
+            for r in rows:
+                if unit != "USD/shares":
+                    r["val"] = r["val"] * k
+    f2["facts"]["dei"]["EntityCommonStockSharesOutstanding"]["units"]["shares"][0]["val"] = 7433038381 * k * 0.4
+    (OUT / f"companyfacts_{cik}.json").write_text(json.dumps(f2))
+    s2 = json.loads(json.dumps(subs))
+    s2["name"] = name
+    (OUT / f"submissions_{cik}.json").write_text(json.dumps(s2))
 print("fixtures written to", OUT)

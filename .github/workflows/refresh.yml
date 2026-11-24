@@ -3,7 +3,8 @@ name: Refresh models & deploy site
 on:
   push:
     branches: [main]
-    paths: ["models/**", "pipeline/**", "site/assets/**", "site/index.html", "templates/**", "config.yml", ".github/workflows/**"]
+    paths: ["models/**", "reports/**", "pipeline/**", "site/assets/**", "site/index.html", "templates/**",
+            "config.yml", "tests/**", ".github/workflows/**"]
   schedule:
     - cron: "40 21 * * 1-5"   # weekdays, ~40 min after the US close (21:40 UTC)
   workflow_dispatch: {}
@@ -12,6 +13,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  issues: write
 
 concurrency:
   group: refresh
@@ -20,20 +22,27 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-24.04
+    timeout-minutes: 40
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # model "last updated" dates come from git history
 
       - name: Install LibreOffice (headless) + Python deps
         run: |
+          sudo rm -f /var/lib/man-db/auto-update          # skip the slow man-db trigger
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends libreoffice-calc-nogui python3-uno fonts-liberation
-          /usr/bin/python3 -m pip install --break-system-packages -q requests pyyaml openpyxl
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+            libreoffice-calc-nogui python3-uno fonts-liberation
+          /usr/bin/python3 -m pip install --break-system-packages -q requests pyyaml openpyxl reportlab matplotlib
 
       - name: Self-test (offline fixtures)
-        run: /usr/bin/python3 tests/test_offline.py
+        run: |
+          /usr/bin/python3 tests/test_builder.py
+          /usr/bin/python3 tests/test_offline.py
 
       - name: Refresh every model from SEC EDGAR + market data
         env:
@@ -42,11 +51,26 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
         run: /usr/bin/python3 pipeline/run.py
 
+      - name: Open an issue for each new SEC filing (GitHub emails you)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          /usr/bin/python3 - <<'PY'
+          import json, subprocess
+          for a in json.load(open("site/data/alerts.json")):
+              title = f"{a['ticker']}: new {a['form']} filed {a['filed']} — review the model"
+              body = (f"SEC EDGAR shows a new **{a['form']}** for **{a['ticker']}** (period {a['period']}), "
+                      f"filed {a['filed']}.\n\n- Filing: {a['url']}\n- Model last updated: {a['model_date']}\n\n"
+                      "Roll the historicals and assumptions, commit the updated model, and close this issue. "
+                      "The site shows a *Review* flag until the model is newer than the filing.")
+              subprocess.run(["gh", "issue", "create", "--title", title, "--body", body], check=False)
+          PY
+
       - name: Save refreshed data to the repo (keeps target-price history)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data site/downloads
+          git add site/data site/downloads models
           git diff --cached --quiet || git commit -m "Data refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push || (git pull --rebase && git push)
 

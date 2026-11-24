@@ -1,6 +1,6 @@
-"""End-to-end offline test: fixtures -> pipeline -> refreshed Excel + JSON.
+"""End-to-end offline test: fixtures -> pipeline (ticker-only build + peers) -> JSON, Excel, PDF.
 
-    /usr/bin/python3 tests/test_offline.py
+    /usr/bin/python3 tests/test_offline.py [--keep]
 """
 import json
 import os
@@ -15,33 +15,36 @@ subprocess.run([sys.executable, str(ROOT / "tests" / "make_fixtures.py")], check
 
 tmp = Path(tempfile.mkdtemp())
 work = tmp / "repo"
-shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns(".git", "site"))
+shutil.copytree(ROOT, work, ignore=shutil.ignore_patterns(".git", "site", "reports"))
+shutil.copytree(ROOT / "site", work / "site", ignore=shutil.ignore_patterns("data", "downloads"))
 shutil.rmtree(work / "models")
 (work / "models").mkdir()
-shutil.copy2(ROOT / "templates" / "DCF_Template.xlsx", work / "models" / "MSFT.xlsx")
-(work / "models" / "MSFT.yml").write_text('set:\n  "DCF!B4": 0.13\n  "DCF!B11": 0.085\n  "DCF!B12": 0.035\n')
+(work / "models" / "MSFT.yml").write_text("build: true\nstance: Balanced\npeers: [ORCL, GOOGL]\n"
+                                          "thesis: Test thesis.\nrisks: [Test risk]\n")
 
 env = dict(os.environ, FIXTURES_DIR=str(ROOT / "tests" / "fixtures"))
 subprocess.run([sys.executable, str(work / "pipeline" / "run.py")], check=True, env=env, cwd=work)
 d = json.loads((work / "site" / "data" / "MSFT.json").read_text())
 
-# independent recompute of the template DCF from the fixture numbers
-rev, m, da, cx = 281724, 128528 / 281724, 34153 / 281724, 64551 / 281724
-g, t, nwc, w, tg = .13, .21, .05, .085, .035
-pv, prev = 0, rev
-for n in range(1, 6):
-    r = prev * (1 + g)
-    f = r * m * (1 - t) + r * da - r * cx - (r - prev) * nwc
-    pv += f / (1 + w) ** n
-    prev, last = r, f
-expected = (pv + last * (1 + tg) / (w - tg) / (1 + w) ** 5 - (2999 + 40152 - 30242)) / 7433.038381
-
 assert d["status"] == "ok", d
-assert abs(d["target"] - expected) < 0.02, (d["target"], expected)
-assert d["financials"]["labels"] == ["FY2021", "FY2022", "FY2023", "FY2024", "FY2025"]
-assert d["financials"]["items"]["net_income"][-1] == 101832  # 10-Q fact ignored
+assert (work / "models" / "MSFT_v1.xlsx").exists(), "builder did not save MSFT_v1.xlsx"
+assert abs(d["target"] - d["scenarios"]["base"]) < 0.01 and 150 < d["target"] < 300, d["target"]
+assert d["scenarios"]["bear"] < d["scenarios"]["base"] < d["scenarios"]["bull"], d["scenarios"]
+assert d["financials"]["items"]["net_income"][-1] == 101832     # 10-Q fact ignored
+assert d["consensus"]["target_median"] == 625.0
+assert d["peers"]["implied"]["ev_ebitda"]["median"] and len(d["peers"]["rows"]) == 3
+assert d["peers"]["peer_avg_street_upside"] is not None
+assert len(d["football"]) >= 3, d["football"]
+assert 0.04 < d["wacc"]["risk_free"] < 0.046
+assert (work / "site" / "downloads" / "MSFT_tearsheet.pdf").stat().st_size > 10000
 assert (work / "site" / "downloads" / "MSFT_model_live.xlsx").exists()
-pe = next(i["value"] for g_ in d["ratios"] for i in g_["items"] if i["label"] == "P/E")
+fund = json.loads((work / "site" / "data" / "fund.json").read_text())
+assert fund["stats"]["sharpe"] is not None and fund["holdings"][0]["ticker"] == "MSFT"
+pe = next(i["value"] for g in d["ratios"] for i in g["items"] if i["label"] == "P/E")
 assert abs(pe - d["price"] / 13.64) < 0.01
-shutil.rmtree(tmp, ignore_errors=True)
-print(f"OK  target {d['target']:.2f} == {expected:.2f}; ratios & downloads present")
+print(f"OK  target {d['target']:.2f} | scenarios {d['scenarios']} | peers-implied avg "
+      f"{d['peers']['implied']['average']:.2f} | Sharpe {fund['stats']['sharpe']:.2f}")
+if "--keep" in sys.argv:
+    print("kept:", work)
+else:
+    shutil.rmtree(tmp, ignore_errors=True)

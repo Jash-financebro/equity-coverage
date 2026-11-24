@@ -18,22 +18,10 @@ from com.sun.star.beans import PropertyValue  # type: ignore
 
 from fundamentals import LINE_ITEMS
 
-SHEET = "Live_Data"
+from layout import (FIRST_ITEM_ROW, LAST_ROW, MARKET, MARKET_HEADER_ROW, SCALARS, SHEET, YEAR_COLS,  # noqa: F401
+                    item_row, ref_for)
+
 BLUE, GREEN, BLACK, GREY = 0x0000FF, 0x008000, 0x000000, 0x666666
-YEAR_COLS = ["B", "C", "D", "E", "F"]          # oldest -> newest; F is always FY0
-FIRST_ITEM_ROW = 17
-SCALARS = {  # key -> (row, label, number format, named range)
-    "ticker": (4, "Ticker", None, None),
-    "company": (5, "Company", None, None),
-    "price": (6, "Share price ($)", "#,##0.00", "LD_Price"),
-    "price_date": (7, "Price date", None, None),
-    "shares": (8, "Shares outstanding (mm)", "#,##0.0", "LD_Shares"),
-    "market_cap": (9, "Market cap ($mm)", "#,##0", "LD_MarketCap"),
-    "net_debt": (10, "Net debt, latest FY ($mm)", "#,##0;(#,##0);-", "LD_NetDebt"),
-    "tenk_filed": (11, "Latest 10-K filed", None, None),
-    "tenk_url": (12, "Latest 10-K link", None, None),
-    "sources": (13, "Sources", None, None),
-}
 TARGET_LABELS = [
     "target price", "price target", "implied share price", "implied price per share",
     "implied value per share", "intrinsic value per share", "fair value per share",
@@ -46,25 +34,6 @@ def _prop(name, value):
     p = PropertyValue()
     p.Name, p.Value = name, value
     return p
-
-
-def item_row(key: str) -> int:
-    for i, (k, *_rest) in enumerate(LINE_ITEMS):
-        if k == key:
-            return FIRST_ITEM_ROW + i
-    raise KeyError(key)
-
-
-def ref_for(source: str) -> str:
-    """'price' -> $Live_Data.$B$6 ; 'revenue.FY0' -> $Live_Data.$F$17 ; 'capex.FY-2' -> $D$..."""
-    if source in SCALARS:
-        return f"${SHEET}.$B${SCALARS[source][0]}"
-    key, _, period = source.partition(".")
-    period = period or "FY0"
-    back = 0 if period.upper() == "FY0" else int(period.upper().replace("FY", ""))
-    if not -4 <= back <= 0:
-        raise ValueError(f"period out of range in {source!r} (use FY0..FY-4)")
-    return f"${SHEET}.${YEAR_COLS[4 + back]}${item_row(key)}"
 
 
 class Calc:
@@ -168,11 +137,12 @@ def write_live_data(doc, data: dict) -> None:
     if not sheets.hasByName(SHEET):
         sheets.insertNewByName(SHEET, sheets.getCount())
     sh = sheets.getByName(SHEET)
-    sh.getCellRangeByName("A1:H60").clearContents(1 | 2 | 4 | 16)  # values, dates, strings, formulas
+    sh.getCellRangeByName(f"A1:H{LAST_ROW}").clearContents(1 | 2 | 4 | 16)  # values, dates, strings, formulas
 
-    _set(sh.getCellRangeByName("A1"), "LIVE DATA — refreshed automatically from SEC EDGAR (10-K XBRL) "
-         "and market prices. Don't type here; link your model to these cells.", BLACK, bold=True)
-    _set(sh.getCellRangeByName("A2"), f"Last refresh: {data['refreshed_at']}", GREY)
+    _set(sh.getCellRangeByName("A1"), data.get("model_label", ""), BLACK)
+    _set(sh.getCellRangeByName("A2"), "LIVE DATA (historicals source: SEC EDGAR 10-K XBRL; prices & market data: "
+         "Yahoo Finance). Refreshed automatically — link your model to these cells. "
+         f"Last refresh: {data['refreshed_at']}", GREY)
 
     num = {code: _fmt(doc, code) for code in
            ("#,##0.00", "#,##0.0", "#,##0", "#,##0;(#,##0);-", "#,##0.0;(#,##0.0);-")}
@@ -203,6 +173,12 @@ def write_live_data(doc, data: dict) -> None:
             _set(sh.getCellRangeByName(f"{col}{r}"), v, BLUE, num[code])
         _set(sh.getCellRangeByName(f"G{r}"), fin["concepts"].get(key, "n/a"), GREY)
 
+    mk = data.get("market") or {}
+    _set(sh.getCellRangeByName(f"A{MARKET_HEADER_ROW}"), "Market data & cost of capital", BLACK, bold=True)
+    for key, (row, label, code, _n) in MARKET.items():
+        _set(sh.getCellRangeByName(f"A{row}"), label, BLACK)
+        _set(sh.getCellRangeByName(f"B{row}"), mk.get(key), BLUE, _fmt(doc, code))
+
     cols = sh.getColumns()
     cols.getByIndex(0).Width = 7200
     for i in range(1, 6):
@@ -212,7 +188,7 @@ def write_live_data(doc, data: dict) -> None:
     # named ranges so models can say =LD_Price or =LD_REVENUE
     names = doc.NamedRanges
     addr = uno.createUnoStruct("com.sun.star.table.CellAddress")
-    wanted = {n: f"${SHEET}.$B${row}" for _k, (row, _l, _f, n) in SCALARS.items() if n}
+    wanted = {n: f"${SHEET}.$B${row}" for _k, (row, _l, _f, n) in list(SCALARS.items()) + list(MARKET.items()) if n}
     for key, *_ in LINE_ITEMS:
         wanted[f"LD_{key.upper()}"] = f"${SHEET}.$F${item_row(key)}"
     for name, content in wanted.items():
@@ -225,7 +201,7 @@ def link_inputs(doc, inputs: dict) -> list[str]:
     done = []
     for target, source in (inputs or {}).items():
         cell = _cell(doc, target)
-        cell.setFormula("=" + ref_for(source))
+        cell.setFormula("=" + ref_for(source, calc_syntax=True))
         cell.CharColor = GREEN  # cross-sheet link
         done.append(f"{target} <- {source}")
     return done
@@ -287,6 +263,33 @@ def find_target(doc, explicit: str | None):
     return (best[2], best[1]) if best else (None, None)
 
 
+def run_scenarios(doc, cfg: dict, base_target) -> dict:
+    """Bull/bear (or any named) cases: apply overrides, recalc, read target, restore."""
+    out = {"base": base_target}
+    names = doc.NamedRanges
+    selector = names.getByName("Scenario").getReferredCells().getCellByPosition(0, 0) \
+        if names.hasByName("Scenario") else None
+    scen = dict(cfg.get("scenarios") or {})
+    if not scen and selector is not None:  # models from the builder: 1 = bull, 2 = base, 3 = bear
+        scen = {"bull": {"selector": 1}, "base": {"selector": 2}, "bear": {"selector": 3}}
+    for name, spec in scen.items():
+        saved = []
+        if "selector" in spec and selector is not None:
+            saved.append((selector, selector.getFormula()))
+            selector.setValue(float(spec["selector"]))
+        for ref, v in (spec.get("set") or {}).items():
+            cell = _cell(doc, ref)
+            saved.append((cell, cell.getFormula()))
+            cell.setValue(float(v)) if isinstance(v, (int, float)) else cell.setString(str(v))
+        doc.calculateAll()
+        t, _ = find_target(doc, cfg.get("target_price"))
+        out[name] = t if isinstance(t, float) else None
+        for cell, f in reversed(saved):
+            cell.setFormula(f)
+    doc.calculateAll()
+    return out
+
+
 def read_outputs(doc, outputs: dict) -> dict:
     out = {}
     for label, ref in (outputs or {}).items():
@@ -315,13 +318,15 @@ def refresh(calc: Calc, src: Path, dest: Path, data: dict, cfg: dict) -> dict:
         links = link_inputs(doc, cfg.get("inputs")) + set_values(doc, cfg.get("set"))
         doc.calculateAll()
         target, where = find_target(doc, cfg.get("target_price"))
+        scenarios = run_scenarios(doc, cfg, target if isinstance(target, float) else None)
         outputs = read_outputs(doc, cfg.get("outputs"))
         save_xlsx(doc, dest)
     finally:
         doc.close(True)
         shutil.rmtree(work.parent, ignore_errors=True)
     return {"target": target if isinstance(target, float) else None, "target_cell": where,
-            "links": links, "outputs": outputs}
+            "links": links, "outputs": outputs,
+            "scenarios": scenarios}
 
 
 if __name__ == "__main__":  # quick manual check: python excel.py model.xlsx

@@ -144,3 +144,19 @@ tr.link:hover td { background: var(--line-2); }
   .hero h1 { font-size: 24px; }
   .kpi.hero-n .v { font-size: 32px; }
 }
+
+.flag { display: inline-block; font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 99px; border: 1px solid var(--hold); color: var(--hold); margin-left: 4px; }
+.warn a { color: inherit; }
+tr.selfrow td { background: var(--line-2); font-weight: 500; }
+tr.medrow td { border-top: 1px solid var(--line); color: var(--ink-2); font-weight: 500; }
+.kvrow { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); }
+.kvrow .kv { flex-direction: column; gap: 2px; border-bottom: 0; border-right: 1px solid var(--line-2); }
+.kvrow .kv:last-child { border-right: 0; }
+.kvrow .kv span:last-child { font-size: 16px; }
+.hb { display: grid; grid-template-columns: 160px 1fr 60px; align-items: center; gap: 10px; font-size: 13px; margin: 6px 0; }
+.hb span:first-child { color: var(--ink-2); }
+.hb span:last-child { text-align: right; }
+.hb-track { height: 10px; background: var(--line-2); border-radius: 4px; }
+.hb-fill { height: 10px; background: var(--s1); border-radius: 0 4px 4px 0; }
+.tiles + .tiles { margin-top: -20px; }
+@media (max-width: 860px) { .kvrow { grid-template-columns: repeat(2, 1fr); } }
