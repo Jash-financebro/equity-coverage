@@ -49,7 +49,9 @@ jobs:
           git add -A library ':!library/index.json'
           git commit -q -m "Library: generate $T"
           for i in 1 2 3 4 5 6 7 8; do
-            git fetch -q origin main && git rebase -q origin/main
+            git fetch -q origin main
+            git checkout -q -- library/index.json 2>/dev/null || rm -f library/index.json   # rebuilt below
+            git rebase -q origin/main
             python3 -c "import sys; sys.path.insert(0, 'pipeline'); import generate; generate.update_index()"
             git add library/index.json
             made=0; git commit -q -m "Library index: $T" && made=1
