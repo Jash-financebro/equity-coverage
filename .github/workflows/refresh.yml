@@ -25,10 +25,11 @@ jobs:
     timeout-minutes: 40
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy_try.outputs.page_url || steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: main                 # always start from the latest data commit, not the triggering SHA
           fetch-depth: 0            # model "last updated" dates come from git history
 
       - name: Install LibreOffice (headless) + Python deps
@@ -72,11 +73,18 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add site/data site/downloads models
           git diff --cached --quiet || git commit -m "Data refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push || (git pull --rebase && git push)
+          # a newer refresh always wins over older generated data
+          git push || (git pull --rebase -X theirs origin main && git push)
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site
+      - id: deploy_try
+        uses: actions/deploy-pages@v4
+        continue-on-error: true     # GitHub sometimes can't see a just-uploaded artifact yet
+      - if: steps.deploy_try.outcome == 'failure'
+        run: sleep 45
       - id: deploy
+        if: steps.deploy_try.outcome == 'failure'
         uses: actions/deploy-pages@v4
