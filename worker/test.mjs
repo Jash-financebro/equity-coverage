@@ -8,6 +8,8 @@ globalThis.fetch = async (url, init = {}) => {
   if (url.startsWith("https://fc.yahoo.com")) return new Response("", { headers: { "set-cookie": "A3=abc; Path=/" } });
   if (url.includes("/getcrumb")) return new Response("CRUMB");
   if (url.includes("/v8/finance/chart/")) { const t0 = Date.parse("2025-11-24") / 1000; return new Response(JSON.stringify({ chart: { result: [{ meta: { regularMarketPrice: 110, longName: "X" }, timestamp: [t0, t0 + 604800], indicators: { quote: [{ close: [100, 110] }] } }] } })); }
+  if (url.includes("/contents/site/universe/stats.json")) return new Response(JSON.stringify({ data: { XOM: [8.0, 4200] } }));
+  if (url.includes("/quoteSummary/XOM")) return new Response("{}", { status: 401 });
   if (url.includes("/quoteSummary/")) { if (!url.includes("crumb=CRUMB")) return new Response("{}", { status: 401 });
     return new Response(JSON.stringify({ quoteSummary: { result: [{ price: { longName: "Coca-Cola", marketCap: { raw: 4.2e11 } }, summaryDetail: { trailingPE: { raw: 24.5 }, dividendYield: { raw: 0.03 }, beta: { raw: 0.45 } } }] } })); }
   if (url.includes("/contents/site/universe/search.json")) return new Response(JSON.stringify([["XOM", "Exxon Mobil Corp", "Energy"], ["KO", "Coca-Cola Co", "Consumer Staples"]]));
@@ -64,5 +66,6 @@ ok(s === 429, "rate limit " + s + JSON.stringify(b));
   r = await worker.fetch(new Request("https://w.dev/api/update?ticker=KO", { method: "POST", body: new Uint8Array([1, 2, 3]), headers: { "CF-Connecting-IP": "8.8.8.8" } }), env, ctx);
   ok(r.status === 415, "non-xlsx rejected " + r.status); }
 [s, b] = await call("/api/quotes?t=ko,xom"); ok(s === 200 && b.quotes.length === 2 && b.quotes[0].pe === 24.5 && b.quotes[0].closes.length === 2 && b.quotes[0].sector === "Consumer Staples" && b.spy.length === 2, "quotes " + JSON.stringify(b).slice(0, 300));
+ok(Math.abs(b.quotes[1].pe - 110 / 8) < 1e-9 && b.quotes[1].market_cap === 110 * 4200e6 && b.quotes[1].pe_source, "SEC fallback for P/E and market cap " + JSON.stringify(b.quotes[1]).slice(0, 300));
 [s, b] = await call("/api/quotes?t=ZZZZ"); ok(s === 404, "unknown ticker rejected");
 console.log("OK  worker: quotes, insights, model updates, private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");

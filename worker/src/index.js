@@ -169,12 +169,14 @@ async function quoteOne(t, sector, ctx) {
   return cached(ctx, `quote-v1-${t}`, 1800, async () => {
     const out = { ticker: t, sector };
     try {
-      const ch = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?range=1y&interval=1wk`, { headers: YUA }).then((r) => r.json());
+      const ch = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?range=1y&interval=1wk&events=div`, { headers: YUA }).then((r) => r.json());
       const res = ch.chart?.result?.[0] || {};
       const ts = res.timestamp || [], cl = res.indicators?.quote?.[0]?.close || [];
       out.closes = ts.map((x, i) => [new Date(x * 1000).toISOString().slice(0, 10), cl[i]]).filter((p) => p[1] != null).map(([d, c]) => [d, Math.round(c * 100) / 100]);
       out.price = res.meta?.regularMarketPrice ?? out.closes.at(-1)?.[1] ?? null;
       out.name = res.meta?.longName || res.meta?.shortName || null;
+      const divs = Object.values(res.events?.dividends || {});
+      out.div_12m = divs.filter((dv) => dv.date * 1000 > Date.now() - 365 * 864e5).reduce((a, dv) => a + (dv.amount || 0), 0);
     } catch (_) { /* leave blank */ }
     try {
       const { cookie, crumb } = await yahooAuth(ctx);
@@ -190,6 +192,20 @@ async function quoteOne(t, sector, ctx) {
     return out;
   });
 }
+function weeklyReturns(closes) {
+  const m = {};
+  for (let i = 1; i < closes.length; i++) if (closes[i - 1][1]) m[closes[i][0]] = closes[i][1] / closes[i - 1][1] - 1;
+  return m;
+}
+function betaOf(r, mkt) {
+  const ks = Object.keys(r).filter((k) => k in mkt);
+  if (ks.length < 20) return null;
+  const a = ks.map((k) => r[k]), b = ks.map((k) => mkt[k]);
+  const ma = a.reduce((x, y) => x + y, 0) / a.length, mb = b.reduce((x, y) => x + y, 0) / b.length;
+  let cov = 0, vb = 0;
+  for (let i = 0; i < a.length; i++) { cov += (a[i] - ma) * (b[i] - mb); vb += (b[i] - mb) ** 2; }
+  return vb ? Math.round((cov / vb) * 100) / 100 : null;
+}
 async function quotes(url, env, ctx) {
   const want = [...new Set(String(url.searchParams.get("t") || "").toUpperCase().split(/[,\s]+/).map((x) => x.replace(/[./]/g, "-")).filter(Boolean))];
   if (!want.length) fail("Add at least one ticker.");
@@ -197,8 +213,18 @@ async function quotes(url, env, ctx) {
   const list = await listed(env, ctx);
   const bad = want.filter((t) => !list[t]);
   if (bad.length) fail(`Not NYSE or Nasdaq tickers we know: ${bad.join(", ")}`, 404);
-  const [qs, spy] = await Promise.all([Promise.all(want.map((t) => quoteOne(t, list[t].sector, ctx))), quoteOne("SPY", "Index", ctx)]);
-  qs.forEach((q) => { q.name = q.name || list[q.ticker].name; });
+  const [qs, spy, stats] = await Promise.all([Promise.all(want.map((t) => quoteOne(t, list[t].sector, ctx))), quoteOne("SPY", "Index", ctx),
+    cached(ctx, "stats-v1", 6 * 3600, async () => (await rawFile(env, "site/universe/stats.json")) || { data: {} })]);
+  const spyRet = weeklyReturns(spy.closes || []);
+  qs.forEach((q) => {
+    q.name = q.name || list[q.ticker].name;
+    // Yahoo's summary endpoint often refuses cloud servers: fill the gaps from SEC data and the price history
+    const [eps, sharesMm] = (stats.data || {})[q.ticker] || [];
+    if (q.pe == null && q.price && eps) { q.pe = eps > 0 ? q.price / eps : null; q.pe_source = "price ÷ latest 10-K diluted EPS"; }
+    if (q.market_cap == null && q.price && sharesMm) q.market_cap = q.price * sharesMm * 1e6;
+    if ((q.div_yield == null || q.div_yield === 0) && q.price && q.div_12m) q.div_yield = q.div_12m / q.price;
+    if (q.beta == null) { q.beta = betaOf(weeklyReturns(q.closes || []), spyRet); if (q.beta != null) q.beta_source = "1y weekly vs S&P 500"; }
+  });
   return { as_of: new Date().toISOString(), quotes: qs, spy: spy.closes || [] };
 }
 

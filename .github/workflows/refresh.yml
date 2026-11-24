@@ -56,6 +56,11 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
         run: python3 pipeline/universe.py --if-stale 7
 
+      - name: EPS and share counts for every company (SEC XBRL frames)
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: python3 pipeline/universe_stats.py || echo "::warning::universe stats failed"
+
       - name: Refresh every model from SEC EDGAR + market data
         env:
           # SEC asks every automated client to identify itself: "Name email@domain.com".
