@@ -9,28 +9,28 @@
  "city": "Houston",
  "state": "TX",
  "website": "https://www.cheniere.com",
- "generated_at": "2026-11-24T18:39:24Z",
- "version": 7,
- "price": 296.73,
+ "generated_at": "2026-11-24T18:42:48Z",
+ "version": 8,
+ "price": 296.76,
  "price_date": "2026-11-24",
- "target": 335.16,
- "upside": 0.1295,
+ "target": 334.75,
+ "upside": 0.128,
  "rating": "Hold",
  "scenarios": {
-  "bear": 280.33,
-  "base": 335.16,
-  "bull": 394.59
+  "bear": 280.0,
+  "base": 334.75,
+  "bull": 394.09
  },
  "model_scenarios": {
-  "base": 303.57,
-  "bull": 357.41,
-  "bear": 253.91
+  "base": 303.67,
+  "bull": 357.51,
+  "bear": 254.01
  },
- "dcf_value": 285.098250265317,
- "comps_value": 479.936834205844,
- "exit_value": 233.860726490007,
- "model_value": 303.570957543298,
- "peer_avg_upside": 0.27945006280540285,
+ "dcf_value": 285.090589525071,
+ "comps_value": 480.434856113776,
+ "exit_value": 233.875745456733,
+ "model_value": 303.673505215477,
+ "peer_avg_upside": 0.2780012984202482,
  "anchor_peers": [
   "TRGP",
   "KMI",
@@ -120,7 +120,7 @@
   "period": "2026-09-30",
   "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000038/lng-20260930.htm"
  },
- "ev_ebitda": 7.88310055741787,
+ "ev_ebitda": 7.88368729432047,
  "ebitda_margin": 0.522677212655186,
  "growth_next": -0.0103,
  "quality": {
@@ -342,9 +342,9 @@
     "margin_delta": 0,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 357.40554014297,
-    "target": 394.592432008376,
-    "upside": 0.329802958947109
+    "model": 357.508669368139,
+    "target": 394.088840727636,
+    "upside": 0.327971561961302
    },
    "base": {
     "growth": [
@@ -365,9 +365,9 @@
     "margin_delta": 0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 303.570957543298,
-    "target": 335.156535,
-    "upside": 0.1295
+    "model": 303.673505215477,
+    "target": 334.74528,
+    "upside": 0.128
    },
    "bear": {
     "growth": [
@@ -388,9 +388,9 @@
     "margin_delta": -0.01,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 253.90711186553,
-    "target": 280.325326616829,
-    "upside": -0.0552848494697924
+    "model": 254.009048263466,
+    "target": 279.99917188414,
+    "upside": -0.0564794046227929
    }
   },
   "dcf_inputs": {
@@ -437,109 +437,109 @@
     0.1797,
     0.1797
    ],
-   "wacc": 0.0866057262486101,
+   "wacc": 0.086607008153291,
    "g": 0.025,
-   "ev_ebitda_now": 7.88310055741787,
+   "ev_ebitda_now": 7.88368729432047,
    "debt": -22813,
    "cash": 1177,
-   "nci_ratio": -0.21549999999999944,
+   "nci_ratio": -0.21549999999999997,
    "shares": 204.204,
-   "comps_value": 479.936834205844,
+   "comps_value": 480.434856113776,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 335.156535,
-   "base_model": 303.570957543298,
-   "price": 296.73,
+   "anchored_base": 334.74528,
+   "base_model": 303.673505215477,
+   "price": 296.76,
    "check": {
-    "dcf": 285.098250265317,
-    "exit": 233.860726490007,
-    "model": 303.570957543298,
-    "target": 335.156535
+    "dcf": 285.090589525071,
+    "exit": 233.875745456733,
+    "model": 303.673505215477,
+    "target": 334.74528
    }
   },
   "valuation": {
-   "dcf": 285.098250265317,
-   "exit": 233.860726490007,
-   "comps": 479.936834205844,
+   "dcf": 285.090589525071,
+   "exit": 233.875745456733,
+   "comps": 480.434856113776,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 303.570957543298,
+   "model_value": 303.673505215477,
    "anchor": {
     "street": 347,
-    "peer_up": 0.2795,
-    "peer_value": 379.666035,
+    "peer_up": 0.278,
+    "peer_value": 379.25928,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 333.451987521649,
+    "anchored": 333.401572607738,
     "band": 0.15,
-    "lo": 335.156535,
-    "hi": 424.175535,
-    "upside": 0.1295
+    "lo": 334.74528,
+    "hi": 423.77328,
+    "upside": 0.128
    },
-   "target": 335.156535
+   "target": 334.74528
   },
   "comps": [
    {
     "name": "Targa Resources Corp.",
     "ticker": "TRGP",
-    "price": 281.63,
-    "mcap": 60423.7165,
-    "ev": 77690.1165,
+    "price": 281.95,
+    "mcap": 60492.3725,
+    "ev": 77758.7725,
     "ebitda": 4846.5,
-    "ev_ebitda": 16.0301488703188,
-    "pe": 33.1719670200236
+    "ev_ebitda": 16.0443149695657,
+    "pe": 33.2096584216726
    },
    {
     "name": "Kinder Morgan, INC.",
     "ticker": "KMI",
-    "price": 30.91,
-    "mcap": 68858.8252,
-    "ev": 100798.8252,
+    "price": 30.95,
+    "mcap": 68947.934,
+    "ev": 100887.934,
     "ebitda": 7177,
-    "ev_ebitda": 14.044701853142,
-    "pe": 22.5620437956204
+    "ev_ebitda": 14.0571177372161,
+    "pe": 22.5912408759124
    },
    {
     "name": "Venture Global, Inc.",
     "ticker": "VG",
-    "price": 11.97,
-    "mcap": 31540.95,
-    "ev": 63390.95,
+    "price": 11.98,
+    "mcap": 31567.3,
+    "ev": 63417.3,
     "ebitda": 6097,
-    "ev_ebitda": 10.3970723306544,
-    "pe": 13.9186046511628
+    "ev_ebitda": 10.4013941282598,
+    "pe": 13.9302325581395
    },
    {
     "name": "Williams Companies, INC.",
     "ticker": "WMB",
-    "price": 65.84,
-    "mcap": 80533.5128,
-    "ev": 109131.5128,
+    "price": 65.94,
+    "mcap": 80655.8298,
+    "ev": 109253.8298,
     "ebitda": 6543,
-    "ev_ebitda": 16.6791246828672,
-    "pe": 30.7663551401869
+    "ev_ebitda": 16.6978190126853,
+    "pe": 30.8130841121495
    },
    {
     "name": "Oneok Inc",
     "ticker": "OKE",
-    "price": 84.5,
-    "mcap": 53273.025,
-    "ev": 85191.025,
+    "price": 84.58,
+    "mcap": 53323.461,
+    "ev": 85241.461,
     "ebitda": 7255,
-    "ev_ebitda": 11.7423880082702,
-    "pe": 15.590405904059
+    "ev_ebitda": 11.7493399035148,
+    "pe": 15.6051660516605
    }
   ],
   "comps_median": {
-   "ev_ebitda": 14.044701853142,
-   "pe": 22.5620437956204
+   "ev_ebitda": 14.0571177372161,
+   "pe": 22.5912408759124
   },
   "comps_self": {
-   "ev_ebitda": 7.88310055741787,
-   "pe": 12.2644688555347
+   "ev_ebitda": 7.88368729432047,
+   "pe": 12.2657088180113
   },
   "wacc": {
    "rf": 0.04906,
@@ -547,9 +547,9 @@
    "erp": 0.055,
    "ke": 0.10406,
    "kd_at": 0.0402455493842067,
-   "we": 0.726483992528956,
-   "wd": 0.273516007471044,
-   "wacc": 0.0866057262486101
+   "we": 0.726504080528907,
+   "wd": 0.273495919471093,
+   "wacc": 0.086607008153291
   },
   "sens": {
    "g": [
@@ -560,47 +560,47 @@
     0.035
    ],
    "wacc": [
-    0.0766057262486101,
-    0.0816057262486101,
-    0.0866057262486101,
-    0.0916057262486101,
-    0.0966057262486101
+    0.076607008153291,
+    0.081607008153291,
+    0.086607008153291,
+    0.091607008153291,
+    0.096607008153291
    ],
    "grid": [
     [
-     297.819788270756,
-     324.541635296723,
-     356.441560216068,
-     395.186121511035,
-     443.242997429102
+     297.811825781877,
+     324.532384399729,
+     356.430642631261,
+     395.172991375238,
+     443.226836057888
     ],
     [
-     269.094764576743,
-     291.387640680735,
-     317.618789037623,
-     348.932929198661,
-     386.966016296389
+     269.087953363477,
+     291.379830886869,
+     317.609715072445,
+     348.922219840804,
+     386.953135854392
     ],
     [
-     244.383866472764,
-     263.212872052124,
-     285.098250265317,
-     310.849911920766,
-     341.591651911978
+     244.377973880082,
+     263.20619116174,
+     285.09058952507,
+     310.84101067909,
+     341.581145842015
     ],
     [
-     222.901034230384,
-     238.974238155185,
-     257.460628577616,
-     278.947777460036,
-     304.230858363193
+     222.895886312213,
+     238.968458040886,
+     257.454074909146,
+     278.940262235602,
+     304.222125756121
     ],
     [
-     204.052858095168,
-     217.900976168708,
-     233.68303427736,
-     251.834567053961,
-     272.932503335872
+     204.04832219996,
+     217.895926269357,
+     233.677363971315,
+     251.828137594449,
+     272.925130189614
     ]
    ]
   },
@@ -811,18 +811,18 @@
    ],
    [
     "2026-11-24",
-    296.73
+    296.76
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-26",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:39:24Z"
+   "generated_at": "2026-11-24T18:42:48Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=3570&type=10-K"
  },
  "changes": [
-  "Target fell from $335.91 to $335.16 (-0.2%) since v6 on 2026-11-24."
+  "Target fell from $335.16 to $334.75 (-0.1%) since v7 on 2026-11-24."
  ],
  "history": [
   {
@@ -866,13 +866,20 @@
    "price": 296.73,
    "target": 335.16,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 8,
+   "price": 296.76,
+   "target": 334.75,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v7.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_tearsheet_v7.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v7.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v8.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_tearsheet_v8.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v8.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T03:10:47Z"
