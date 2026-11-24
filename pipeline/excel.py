@@ -154,12 +154,12 @@ def write_live_data(doc, data: dict) -> None:
     labels = fin["labels"][-5:]
     periods = fin["periods"][-5:]
     pad = 5 - len(labels)
-    _set(sh.getCellRangeByName("A15"), "($ millions unless noted)", BLACK, bold=True)
+    _set(sh.getCellRangeByName("A15"), "($ millions unless noted)", BLACK)
     _set(sh.getCellRangeByName("A16"), "Fiscal period end", GREY)
-    _set(sh.getCellRangeByName("G15"), "SEC XBRL concept", GREY, bold=True)
+    _set(sh.getCellRangeByName("G15"), "SEC XBRL concept", GREY)
     for j, col in enumerate(YEAR_COLS):
         idx = j - pad
-        _set(sh.getCellRangeByName(f"{col}15"), labels[idx] if idx >= 0 else "", BLACK, bold=True)
+        _set(sh.getCellRangeByName(f"{col}15"), labels[idx] if idx >= 0 else "", BLACK)
         _set(sh.getCellRangeByName(f"{col}16"), periods[idx] if idx >= 0 else "", GREY)
 
     for key, label, _kind, _c in LINE_ITEMS:
@@ -174,7 +174,7 @@ def write_live_data(doc, data: dict) -> None:
         _set(sh.getCellRangeByName(f"G{r}"), fin["concepts"].get(key, "n/a"), GREY)
 
     mk = data.get("market") or {}
-    _set(sh.getCellRangeByName(f"A{MARKET_HEADER_ROW}"), "Market data & cost of capital", BLACK, bold=True)
+    _set(sh.getCellRangeByName(f"A{MARKET_HEADER_ROW}"), "Market data & cost of capital", BLACK)
     for key, (row, label, code, _n) in MARKET.items():
         _set(sh.getCellRangeByName(f"A{row}"), label, BLACK)
         _set(sh.getCellRangeByName(f"B{row}"), mk.get(key), BLUE, _fmt(doc, code))

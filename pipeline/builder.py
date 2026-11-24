@@ -65,7 +65,7 @@ def banner(ws, row, first="B", last=LAST_COL, fill=NAVY):
         c.fill = PatternFill("solid", fgColor=fill)
         if not (isinstance(c.value, (int, float)) and not isinstance(c.value, bool)) and not (
                 isinstance(c.value, str) and c.value.startswith("=")):
-            c.font = Font(name=FONT, size=SIZE, bold=c.font.bold, color=WHITE)
+            c.font = Font(name=FONT, size=SIZE, bold=False, color=WHITE)
 
 
 class Sheet:
@@ -95,7 +95,7 @@ class Sheet:
             color = BLUE
         else:
             color = BLACK
-        c.font = Font(name=FONT, size=SIZE, bold=bold, color=color)
+        c.font = Font(name=FONT, size=SIZE, bold=False, color=color)  # JJ: no bold anywhere
         if fmt:
             c.number_format = fmt
         if note:
@@ -189,7 +189,8 @@ def _drivers(fin: dict, stance: str) -> dict:
 def _write_live_data(wb, label, live: dict, fin: dict):
     ws = wb.create_sheet("Live_Data")
     ws.sheet_state = "hidden"
-    f = lambda color=BLACK, bold=False: Font(name=FONT, size=10, color=color, bold=bold)  # noqa: E731
+    ws.sheet_view.showGridLines = False
+    f = lambda color=BLACK, bold=False: Font(name=FONT, size=10, color=color, bold=False)  # noqa: E731
     ws["A1"].value = None
     ws["A2"].value = ("LIVE DATA (historicals source: SEC EDGAR 10-K XBRL; prices & market data: Yahoo Finance). "
                       "Refreshed automatically by the pipeline.")
@@ -504,7 +505,7 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     DC.line(9, "Less: capital expenditures", {c: f"={CF.ref(c + '12')}" for c in PROJ})
     DC.line(10, "Less: increase in net working capital", {c: f"={CF.ref(c + '7')}+{CF.ref(c + '8')}" for c in PROJ})
     DC.line(11, "Unlevered Free Cash Flow", {c: f"={c}7+{c}8+{c}9+{c}10" for c in PROJ}, total=True)
-    DC.line(13, "Discount period (years)", {c: i + 1 for i, c in enumerate(PROJ)}, '0.0')
+    DC.line(13, "Discount period (years)", {c: (1 if i == 0 else f"={PROJ[i - 1]}13+1") for i, c in enumerate(PROJ)}, '0.0')
     DC.line(14, "WACC", {c: f"={WA.ref('$D$23')}" for c in PROJ}, PCT)
     DC.line(15, "Discount factor", {c: f"=1/(1+{c}14)^{c}13" for c in PROJ}, '0.0000')
     DC.line(16, "PV of unlevered free cash flow", {c: f"={c}11*{c}15" for c in PROJ})
@@ -634,10 +635,10 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.line(6, "Comps-implied value per share", {"D": f"={comps_ref}"}, PS)
     VS.line(7, "DCF value per share (exit multiple)", {"D": f"={DC.ref('$D$52')}"}, PS)
     w_c = 0.2 if peers else 0.0
-    VS.line(8, "Weight: DCF perpetuity growth", {"D": round((1 - w_c) / 2, 2)}, PCT)
+    VS.line(8, "Weight: DCF perpetuity growth", {"D": "=(1-D9)/2"}, PCT)
     VS.line(9, "Weight: trading comps", {"D": w_c}, PCT,
             note=None if peers else "No usable peers found: comps weight set to 0")
-    VS.line(10, "Weight: DCF exit multiple", {"D": round((1 - w_c) / 2, 2)}, PCT)
+    VS.line(10, "Weight: DCF exit multiple", {"D": "=(1-D9)/2"}, PCT)
     VS.line(11, "DCF perpetuity contribution", {"D": "=D5*D8"}, PS)
     VS.line(12, "Comps + exit-multiple contribution", {"D": "=D6*D9+D7*D10"}, PS)
     VS.line(13, "Model value (blended intrinsic, per share)", {"D": "=D11+D12"}, PS)
@@ -674,7 +675,7 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
             note=f"Average over {anc.get('peer_count', 0)} peers with consensus targets ({', '.join(anc.get('peers_used', []))})"
             if peer_up is not None else "No peer consensus available: weight set to 0, band centred on street/model")
     VS.line(32, "Peer-relative value (price x (1 + peer average upside))", {"D": "=D14*(1+D31)"}, PS)
-    VS.line(33, "Weight: model value", {"D": round(w_m / tot, 4)}, PCT)
+    VS.line(33, "Weight: model value", {"D": "=1-D34-D35"}, PCT)
     VS.line(34, "Weight: street median target", {"D": round(w_s / tot, 4)}, PCT)
     VS.line(35, "Weight: peer-relative value", {"D": round(w_p / tot, 4)}, PCT)
     VS.line(36, "Model contribution", {"D": "=D29*D33"}, PS)
@@ -696,6 +697,13 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     wb._sheets.sort(key=lambda w: order.index(w.title) if w.title in order else 99)
     wb.active = 0
 
+    for sheet, cells in ((RB, ["D5", "D40", "D41", "D42", "D44", "E44", "F44"]),
+                         (VS, ["D9", "D30", "D31", "D34", "D35", "D40"])):
+        for cell in cells:
+            sheet.ws[cell].fill = PatternFill("solid", fgColor="FFFF00")
+    RB.put("B49", "Yellow cells are the key levers: scenario switch, terminal growth and exit multiple. "
+                  "Blue = typed input, black = formula on this tab, green = link from another tab.")
+
     wb.defined_names["Scenario"] = DefinedName("Scenario", attr_text=f"{RB.ref('$D$5')}")
     wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{VS.ref('$D$43')}")
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -705,7 +713,7 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
 
 def _big(sheet, cell, value, fmt, size, bold=True, fill=None):
     c = sheet.put(cell, value, fmt, bold=bold)
-    c.font = Font(name=FONT, size=size, bold=bold, color=c.font.color)
+    c.font = Font(name=FONT, size=size, bold=False, color=c.font.color)
     if fill:
         c.fill = PatternFill("solid", fgColor=fill)
     return c
@@ -850,9 +858,11 @@ def verify(path: Path) -> list[str]:
                         rgb = c.font.color.rgb if c.font.color else None
                         if rgb not in ("000000FF", "FF0000FF", "0000FF"):
                             issues.append(f"{ws.title}!{c.coordinate} hardcode colour {rgb}")
-                if "$" in (c.number_format or "").replace('"$"', "$") and c.number_format != "General":
-                    if "$#" in c.number_format and not c.font.bold:
-                        issues.append(f"{ws.title}!{c.coordinate} has $ format but is not bold")
+                if c.value is not None and c.font.bold:
+                    issues.append(f"{ws.title}!{c.coordinate} is bold")
+    for ws in wb:
+        if ws.sheet_view.showGridLines:
+            issues.append(f"{ws.title} shows gridlines")
     if wb["Live_Data"].sheet_state != "hidden":
         issues.append("Live_Data is not hidden")
     return issues

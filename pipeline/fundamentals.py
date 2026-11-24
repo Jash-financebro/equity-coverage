@@ -41,7 +41,8 @@ LINE_ITEMS: list[tuple[str, str, str, list[str]]] = [
     ("current_liabilities", "Current liabilities", "stock", ["LiabilitiesCurrent"]),
     ("total_liabilities", "Total liabilities", "stock", ["Liabilities"]),
     ("short_term_debt", "Short-term debt", "stock", [
-        "LongTermDebtCurrent", "DebtCurrent", "ShortTermBorrowings"]),
+        "LongTermDebtCurrent", "DebtCurrent", "ShortTermBorrowings", "LoansAndNotesPayable",
+        "LongTermDebtAndCapitalLeaseObligationsCurrent", "CommercialPaper"]),
     ("long_term_debt", "Long-term debt", "stock", [
         "LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations"]),
     ("equity", "Shareholders' equity", "stock", [
@@ -53,8 +54,12 @@ LINE_ITEMS: list[tuple[str, str, str, list[str]]] = [
         "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization"]),
     ("sga", "SG&A", "flow", ["SellingGeneralAndAdministrativeExpense", "GeneralAndAdministrativeExpense"]),
     ("buybacks", "Share repurchases", "flow", ["PaymentsForRepurchaseOfCommonStock"]),
-    ("debt_repaid", "Debt repayments", "flow", ["RepaymentsOfLongTermDebt", "RepaymentsOfDebt"]),
-    ("debt_issued", "Debt issued", "flow", ["ProceedsFromIssuanceOfLongTermDebt", "ProceedsFromIssuanceOfDebt"]),
+    ("debt_repaid", "Debt repayments", "flow", ["RepaymentsOfLongTermDebt", "RepaymentsOfDebt",
+                                                 "RepaymentsOfDebtMaturingInMoreThanThreeMonths",
+                                                 "RepaymentsOfLongTermDebtAndCapitalSecurities", "RepaymentsOfSeniorDebt"]),
+    ("debt_issued", "Debt issued", "flow", ["ProceedsFromIssuanceOfLongTermDebt", "ProceedsFromIssuanceOfDebt",
+                                                "ProceedsFromDebtMaturingInMoreThanThreeMonths",
+                                                "ProceedsFromIssuanceOfSeniorLongTermDebt"]),
     ("cfi", "Cash from investing", "flow", [
         "NetCashProvidedByUsedInInvestingActivities",
         "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations"]),
@@ -66,6 +71,8 @@ LINE_ITEMS: list[tuple[str, str, str, list[str]]] = [
 ]
 
 PER_SHARE = {"eps_diluted"}
+ZERO_IF_UNTAGGED = ("short_term_debt", "debt_repaid", "debt_issued", "buybacks", "dividends",
+                    "equity_investments")
 SHARE_COUNTS = {"shares_diluted"}
 
 
@@ -155,6 +162,12 @@ def build(facts: dict, years: int = 5) -> dict:
                 eq = eq / 1e6 if eq is not None else items["equity"][i]
                 if eq is not None:
                     items["total_liabilities"][i] = round(items["total_assets"][i] - eq, 3)
+
+    # detail lines a company doesn't tag in some years: an explicit 0 so every model link has a value to flow
+    for key in ZERO_IF_UNTAGGED:
+        if any(v is None for v in items.get(key, [])):
+            items[key] = [0.0 if v is None else v for v in items[key]]
+            used[key] = used.get(key, "not tagged") + " (untagged years = 0)"
 
     labels = [f"FY{_d(e).year}" for e in ends]
     return {"periods": ends, "labels": labels, "items": items, "concepts": used,
