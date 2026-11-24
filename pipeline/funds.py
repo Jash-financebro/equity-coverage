@@ -26,6 +26,12 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = universe.OUT.parent.parent / "funds"
 CUSIP_CACHE = ROOT / "data" / "cusip_map.json"
 WANT = 15
+LOG: list[str] = []
+
+
+def log(msg: str):
+    print(msg)
+    LOG.append(msg.strip())
 # slug, display name, best-known person, CIK, a word that must appear in SEC's filer name
 CANDIDATES = [
     ("berkshire-hathaway", "Berkshire Hathaway", "Warren Buffett", 1067983, "BERKSHIRE"),
@@ -105,7 +111,12 @@ def holdings_for(cik: int, f: dict) -> list[dict]:
 
 
 def combine(rows: list[dict]) -> tuple[dict, list[dict]]:
-    """Stock positions by CUSIP (summing sub-managers) and option positions kept apart."""
+    """Stock positions by CUSIP (summing sub-managers) and option positions kept apart.
+    Values are in dollars since 2023; a filer still reporting in thousands shows sub-$1 'prices', so scale it."""
+    px = sorted(r["value"] / r["shares"] for r in rows if r["shares"] and not r["putcall"] and r["kind"] == "SH")
+    if px and px[len(px) // 2] < 1.0:
+        for r in rows:
+            r["value"] *= 1000
     pos, opts = {}, []
     for r in rows:
         if r["putcall"]:
@@ -154,7 +165,10 @@ def stale(days: float) -> bool:
     f = OUT / "index.json"
     if not f.exists():
         return True
-    age = dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(json.loads(f.read_text())["as_of"])
+    d = json.loads(f.read_text())
+    if len(d.get("funds", [])) < WANT:
+        return True
+    age = dt.datetime.now(dt.timezone.utc) - dt.datetime.fromisoformat(d["as_of"])
     return age.total_seconds() > days * 86400
 
 
@@ -180,21 +194,21 @@ def main():
             if word not in (subs.get("name") or "").upper():
                 alt = find_cik(word)
                 if not alt:
-                    print(f"  ✗ {name}: CIK {cik} is '{subs.get('name')}', no match found")
+                    log(f"  ✗ {name}: CIK {cik} is '{subs.get('name')}', no match found")
                     continue
                 cik, subs = alt, sources.submissions(alt)
             fl = filings_13f(subs)
             if not fl or fl[0]["filed"] < cutoff:
-                print(f"  ✗ {name}: no 13F since {cutoff}")
+                log(f"  ✗ {name}: no 13F since {cutoff} (latest: {fl[0]['filed'] if fl else 'none'}, CIK {cik})")
                 continue
             cur, cur_opts = combine(holdings_for(cik, fl[0]))
             prev, _ = combine(holdings_for(cik, fl[1])) if len(fl) > 1 else ({}, [])
             loaded.append({"slug": slug, "name": name, "person": person, "cik": cik, "filer": subs.get("name"),
                            "filing": fl[0], "prev_filing": fl[1] if len(fl) > 1 else None,
                            "cur": cur, "prev": prev, "opts": cur_opts})
-            print(f"  ✓ {name}: {len(cur)} positions, period {fl[0]['period']}, filed {fl[0]['filed']}")
+            log(f"  ✓ {name}: {len(cur)} positions, period {fl[0]['period']}, filed {fl[0]['filed']}, CIK {cik}")
         except Exception as exc:  # noqa: BLE001
-            print(f"  ✗ {name}: {exc}")
+            log(f"  ✗ {name}: {type(exc).__name__}: {str(exc)[:160]} (CIK {cik})")
 
     cmap = map_cusips({c for f in loaded for c in [*f["cur"], *f["prev"]]}, uni)
     tick = lambda p: cmap.get(p["cusip"]) or by_name.get(norm(p["name"]))  # noqa: E731
@@ -220,21 +234,24 @@ def main():
             hold.append(row)
             if t:
                 owners.setdefault(t, []).append([f["slug"], row["weight"], chg])
-                a = agg.setdefault(t, {"ticker": t, "name": p["name"], "funds": 0, "value": 0.0, "bought": 0, "sold": 0})
-                a["funds"] += 1
+                key = (by_ticker.get(t) or {}).get("ticker", t)  # one entry per company (GOOG + GOOGL)
+                a = agg.setdefault(key, {"ticker": key, "name": p["name"], "funds": set(), "value": 0.0, "bought": set(), "sold": set()})
+                a["funds"].add(f["slug"])
                 a["value"] += p["value"]
-                a["bought"] += 1 if chg in ("new", "add") else 0
+                if chg in ("new", "add"):
+                    a["bought"].add(f["slug"])
         for c, pv in f["prev"].items():
             if c not in f["cur"]:
                 t = tick(pv)
                 exits.append({"ticker": t, "name": pv["name"], "prev_value": round(pv["value"]),
                               "prev_weight": round(pv["value"] / ptotal, 5)})
                 if t:
-                    a = agg.setdefault(t, {"ticker": t, "name": pv["name"], "funds": 0, "value": 0.0, "bought": 0, "sold": 0})
-                    a["sold"] += 1
+                    key = (by_ticker.get(t) or {}).get("ticker", t)
+                    a = agg.setdefault(key, {"ticker": key, "name": pv["name"], "funds": set(), "value": 0.0, "bought": set(), "sold": set()})
+                    a["sold"].add(f["slug"])
         for h in hold:
             if h["change"] == "trim" and h["ticker"]:
-                agg[h["ticker"]]["sold"] += 1
+                agg[(by_ticker.get(h["ticker"]) or {}).get("ticker", h["ticker"])]["sold"].add(f["slug"])
         exits.sort(key=lambda e: -e["prev_value"])
         sectors = {}
         for h in hold:
@@ -255,10 +272,14 @@ def main():
                                                                            "value": round(o["value"])} for o in f["opts"][:50]]},
                                                          separators=(",", ":")))
     rows = list(agg.values())
+    for a in rows:
+        a["fund_list"] = sorted(a["funds"])
+        a["funds"], a["bought"], a["sold"] = len(a["funds"]), len(a["bought"]), len(a["sold"])
     out = {"as_of": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "funds": summary,
            "most_owned": sorted(rows, key=lambda a: (-a["funds"], -a["value"]))[:20],
            "most_bought": sorted([a for a in rows if a["bought"]], key=lambda a: (-a["bought"], -a["value"]))[:15],
-           "most_sold": sorted([a for a in rows if a["sold"]], key=lambda a: (-a["sold"], -a["value"]))[:15]}
+           "most_sold": sorted([a for a in rows if a["sold"]], key=lambda a: (-a["sold"], -a["value"]))[:15],
+           "log": LOG}
     for a in rows:
         a["value"] = round(a["value"])
     (OUT / "index.json").write_text(json.dumps(out, separators=(",", ":")))

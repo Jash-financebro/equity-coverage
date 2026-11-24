@@ -51,11 +51,11 @@ def instants(concepts, quarters) -> dict[int, float]:
 
 
 def spark(symbols: list[str]) -> dict[str, list[float]]:
-    """Weekly closes for up to 20 symbols per request."""
+    """Two years of weekly closes for up to 20 symbols per request (beta on ~104 weeks is far less noisy)."""
     out = {}
     try:
         d = sources._get("https://query1.finance.yahoo.com/v7/finance/spark?symbols=" + ",".join(symbols)
-                         + "&range=1y&interval=1wk", headers={"User-Agent": "Mozilla/5.0 (ModelBuilder)"}, tries=2)
+                         + "&range=2y&interval=1wk", headers={"User-Agent": "Mozilla/5.0 (ModelBuilder)"}, tries=2)
         for r in d.get("spark", {}).get("result", []) or []:
             resp = (r.get("response") or [{}])[0]
             cl = [c for c in ((resp.get("indicators") or {}).get("quote") or [{}])[0].get("close") or [] if c]
@@ -136,7 +136,7 @@ def main():
         rnd = lambda v, d=4: (round(v, d) if v is not None and math.isfinite(v) else None)  # noqa: E731
         row = {
             "ticker": t, "name": c["name"], "sector": c["sector"], "exchange": c.get("exchange", "NYSE"),
-            "price": rnd(px, 2), "chg_1y": rnd(cl[-1] / cl[0] - 1) if cl and len(cl) > 30 and cl[0] else None,
+            "price": rnd(px, 2), "chg_1y": rnd(cl[-1] / cl[-53] - 1) if cl and len(cl) >= 53 and cl[-53] else None,
             "beta": beta(cl, spy) if cl and spy else None, "mcap": rnd(mcap, 1),
             "pe": rnd(mcap / m(n_), 1) if mcap and n_ and n_ > 0 else None,
             "ev_ebitda": rnd(ev / m(ebitda), 1) if ev and ebitda and ebitda > 0 and not fin else None,
