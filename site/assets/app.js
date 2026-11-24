@@ -345,7 +345,7 @@
           ${["bear", "base", "bull"].filter((k) => nz(d.scenarios[k])).map((k) => `<div class="kv"><span>${k[0].toUpperCase() + k.slice(1)}</span><span class="num">${usd(d.scenarios[k])} &nbsp;${signed(d.scenarios[k] / d.price - 1)}</span></div>`).join("")}
         </div>
         <div class="card"><div class="card-h"><h2>Cost of capital · market data</h2><span class="note">vs. model</span></div>
-          ${d.wacc ? [["Risk-free (10Y)", pct(d.wacc.risk_free, 2)], ["Beta", nz(d.wacc.beta) ? d.wacc.beta.toFixed(2) : "—"], ["Cost of equity", pct(d.wacc.cost_of_equity, 2)], ["After-tax cost of debt", pct(d.wacc.after_tax_cost_of_debt, 2)], ["Market-data WACC", pct(d.wacc.wacc, 2)], ["Model WACC", nz((d.model_outputs || {}).WACC) ? pct(d.model_outputs.WACC, 2) : "—"]].map(([k, v]) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`).join("") : ""}
+          ${d.wacc ? [["Risk-free (10Y)", pct(d.wacc.risk_free, 2)], ["Beta" + (d.wacc.beta_source ? ` (${esc(d.wacc.beta_source)})` : ""), nz(d.wacc.beta) ? d.wacc.beta.toFixed(2) : "—"], ["Cost of equity", pct(d.wacc.cost_of_equity, 2)], ["After-tax cost of debt", pct(d.wacc.after_tax_cost_of_debt, 2)], ["Market-data WACC", pct(d.wacc.wacc, 2)], ["Model WACC", nz((d.model_outputs || {}).WACC) ? pct(d.model_outputs.WACC, 2) : "—"]].map(([k, v]) => `<div class="kv"><span>${k}</span><span class="num">${v}</span></div>`).join("") : ""}
         </div>
       </div>` : ""}
 
@@ -369,7 +369,7 @@
 
       ${d.peers ? `
       <div class="card section">
-        <div class="card-h"><h2>Peer comparison · SEC 10-K data at current prices</h2><span class="note">Street targets: Yahoo Finance consensus</span></div>
+        <div class="card-h"><h2>Peer comparison · SEC 10-K data at current prices</h2><span class="note">Implied prices on ${esc(d.peers.basis || "10-K figures")} · street targets: Yahoo Finance</span></div>
         <div class="scroll"><table>
           <thead><tr><th>Company</th><th class="r">Price</th><th class="r">P/E</th><th class="r">EV/EBITDA</th><th class="r">EV/Sales</th><th class="r">Op. margin</th><th class="r">Rev. growth</th><th class="r">ROE</th><th class="r">ND/EBITDA</th><th class="r">Street mean</th><th class="r">Street median</th><th class="r">Upside to median</th></tr></thead>
           <tbody>${d.peers.rows.map((r) => r.status === "error" ? `<tr><td><span class="tk">${esc(r.ticker)}</span></td><td colspan="11" class="note">data unavailable</td></tr>` : `<tr${r.self ? ' class="selfrow"' : ""}><td><span class="tk">${esc(r.ticker)}</span><span class="co">${esc(r.name)}</span></td>

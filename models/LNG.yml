@@ -21,6 +21,12 @@ scenarios:
   bull: {set: {"'LNG Sensitivity Analysis'!D6": 3}}
 
 peers: [VG, WMB, KMI, TRGP, OKE]          # same peer set as the model's comps tab
+peer_inputs:                              # use the model's adjusted figures for peer-implied prices
+  ebitda: "'LNG Historicals'!E61"         # LTM Consolidated Adjusted EBITDA (ex-derivative marks)
+  debt: "'LNG Historicals'!E75"           # total debt, latest 10-Q
+  cash: "'LNG Historicals'!E76"           # cash & restricted cash, latest 10-Q
+  nci: "'LNG Historicals'!E71"            # CQP public stake at market value
+  skip_pe: true                           # GAAP EPS includes derivative marks; P/E not comparable
 
 outputs:
   DCF - perpetuity growth: "'LNG DCF'!D50"

@@ -9,7 +9,7 @@ ANNUAL_FORMS = {"10-K", "10-K/A", "20-F", "20-F/A", "40-F", "40-F/A"}
 # kind: "flow" = income/cash-flow item over a year, "stock" = balance-sheet point in time
 LINE_ITEMS: list[tuple[str, str, str, list[str]]] = [
     ("revenue", "Revenue", "flow", [
-        "RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet",
+        "Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet",
         "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueGoodsNet"]),
     ("cogs", "Cost of revenue", "flow", [
         "CostOfRevenue", "CostOfGoodsAndServicesSold", "CostOfGoodsSold", "CostOfServices"]),

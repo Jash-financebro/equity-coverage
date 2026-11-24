@@ -61,7 +61,24 @@ def peer_snapshot(ticker: str) -> dict:
     return out
 
 
-def peer_analysis(self_row: dict, peers: list[str], snapshot: dict, price: float) -> dict | None:
+def regression_beta(stock_hist, spy_hist):
+    """Beta from ~1 year of daily returns vs SPY (fallback when the quoted beta is missing or implausible)."""
+    s = {d: c for d, c in stock_hist or []}
+    m = {d: c for d, c in spy_hist or []}
+    dates = [d for d in sorted(s) if d in m]
+    if len(dates) < 60:
+        return None
+    rs = [s[dates[i]] / s[dates[i - 1]] - 1 for i in range(1, len(dates))]
+    rm = [m[dates[i]] / m[dates[i - 1]] - 1 for i in range(1, len(dates))]
+    ms, mm_ = sum(rs) / len(rs), sum(rm) / len(rm)
+    cov = sum((a - ms) * (b - mm_) for a, b in zip(rs, rm))
+    var = sum((b - mm_) ** 2 for b in rm)
+    return cov / var if var else None
+
+
+def peer_analysis(self_row: dict, peers: list[str], snapshot: dict, price: float, adj: dict | None = None) -> dict | None:
+    """adj (optional, read from the analyst's model): ebitda, debt, cash, nci, eps — used instead of the
+    generic 10-K figures, e.g. Adjusted EBITDA ex-derivative marks and minority interest at market value."""
     if not peers:
         return None
     rows = [peer_snapshot(p) for p in peers]
@@ -71,6 +88,16 @@ def peer_analysis(self_row: dict, peers: list[str], snapshot: dict, price: float
     q25 = {k: _pct([r.get(k) for r in ok], .25) for k in ("pe", "ev_ebitda")}
     q75 = {k: _pct([r.get(k) for r in ok], .75) for k in ("pe", "ev_ebitda")}
     shares, net_debt, ebitda, eps = (snapshot.get(k) for k in ("shares_mm", "net_debt", "ebitda", "eps"))
+    adj = {k: v for k, v in (adj or {}).items() if isinstance(v, (int, float))}
+    if adj:
+        ebitda = adj.get("ebitda", ebitda)
+        if "debt" in adj or "cash" in adj or "nci" in adj:
+            net_debt = adj.get("debt", 0) - adj.get("cash", 0) + adj.get("nci", 0)
+        eps = adj["eps"] if "eps" in adj else (None if adj.get("skip_pe") else eps)
+        if ebitda and snapshot.get("market_cap"):
+            self_row["ev_ebitda"] = (snapshot["market_cap"] + net_debt) / ebitda
+        if "eps" in adj and adj["eps"]:
+            self_row["pe"] = price / adj["eps"]
 
     def from_ev_ebitda(m):
         if m is None or not ebitda or ebitda <= 0 or not shares:
@@ -94,6 +121,7 @@ def peer_analysis(self_row: dict, peers: list[str], snapshot: dict, price: float
                                    / max(1, sum(1 for r in ok if r.get("street_upside") is not None)))
         if any(r.get("street_upside") is not None for r in ok) else None,
         "peer_street_median_count": len(street_meds),
+        "basis": "model-adjusted EBITDA / net debt incl. minority interest" if adj else "10-K EBITDA and net debt",
     }
 
 
@@ -129,7 +157,7 @@ def football(price_hist, consensus, peers, scenarios, target, price) -> list[dic
     if peers:
         for key, label in (("ev_ebitda", "Peer EV/EBITDA (25th–75th pct)"), ("pe", "Peer P/E (25th–75th pct)")):
             v = peers["implied"][key]
-            if v["low"] and v["high"]:
+            if v["low"] and v["high"] and v["low"] > 0:
                 rows.append({"label": label, "low": min(v["low"], v["high"]), "high": max(v["low"], v["high"]),
                              "mid": v["median"]})
     sc = {k: v for k, v in (scenarios or {}).items() if v}

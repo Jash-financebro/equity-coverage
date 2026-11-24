@@ -9,7 +9,21 @@ A minimalist research site that keeps Excel valuation models current on its own.
 5. computes 20+ financial ratios, and
 6. publishes the site to GitHub Pages with the refreshed `.xlsx` ready to download.
 
-The home page shows every covered name with price, **target price**, upside, rating, key ratios and an Excel download. Each ticker page adds a price-vs-target chart, the full ratio set, five years of 10-K financials, model outputs, links to the original SEC filings, and a target-price history that builds up over time.
+The home page shows every covered name with price, **target price**, street median target, upside, rating, key ratios and an Excel download. Each ticker page adds:
+
+| Feature | What it shows |
+|---|---|
+| **Scenarios** | Bear / base / bull targets, recalculated by flipping the model's own scenario toggle |
+| **Football field** | 52-week range, street target range, peer-multiple ranges, DCF bear → bull, vs. price and target |
+| **Street consensus** | Mean and median analyst price targets (Yahoo Finance), linked into the model if you want |
+| **Peer comparison** | The same ratios from each peer's 10-K, peer medians, prices implied by the peer-median EV/EBITDA and P/E, and each peer's upside to its own street median target (plus the peer average) |
+| **Market-data WACC** | 10Y Treasury + Yahoo beta + ERP + 10-K cost of debt, next to the model's WACC |
+| **Track record** | Every change in rating or target is a "call", measured against the S&P 500; hit rate after 30 days |
+| **Filing alerts** | A new 10-K / 10-Q flags the stock *Review* and opens a GitHub issue (GitHub emails you) |
+| **Tear sheet** | One-page PDF, regenerated daily |
+| **Research report** | Full initiation report (Word + PDF) from `reports/` |
+
+A **Fund** page tracks the portfolio (holdings from `config.yml`, or equal-weight coverage): growth of 100 vs. the S&P 500, Sharpe ratio, beta, Jensen's alpha, volatility, max drawdown and sector weights.
 
 ## Adding a model
 
@@ -61,14 +75,38 @@ outputs:                       # extra model cells to show on the site
 rating: Buy                    # override the upside-based rating
 ```
 
-Don't have a model yet? `templates/DCF_Template.xlsx` is a starter DCF already wired to `Live_Data`. Copy it to `models/TICKER.xlsx` and it works for any SEC filer.
+### No model yet? Add a ticker and the pipeline builds one
+
+```yaml
+# models/NEE.yml
+build: true
+stance: Balanced        # Bullish | Balanced | Bearish | Conservative
+peers: [DUK, SO, D, AEP]
+```
+
+The pipeline builds `models/NEE_v1.xlsx` from SEC EDGAR following the three-statement-model-builder conventions:
+
+- a hidden historicals tab labelled with its source
+- separate Income Statement, Balance Sheet and Cash Flow tabs
+- roll-forward schedules: PP&E, D&A, other NCA, equity / retained earnings, term debt + revolver cash sweep, interest
+- Revenue Build with a bull/base/bear selector, plus WACC, DCF (with a WACC × g sensitivity grid) and Financial Ratios tabs
+- `{Ticker}_v#` in A1 of every tab, a balance check that nets to zero, no SUMPRODUCT, `$` and bold only on totals, and blue / black / green color coding
+
+When a newer 10-K lands, it rolls the model to `_v2` and moves `_v1` to `models/archive/`. `tests/test_builder.py` runs the skill's verification scans on every deploy.
+
+`templates/DCF_Template.xlsx` is a simpler starter DCF that is also wired to `Live_Data`.
+
+## Research reports
+
+Put a report in `reports/` as `TICKER_*.pdf` and/or `TICKER_*.docx`. The site links it from the ticker page. `reports/equity-report-config.md` holds the byline used by the equity-research-report workflow.
 
 ## One-time setup
 
 1. **Settings → Pages → Source: GitHub Actions.**
 2. **Settings → Secrets and variables → Actions → Variables → New variable**: `SEC_USER_AGENT` = `Your Name your@email.com`. SEC asks every automated client to identify itself.
 3. **Actions → Refresh models & deploy site → Run workflow** to run the first refresh.
-4. Edit `config.yml` to set the site title, your LinkedIn, and a link to your portfolio site.
+4. Edit `config.yml` to set the site title, your LinkedIn, your portfolio site link and (optionally) your fund's holdings.
+5. Watch the repo (it's on by default for your own repos) so new-filing issues reach your email.
 
 ## Run it locally
 

@@ -174,8 +174,13 @@ def process(calc, path: Path | None, cfg: dict, now: str, ctx: dict) -> dict:
     recent = sources.recent_filings(subs, cik)
     price = mkt["price"]
     rt = ratios.compute(fin, price, shares)
-    wacc = analytics.market_wacc(fin, rt["snapshot"], qs.get("beta"), ctx["rates"]["rf_10y"],
+    beta, beta_src = qs.get("beta"), "Yahoo Finance"
+    if not beta or not 0.2 < beta < 3.5:
+        beta = analytics.regression_beta(mkt["history"], (ctx.get("spy") or {}).get("history"))
+        beta_src = "1Y daily regression vs SPY"
+    wacc = analytics.market_wacc(fin, rt["snapshot"], beta, ctx["rates"]["rf_10y"],
                                  SETTINGS.get("equity_risk_premium", 0.055))
+    wacc["beta_source"] = beta_src
 
     sec_title = subs.get("name") or sec_name
     if sec_title.isupper():
@@ -204,7 +209,14 @@ def process(calc, path: Path | None, cfg: dict, now: str, ctx: dict) -> dict:
     live["model_label"] = path.stem
 
     out_xlsx = DL / f"{ticker}_model_live.xlsx"
-    res = excel.refresh(calc, path, out_xlsx, live, cfg)
+    pin = cfg.get("peer_inputs") or {}
+    cfg_x = dict(cfg)
+    cfg_x["outputs"] = {**(cfg.get("outputs") or {}),
+                        **{f"__peer_{k}": v for k, v in pin.items() if isinstance(v, str) and "!" in v}}
+    res = excel.refresh(calc, path, out_xlsx, live, cfg_x)
+    peer_adj = {k[7:]: res["outputs"].pop(k) for k in list(res["outputs"]) if k.startswith("__peer_")}
+    if pin.get("skip_pe"):
+        peer_adj["skip_pe"] = True
     target, stale = res["target"], False
     if target is None:
         target = cached_target(path, res["target_cell"] or cfg.get("target_price"))
@@ -227,7 +239,7 @@ def process(calc, path: Path | None, cfg: dict, now: str, ctx: dict) -> dict:
                 "street_mean": qs.get("target_mean"), "street_median": qs.get("target_median"),
                 "street_upside": (qs["target_median"] / price - 1) if qs.get("target_median") else None,
                 "model_target": target}
-    peers = analytics.peer_analysis(self_row, cfg.get("peers") or [], rt["snapshot"], price)
+    peers = analytics.peer_analysis(self_row, cfg.get("peers") or [], rt["snapshot"], price, peer_adj)
     scen = res.get("scenarios") or {}
     ff = analytics.football(mkt["history"], qs, peers, scen, target, price)
 
