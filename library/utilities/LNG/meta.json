@@ -9,28 +9,28 @@
  "city": "Houston",
  "state": "TX",
  "website": "https://www.cheniere.com",
- "generated_at": "2026-11-24T18:30:59Z",
- "version": 6,
- "price": 296.89,
+ "generated_at": "2026-11-24T18:39:24Z",
+ "version": 7,
+ "price": 296.73,
  "price_date": "2026-11-24",
- "target": 335.91,
- "upside": 0.1314,
+ "target": 335.16,
+ "upside": 0.1295,
  "rating": "Hold",
  "scenarios": {
-  "bear": 280.95,
-  "base": 335.91,
-  "bull": 395.48
+  "bear": 280.33,
+  "base": 335.16,
+  "bull": 394.59
  },
  "model_scenarios": {
-  "base": 303.56,
-  "bull": 357.4,
-  "bear": 253.9
+  "base": 303.57,
+  "bull": 357.41,
+  "bear": 253.91
  },
- "dcf_value": 285.056134056798,
- "comps_value": 479.812328728861,
- "exit_value": 233.943331486334,
- "model_value": 303.562251963025,
- "peer_avg_upside": 0.28140524150746843,
+ "dcf_value": 285.098250265317,
+ "comps_value": 479.936834205844,
+ "exit_value": 233.860726490007,
+ "model_value": 303.570957543298,
+ "peer_avg_upside": 0.27945006280540285,
  "anchor_peers": [
   "TRGP",
   "KMI",
@@ -104,12 +104,12 @@
   "is_10q": true,
   "label": "Quarter ended Sep 30, 2026"
  },
- "pe_ttm": 21.13,
+ "pe_ttm": 21.12,
  "guidance": {
   "filed": "2026-10-29",
   "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000040/cei20263rdqtrerex991.htm",
   "sentences": [
-   "The following table reconciles our actual Consolidated Adjusted EBITDA and Distributable Cash Flow to net income attributable to Cheniere for the three and nine months ended September 30, 2026 and forecast amounts for full year 2026 (in billions):."
+   "Raising full year 2026 Consolidated Adjusted EBITDA 3 guidance from $7.90 billion - $8.40 billion to $8.75 billion - $9.25 billion and full year 2026 Distributable Cash Flow 3 guidance from $5.30 billion - $5.80 billion to $6.05 billion - $6.55 billion."
   ],
   "revenue_growth_range": null
  },
@@ -120,7 +120,7 @@
   "period": "2026-09-30",
   "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000038/lng-20260930.htm"
  },
- "ev_ebitda": 7.88632761038215,
+ "ev_ebitda": 7.88310055741787,
  "ebitda_margin": 0.522677212655186,
  "growth_next": -0.0103,
  "quality": {
@@ -342,9 +342,9 @@
     "margin_delta": 0,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 357.40003553278,
-    "target": 395.481236654327,
-    "upside": 0.332057584850964
+    "model": 357.40554014297,
+    "target": 394.592432008376,
+    "upside": 0.329802958947109
    },
    "base": {
     "growth": [
@@ -365,9 +365,9 @@
     "margin_delta": 0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 303.562251963025,
-    "target": 335.907003,
-    "upside": 0.1314
+    "model": 303.570957543298,
+    "target": 335.156535,
+    "upside": 0.1295
    },
    "bear": {
     "growth": [
@@ -388,9 +388,9 @@
     "margin_delta": -0.01,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 253.895042396348,
-    "target": 280.947720661603,
-    "upside": -0.0537135328597541
+    "model": 253.90711186553,
+    "target": 280.325326616829,
+    "upside": -0.0552848494697924
    }
   },
   "dcf_inputs": {
@@ -437,109 +437,109 @@
     0.1797,
     0.1797
    ],
-   "wacc": 0.0866127743949693,
+   "wacc": 0.0866057262486101,
    "g": 0.025,
-   "ev_ebitda_now": 7.88632761038215,
+   "ev_ebitda_now": 7.88310055741787,
    "debt": -22813,
    "cash": 1177,
-   "nci_ratio": -0.21550000000000014,
+   "nci_ratio": -0.21549999999999944,
    "shares": 204.204,
-   "comps_value": 479.812328728861,
+   "comps_value": 479.936834205844,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 335.907003,
-   "base_model": 303.562251963025,
-   "price": 296.89,
+   "anchored_base": 335.156535,
+   "base_model": 303.570957543298,
+   "price": 296.73,
    "check": {
-    "dcf": 285.056134056798,
-    "exit": 233.943331486334,
-    "model": 303.562251963025,
-    "target": 335.907003
+    "dcf": 285.098250265317,
+    "exit": 233.860726490007,
+    "model": 303.570957543298,
+    "target": 335.156535
    }
   },
   "valuation": {
-   "dcf": 285.056134056798,
-   "exit": 233.943331486334,
-   "comps": 479.812328728861,
+   "dcf": 285.098250265317,
+   "exit": 233.860726490007,
+   "comps": 479.936834205844,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 303.562251963025,
+   "model_value": 303.570957543298,
    "anchor": {
     "street": 347,
-    "peer_up": 0.2814,
-    "peer_value": 380.441253,
+    "peer_up": 0.2795,
+    "peer_value": 379.666035,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 333.641439231513,
+    "anchored": 333.451987521649,
     "band": 0.15,
-    "lo": 335.907003,
-    "hi": 424.975503,
-    "upside": 0.1314
+    "lo": 335.156535,
+    "hi": 424.175535,
+    "upside": 0.1295
    },
-   "target": 335.907003
+   "target": 335.156535
   },
   "comps": [
    {
     "name": "Targa Resources Corp.",
     "ticker": "TRGP",
-    "price": 281.07,
-    "mcap": 60303.5685,
-    "ev": 77569.9685,
+    "price": 281.63,
+    "mcap": 60423.7165,
+    "ev": 77690.1165,
     "ebitda": 4846.5,
-    "ev_ebitda": 16.0053581966368,
-    "pe": 33.1060070671378
+    "ev_ebitda": 16.0301488703188,
+    "pe": 33.1719670200236
    },
    {
     "name": "Kinder Morgan, INC.",
     "ticker": "KMI",
-    "price": 30.9,
-    "mcap": 68836.548,
-    "ev": 100776.548,
+    "price": 30.91,
+    "mcap": 68858.8252,
+    "ev": 100798.8252,
     "ebitda": 7177,
-    "ev_ebitda": 14.0415978821235,
-    "pe": 22.5547445255474
+    "ev_ebitda": 14.044701853142,
+    "pe": 22.5620437956204
    },
    {
     "name": "Venture Global, Inc.",
     "ticker": "VG",
-    "price": 11.94,
-    "mcap": 31461.9,
-    "ev": 63311.9,
+    "price": 11.97,
+    "mcap": 31540.95,
+    "ev": 63390.95,
     "ebitda": 6097,
-    "ev_ebitda": 10.3841069378383,
-    "pe": 13.8837209302326
+    "ev_ebitda": 10.3970723306544,
+    "pe": 13.9186046511628
    },
    {
     "name": "Williams Companies, INC.",
     "ticker": "WMB",
-    "price": 65.75,
-    "mcap": 80423.4275,
-    "ev": 109021.4275,
+    "price": 65.84,
+    "mcap": 80533.5128,
+    "ev": 109131.5128,
     "ebitda": 6543,
-    "ev_ebitda": 16.6622997860309,
-    "pe": 30.7242990654206
+    "ev_ebitda": 16.6791246828672,
+    "pe": 30.7663551401869
    },
    {
     "name": "Oneok Inc",
     "ticker": "OKE",
-    "price": 84.42,
-    "mcap": 53222.589,
-    "ev": 85140.589,
+    "price": 84.5,
+    "mcap": 53273.025,
+    "ev": 85191.025,
     "ebitda": 7255,
-    "ev_ebitda": 11.7354361130255,
-    "pe": 15.5756457564576
+    "ev_ebitda": 11.7423880082702,
+    "pe": 15.590405904059
    }
   ],
   "comps_median": {
-   "ev_ebitda": 14.0415978821235,
-   "pe": 22.5547445255474
+   "ev_ebitda": 14.044701853142,
+   "pe": 22.5620437956204
   },
   "comps_self": {
-   "ev_ebitda": 7.88632761038215,
-   "pe": 12.2712886491557
+   "ev_ebitda": 7.88310055741787,
+   "pe": 12.2644688555347
   },
   "wacc": {
    "rf": 0.04906,
@@ -547,9 +547,9 @@
    "erp": 0.055,
    "ke": 0.10406,
    "kd_at": 0.0402455493842067,
-   "we": 0.72659444002621,
-   "wd": 0.27340555997379,
-   "wacc": 0.0866127743949693
+   "we": 0.726483992528956,
+   "wd": 0.273516007471044,
+   "wacc": 0.0866057262486101
   },
   "sens": {
    "g": [
@@ -560,47 +560,47 @@
     0.035
    ],
    "wacc": [
-    0.0766127743949693,
-    0.0816127743949693,
-    0.0866127743949693,
-    0.0916127743949693,
-    0.0966127743949693
+    0.0766057262486101,
+    0.0816057262486101,
+    0.0866057262486101,
+    0.0916057262486101,
+    0.0966057262486101
    ],
    "grid": [
     [
-     297.776013150512,
-     324.490777355493,
-     356.381540044985,
-     395.113938552862,
-     443.154151565067
+     297.819788270756,
+     324.541635296723,
+     356.441560216068,
+     395.186121511035,
+     443.242997429102
     ],
     [
-     269.05731852462,
-     291.344705025913,
-     317.568903799609,
-     348.874053768258,
-     386.895206029195
+     269.094764576743,
+     291.387640680735,
+     317.618789037623,
+     348.932929198661,
+     386.966016296389
     ],
     [
-     244.35147053137,
-     263.176142476011,
-     285.056134056798,
-     310.8009762503,
-     341.533894069516
+     244.383866472764,
+     263.212872052124,
+     285.098250265317,
+     310.849911920766,
+     341.591651911978
     ],
     [
-     222.872732167033,
-     238.942460589807,
-     257.424598429353,
-     278.906461248182,
-     304.18284978111
+     222.901034230384,
+     238.974238155185,
+     257.460628577616,
+     278.947777460036,
+     304.230858363193
     ],
     [
-     204.027920677568,
-     217.873212989362,
-     233.651860408364,
-     251.79921976923,
-     272.891968221737
+     204.052858095168,
+     217.900976168708,
+     233.68303427736,
+     251.834567053961,
+     272.932503335872
     ]
    ]
   },
@@ -811,18 +811,18 @@
    ],
    [
     "2026-11-24",
-    296.895
+    296.73
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-26",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:30:59Z"
+   "generated_at": "2026-11-24T18:39:24Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=3570&type=10-K"
  },
  "changes": [
-  "Target fell from $336.32 to $335.91 (-0.1%) since v5 on 2026-11-24."
+  "Target fell from $335.91 to $335.16 (-0.2%) since v6 on 2026-11-24."
  ],
  "history": [
   {
@@ -859,13 +859,20 @@
    "price": 296.89,
    "target": 335.91,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 7,
+   "price": 296.73,
+   "target": 335.16,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v6.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_tearsheet_v6.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v6.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v7.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_tearsheet_v7.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v7.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T03:10:47Z"

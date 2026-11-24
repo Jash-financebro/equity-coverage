@@ -9,28 +9,28 @@
  "city": "Mountain View",
  "state": "CA",
  "website": "https://abc.xyz",
- "generated_at": "2026-11-24T18:31:45Z",
- "version": 5,
- "price": 276.76,
+ "generated_at": "2026-11-24T18:38:53Z",
+ "version": 6,
+ "price": 276.61,
  "price_date": "2026-11-24",
- "target": 317.5,
- "upside": 0.1472,
- "rating": "Hold",
+ "target": 318.23,
+ "upside": 0.1505,
+ "rating": "Buy",
  "scenarios": {
-  "bear": 278.04,
-  "base": 317.5,
-  "bull": 365.52
+  "bear": 278.62,
+  "base": 318.23,
+  "bull": 366.44
  },
  "model_scenarios": {
-  "base": 214.14,
-  "bull": 246.53,
-  "bear": 187.53
+  "base": 213.69,
+  "bull": 246.06,
+  "bear": 187.09
  },
- "dcf_value": 81.5868175012942,
- "comps_value": 373.697460357846,
- "exit_value": 266.925469465086,
- "model_value": 214.144406858121,
- "peer_avg_upside": 0.29715492883592504,
+ "dcf_value": 81.5682150434998,
+ "comps_value": 371.794342208526,
+ "exit_value": 266.767858047015,
+ "model_value": 213.693297677911,
+ "peer_avg_upside": 0.3005044058585753,
  "anchor_peers": [
   "META",
   "SNAP",
@@ -101,7 +101,7 @@
   "is_10q": true,
   "label": "Quarter ended Sep 30, 2026"
  },
- "pe_ttm": 14.45,
+ "pe_ttm": 14.44,
  "guidance": null,
  "last_filing": {
   "form": "10-Q",
@@ -110,7 +110,7 @@
   "period": "2026-09-30",
   "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
  },
- "ev_ebitda": 22.6576314299983,
+ "ev_ebitda": 22.6450084900949,
  "ebitda_margin": 0.372794387790565,
  "growth_next": 0.12,
  "quality": {
@@ -217,21 +217,21 @@
     73795,
     100118,
     132170,
-    115085.928131587,
-    126172.122357559,
-    135946.038198298,
-    143870.641597912,
-    149492.162023595
+    115086.439235539,
+    126172.60845254,
+    135946.674330271,
+    143871.633185345,
+    149493.739239874
    ],
    "eps": [
     5.80058166954881,
     8.04354462922793,
     10.807031888798,
-    9.59728008776099,
-    10.7310385593169,
-    11.7922670203201,
-    12.7278582904753,
-    13.4881993445451
+    9.59732270989439,
+    10.7310799020786,
+    11.7923221998471,
+    12.7279460136145,
+    13.4883416517222
    ]
   },
   "bs": {
@@ -332,9 +332,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 246.533963800859,
-    "target": 365.521126008741,
-    "upside": 0.320715153955561
+    "model": 246.064138922886,
+    "target": 366.441011277665,
+    "upside": 0.32478086541337
    },
    "base": {
     "growth": [
@@ -355,9 +355,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 214.144406858121,
-    "target": 317.499072,
-    "upside": 0.1472
+    "model": 213.693297677911,
+    "target": 318.2340525,
+    "upside": 0.1505
    },
    "bear": {
     "growth": [
@@ -378,9 +378,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 187.529852898329,
-    "target": 278.039268646245,
-    "upside": 0.00462230324557278
+    "model": 187.094004349788,
+    "target": 278.622136724319,
+    "upside": 0.00729248106259628
    }
   },
   "dcf_inputs": {
@@ -427,67 +427,67 @@
     0.1678,
     0.1678
    ],
-   "wacc": 0.115400251820766,
+   "wacc": 0.11541961336566,
    "g": 0.025,
-   "ev_ebitda_now": 22.6576314299983,
+   "ev_ebitda_now": 22.6450084900949,
    "debt": -48543,
    "cash": 30708,
    "nci_ratio": 0.0,
    "shares": 12230,
-   "comps_value": 373.697460357846,
+   "comps_value": 371.794342208526,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 317.499072,
-   "base_model": 214.144406858121,
-   "price": 276.76,
+   "anchored_base": 318.2340525,
+   "base_model": 213.693297677911,
+   "price": 276.61,
    "check": {
-    "dcf": 81.5868175012942,
-    "exit": 266.925469465086,
-    "model": 214.144406858121,
-    "target": 317.499072
+    "dcf": 81.5682150434998,
+    "exit": 266.767858047015,
+    "model": 213.693297677911,
+    "target": 318.2340525
    }
   },
   "valuation": {
-   "dcf": 81.5868175012942,
-   "exit": 266.925469465086,
-   "comps": 373.697460357846,
+   "dcf": 81.5682150434998,
+   "exit": 266.767858047015,
+   "comps": 371.794342208526,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 214.144406858121,
+   "model_value": 213.693297677911,
    "anchor": {
     "street": 380,
-    "peer_up": 0.2972,
-    "peer_value": 359.013072,
+    "peer_up": 0.3005,
+    "peer_value": 359.7248025,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 291.825471429061,
+    "anchored": 291.777849463956,
     "band": 0.15,
-    "lo": 317.499072,
-    "hi": 400.527072,
-    "upside": 0.1472
+    "lo": 318.2340525,
+    "hi": 401.2155525,
+    "upside": 0.1505
    },
-   "target": 317.499072
+   "target": 318.2340525
   },
   "comps": [
    {
     "name": "Meta Platforms, Inc.",
     "ticker": "META",
-    "price": 592.6,
-    "mcap": 1525352.4,
-    "ev": 1548223.4,
+    "price": 591.75,
+    "mcap": 1523164.5,
+    "ev": 1546035.5,
     "ebitda": 101892,
-    "ev_ebitda": 15.194749342441,
-    "pe": 25.2277564921243
+    "ev_ebitda": 15.1732766066031,
+    "pe": 25.1915708812261
    },
    {
     "name": "Snap Inc",
     "ticker": "SNAP",
-    "price": 4.96,
-    "mcap": 8405.216,
-    "ev": 10911.616,
+    "price": 4.95,
+    "mcap": 8388.27,
+    "ev": 10894.67,
     "ebitda": -368.5,
     "ev_ebitda": null,
     "pe": null
@@ -495,41 +495,41 @@
    {
     "name": "AppLovin Corp",
     "ticker": "APP",
-    "price": 385.34,
-    "mcap": 131774.7198,
-    "ev": 132800.6198,
+    "price": 383.37,
+    "mcap": 131101.0389,
+    "ev": 132126.9389,
     "ebitda": 4346.7,
-    "ev_ebitda": 30.5520555363839,
-    "pe": 39.5220512820513
+    "ev_ebitda": 30.397068787816,
+    "pe": 39.32
    },
    {
     "name": "Pinterest, INC.",
     "ticker": "PINS",
-    "price": 18.89,
-    "mcap": 12991.9753,
-    "ev": 12022.6753,
+    "price": 18.86,
+    "mcap": 12971.3422,
+    "ev": 12002.0422,
     "ebitda": 345,
-    "ev_ebitda": 34.8483342028986,
-    "pe": 30.9672131147541
+    "ev_ebitda": 34.788528115942,
+    "pe": 30.9180327868852
    }
   ],
   "comps_median": {
-   "ev_ebitda": 30.5520555363839,
-   "pe": 30.9672131147541
+   "ev_ebitda": 30.397068787816,
+   "pe": 30.9180327868852
   },
   "comps_self": {
-   "ev_ebitda": 22.6576314299983,
-   "pe": 25.6092517212681
+   "ev_ebitda": 22.6450084900949,
+   "pe": 25.5949092078384
   },
   "wacc": {
-   "rf": 0.04904,
+   "rf": 0.04906,
    "beta": 1.226,
    "erp": 0.055,
-   "ke": 0.11647,
-   "kd_at": 0.0408095450367068,
-   "we": 0.985861198168139,
-   "wd": 0.0141388018318607,
-   "wacc": 0.115400251820766
+   "ke": 0.11649,
+   "kd_at": 0.0408261884074396,
+   "we": 0.98585338734845,
+   "wd": 0.0141466126515503,
+   "wacc": 0.11541961336566
   },
   "sens": {
    "g": [
@@ -540,47 +540,47 @@
     0.035
    ],
    "wacc": [
-    0.105400251820766,
-    0.110400251820766,
-    0.115400251820766,
-    0.120400251820766,
-    0.125400251820766
+    0.10541961336566,
+    0.11041961336566,
+    0.11541961336566,
+    0.12041961336566,
+    0.12541961336566
    ],
    "grid": [
     [
-     84.3496949043975,
-     88.1393191727621,
-     92.4002882668633,
-     97.2263707380697,
-     102.737973835466
+     84.3303693707389,
+     88.1180580012312,
+     92.3767372858653,
+     97.2000812637519,
+     102.708368504937
     ],
     [
-     79.6215322662812,
-     82.9532316879909,
-     86.6750586972283,
-     90.8597980636974,
-     95.5995407975845
+     79.6041941460756,
+     82.9342719962829,
+     86.654199170199,
+     90.8366910118911,
+     95.5737457391569
     ],
     [
-     75.3680290742353,
-     78.3144575641852,
-     81.5868175012942,
-     85.2423566290193,
-     89.3525633784174
+     75.3523886086642,
+     78.2974467741805,
+     81.5682150434998,
+     85.2218893153689,
+     89.3298898540476
     ],
     [
-     71.5215541355017,
-     74.1411478491087,
-     77.0353313739175,
-     80.2496670516812,
-     83.8403875303364
+     71.5073752250887,
+     74.1258018380292,
+     77.0186402328438,
+     80.231413461168,
+     83.8203032629272
     ],
     [
-     68.0267303749695,
-     70.3669867486055,
-     72.9403358019107,
-     75.7834272305442,
-     78.9410190473259
+     68.0138187114396,
+     70.3530740086896,
+     72.9252773545177,
+     75.7670482719488,
+     78.9231061910218
     ]
    ]
   },
@@ -791,18 +791,19 @@
    ],
    [
     "2026-11-24",
-    276.76
+    276.605
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-05",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:31:45Z"
+   "generated_at": "2026-11-24T18:38:53Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1652044&type=10-K"
  },
  "changes": [
-  "Target rose from $315.92 to $317.50 (+0.5%) since v4 on 2026-11-24."
+  "Target rose from $317.50 to $318.23 (+0.2%) since v5 on 2026-11-24.",
+  "Rating changed from Hold to Buy."
  ],
  "history": [
   {
@@ -839,13 +840,20 @@
    "price": 276.76,
    "target": 317.5,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 6,
+   "price": 276.61,
+   "target": 318.23,
+   "rating": "Buy"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_v5.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_tearsheet_v5.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_report_v5.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_v6.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_tearsheet_v6.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_report_v6.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T17:39:09Z"

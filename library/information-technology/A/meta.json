@@ -9,28 +9,28 @@
  "city": "Santa Clara",
  "state": "CA",
  "website": "https://www.agilent.com",
- "generated_at": "2026-11-24T18:30:46Z",
- "version": 6,
- "price": 183.84,
+ "generated_at": "2026-11-24T18:39:40Z",
+ "version": 7,
+ "price": 184.31,
  "price_date": "2026-11-24",
- "target": 184.8,
- "upside": 0.0052,
+ "target": 184.82,
+ "upside": 0.0028,
  "rating": "Hold",
  "scenarios": {
-  "bear": 158.75,
-  "base": 184.8,
-  "bull": 217.1
+  "bear": 158.78,
+  "base": 184.82,
+  "bull": 217.12
  },
  "model_scenarios": {
-  "base": 111.86,
-  "bull": 131.41,
-  "bear": 96.1
+  "base": 111.87,
+  "bull": 131.42,
+  "bear": 96.11
  },
- "dcf_value": 45.1761130283998,
- "comps_value": 196.219200512428,
- "exit_value": 136.361078123029,
- "model_value": 111.858716563057,
- "peer_avg_upside": 0.15518994023397292,
+ "dcf_value": 45.1585836547522,
+ "comps_value": 196.324572184737,
+ "exit_value": 136.3427451454,
+ "model_value": 111.865445957008,
+ "peer_avg_upside": 0.15281260566716134,
  "anchor_peers": [
   "ILMN",
   "MTD",
@@ -104,8 +104,24 @@
   "is_10q": true,
   "label": "Quarter ended Jul 31, 2026"
  },
- "pe_ttm": 36.26,
- "guidance": null,
+ "pe_ttm": 36.35,
+ "guidance": {
+  "filed": "2026-11-23",
+  "url": "https://www.sec.gov/Archives/edgar/data/1090872/000109087226000082/exhibit991-q426pressrelease.htm",
+  "sentences": [
+   "Fiscal year 2027 revenue is expected in the range of $8.00 billion to $8.15 billion, representing a range of up 6.0% to 8.0% reported and up 5.0% to 7.0% core (1)(5).",
+   "Excluding the net benefit of tariff refunds recognized in fiscal year 2026, non-GAAP fiscal year 2027 operating margin expansion (2) at the midpoint of core revenue guidance is expected to be approximately 70 basis points higher relative to 26.8% in fiscal year 2026.",
+   "Including the net benefit of tariff refunds recognized in fiscal year 2026, non-GAAP fiscal year 2027 operating margin expansion (2) at the midpoint of core revenue growth guidance is expected to be approximately 10 basis points higher.",
+   "Non-GAAP fiscal year 2027 EPS (4) is expected in the range of $6.73 to $6.86, an increase of 7.3% at the midpoint compared with non-GAAP fiscal year 2026 EPS of $6.34, which included the net benefit of tariff refunds."
+  ],
+  "revenue_growth_range": [
+   0.06,
+   0.08
+  ],
+  "model_growth": 0.0084,
+  "gap": -0.0516,
+  "flag": true
+ },
  "last_filing": {
   "form": "10-Q",
   "filed": "2026-09-01",
@@ -113,7 +129,7 @@
   "period": "2026-07-31",
   "url": "https://www.sec.gov/Archives/edgar/data/1090872/000109087226000064/a-20260731.htm"
  },
- "ev_ebitda": 30.2177857159027,
+ "ev_ebitda": 30.2919775580079,
  "ebitda_margin": 0.254317789291883,
  "growth_next": 0.0084,
  "quality": {
@@ -220,21 +236,21 @@
     1240,
     1289,
     1303,
-    1332.33913485568,
-    1372.4731357288,
-    1420.31966317191,
-    1476.31449416314,
-    1541.04431279773
+    1332.37162309568,
+    1372.51550669796,
+    1420.3722795351,
+    1476.37774973882,
+    1541.11863974413
    ],
    "eps": [
     4.18918918918919,
     4.42955326460481,
     4.5719298245614,
-    4.76444573724862,
-    5.00200260316237,
-    5.27556065855043,
-    5.58861079685004,
-    5.94542040576321
+    4.76456191521903,
+    5.00215702490841,
+    5.27575609400265,
+    5.5888502517864,
+    5.9457071625684
    ]
   },
   "bs": {
@@ -335,9 +351,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 131.41489297357,
-    "target": 217.103709955204,
-    "upside": 0.180938370078353
+    "model": 131.417545961107,
+    "target": 217.124503020886,
+    "upside": 0.178071691060396
    },
    "base": {
     "growth": [
@@ -358,9 +374,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 111.858716563057,
-    "target": 184.795968,
-    "upside": 0.00520000000000009
+    "model": 111.865445957008,
+    "target": 184.821054,
+    "upside": 0.00279999999999991
    },
    "bear": {
     "growth": [
@@ -381,9 +397,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 96.0957552064661,
-    "target": 158.754799354947,
-    "upside": -0.136451265475704
+    "model": 96.1056682386626,
+    "target": 158.7831769434,
+    "upside": -0.138476021033614
    }
   },
   "dcf_inputs": {
@@ -430,119 +446,119 @@
     0.092,
     0.092
    ],
-   "wacc": 0.112665750334763,
+   "wacc": 0.112696088754618,
    "g": 0.025,
-   "ev_ebitda_now": 30.2177857159027,
+   "ev_ebitda_now": 30.2919775580079,
    "debt": -3354,
    "cash": 1789,
    "nci_ratio": 0.0,
    "shares": 281.929,
-   "comps_value": 196.219200512428,
+   "comps_value": 196.324572184737,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 184.795968,
-   "base_model": 111.858716563057,
-   "price": 183.84,
+   "anchored_base": 184.821054,
+   "base_model": 111.865445957008,
+   "price": 184.31,
    "check": {
-    "dcf": 45.1761130283998,
-    "exit": 136.361078123029,
-    "model": 111.858716563057,
-    "target": 184.795968
+    "dcf": 45.1585836547522,
+    "exit": 136.3427451454,
+    "model": 111.865445957008,
+    "target": 184.821054
    }
   },
   "valuation": {
-   "dcf": 45.1761130283998,
-   "exit": 136.361078123029,
-   "comps": 196.219200512428,
+   "dcf": 45.1585836547522,
+   "exit": 136.3427451454,
+   "comps": 196.324572184737,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 111.858716563057,
+   "model_value": 111.865445957008,
    "anchor": {
     "street": 200,
-    "peer_up": 0.1552,
-    "peer_value": 212.371968,
+    "peer_up": 0.1528,
+    "peer_value": 212.466804,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 159.022350281529,
+    "anchored": 159.049423978504,
     "band": 0.15,
-    "lo": 184.795968,
-    "hi": 239.947968,
-    "upside": 0.00520000000000009
+    "lo": 184.821054,
+    "hi": 240.112554,
+    "upside": 0.00280000000000014
    },
-   "target": 184.795968
+   "target": 184.821054
   },
   "comps": [
    {
     "name": "Illumina, INC.",
     "ticker": "ILMN",
-    "price": 206,
-    "mcap": 31147.2,
-    "ev": 29729.2,
+    "price": 207.19,
+    "mcap": 31327.128,
+    "ev": 29909.128,
     "ebitda": 1077,
-    "ev_ebitda": 27.6037140204271,
-    "pe": 37.7981651376147
+    "ev_ebitda": 27.7707780872795,
+    "pe": 38.0165137614679
    },
    {
     "name": "Mettler Toledo International INC/",
     "ticker": "MTD",
-    "price": 1712.22,
-    "mcap": 34056.0558,
-    "ev": 36141.3558,
+    "price": 1711.16,
+    "mcap": 34034.9724,
+    "ev": 36120.2724,
     "ebitda": 51.1,
-    "ev_ebitda": 707.267236790607,
-    "pe": 40.7186682520809
+    "ev_ebitda": 706.854645792564,
+    "pe": 40.6934601664685
    },
    {
     "name": "Waters Corp",
     "ticker": "WAT",
-    "price": 460.15,
-    "mcap": 45228.1435,
-    "ev": 45587.7435,
+    "price": 461.05,
+    "mcap": 45316.6045,
+    "ev": 45676.2045,
     "ebitda": 890.7,
-    "ev_ebitda": 51.181928258673,
-    "pe": 42.7648698884758
+    "ev_ebitda": 51.2812445267767,
+    "pe": 42.8485130111524
    },
    {
     "name": "Revvity, INC.",
     "ticker": "RVTY",
-    "price": 154.38,
-    "mcap": 17234.9832,
-    "ev": 19535.1832,
+    "price": 154.66,
+    "mcap": 17266.2424,
+    "ev": 19566.4424,
     "ebitda": 762,
-    "ev_ebitda": 25.6367233595801,
-    "pe": 74.5797101449276
+    "ev_ebitda": 25.6777459317585,
+    "pe": 74.7149758454106
    },
    {
     "name": "Danaher Corp",
     "ticker": "DHR",
-    "price": 229.31,
-    "mcap": 161326.4643,
-    "ev": 175129.4643,
+    "price": 229.44,
+    "mcap": 161417.9232,
+    "ev": 175220.9232,
     "ebitda": 5440,
-    "ev_ebitda": 32.1929162316176,
-    "pe": 45.4079207920792
+    "ev_ebitda": 32.2097285294118,
+    "pe": 45.4336633663366
    }
   ],
   "comps_median": {
-   "ev_ebitda": 32.1929162316176,
-   "pe": 42.7648698884758
+   "ev_ebitda": 32.2097285294118,
+   "pe": 42.8485130111524
   },
   "comps_self": {
-   "ev_ebitda": 30.2177857159027,
-   "pe": 40.2105909439755
+   "ev_ebitda": 30.2919775580079,
+   "pe": 40.3122985418266
   },
   "wacc": {
-   "rf": 0.04904,
+   "rf": 0.04906,
    "beta": 1.237,
    "erp": 0.055,
-   "ke": 0.117075,
-   "kd_at": 0.0445290034843206,
-   "we": 0.939221323339542,
-   "wd": 0.0607786766604585,
-   "wacc": 0.112665750334763
+   "ke": 0.117095,
+   "kd_at": 0.0445471637630662,
+   "we": 0.939365369478207,
+   "wd": 0.0606346305217929,
+   "wacc": 0.112696088754618
   },
   "sens": {
    "g": [
@@ -553,47 +569,47 @@
     0.035
    ],
    "wacc": [
-    0.102665750334763,
-    0.107665750334763,
-    0.112665750334763,
-    0.117665750334763,
-    0.122665750334763
+    0.102696088754618,
+    0.107696088754618,
+    0.112696088754618,
+    0.117696088754618,
+    0.122696088754618
    ],
    "grid": [
     [
-     46.8293773289677,
-     49.1174827058604,
-     51.7001974011501,
-     54.6383360318416,
-     58.0106882220009
+     46.8111666905697,
+     49.0973897395779,
+     51.6778648012233,
+     54.6133073866863,
+     57.9823706789678
     ],
     [
-     43.9892196222332,
-     45.9937978957127,
-     48.2408681644093,
-     50.7772641988406,
-     53.6627099606533
+     43.9729224616281,
+     45.9759319477642,
+     48.2211547617977,
+     50.755352587318,
+     53.6381520871421
     ],
     [
-     41.4401204947684,
-     43.2073245994278,
-     45.1761130283998,
-     47.3830639879239,
-     49.8741750759489
+     41.4254505284486,
+     43.1913350354193,
+     45.1585836547522,
+     47.3637212297731,
+     49.8526745811564
     ],
     [
-     39.1395488527987,
-     40.7062691937493,
-     42.4420617469563,
-     44.3758555203182,
-     46.5435785528389
+     39.1262741779864,
+     40.6918752992509,
+     42.4263725565119,
+     44.3586548326822,
+     46.5245977698669
     ],
     [
-     37.0528743472894,
-     38.448927898156,
-     39.9879234267456,
-     41.6929992517802,
-     43.5925724510487
+     37.040805117307,
+     38.4359022810776,
+     39.9737991394475,
+     41.6776034140883,
+     43.5756927815807
     ]
    ]
   },
@@ -804,20 +820,18 @@
    ],
    [
     "2026-11-24",
-    183.84
+    184.305
    ]
   ],
   "dates": {
    "tenk_filed": "2025-12-22",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:30:46Z"
+   "generated_at": "2026-11-24T18:39:40Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1090872&type=10-K"
  },
  "changes": [
-  "Target rose from $184.06 to $184.80 (+0.4%) since v5 on 2026-11-24.",
-  "Share price moved +0.5% ($182.85 to $183.84), which moves the peer-relative value and the anchoring band with it.",
-  "Street median target moved +8.1% to $200.00."
+  "Target rose from $184.80 to $184.82 (+0.0%) since v6 on 2026-11-24."
  ],
  "history": [
   {
@@ -854,13 +868,20 @@
    "price": 183.84,
    "target": 184.8,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 7,
+   "price": 184.31,
+   "target": 184.82,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v6.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_tearsheet_v6.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v6.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v7.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_tearsheet_v7.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v7.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T16:20:37Z"

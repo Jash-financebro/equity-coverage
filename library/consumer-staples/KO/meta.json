@@ -9,28 +9,28 @@
  "city": "Atlanta",
  "state": "GA",
  "website": "https://www.coca-colacompany.com",
- "generated_at": "2026-11-24T18:31:18Z",
- "version": 11,
- "price": 97.94,
+ "generated_at": "2026-11-24T18:39:15Z",
+ "version": 12,
+ "price": 97.82,
  "price_date": "2026-11-24",
- "target": 93.95,
- "upside": -0.0408,
+ "target": 94.07,
+ "upside": -0.0383,
  "rating": "Hold",
  "scenarios": {
-  "bear": 74.23,
-  "base": 93.95,
-  "bull": 119.86
+  "bear": 74.32,
+  "base": 94.07,
+  "bull": 120.02
  },
  "model_scenarios": {
-  "base": 67.78,
-  "bull": 86.47,
-  "bear": 53.55
+  "base": 67.74,
+  "bull": 86.43,
+  "bear": 53.52
  },
- "dcf_value": 58.527853548211,
- "comps_value": 45.6046714145048,
- "exit_value": 88.114922260712,
- "model_value": 67.7780446064702,
- "peer_avg_upside": 0.10917742211734364,
+ "dcf_value": 58.4990055982484,
+ "comps_value": 45.5001570188635,
+ "exit_value": 88.107902253156,
+ "model_value": 67.7427945443344,
+ "peer_avg_upside": 0.1116834175969897,
  "anchor_peers": [
   "PEP",
   "KDP",
@@ -109,8 +109,22 @@
   "is_10q": true,
   "label": "Quarter ended Oct 02, 2026"
  },
- "pe_ttm": 28.89,
- "guidance": null,
+ "pe_ttm": 28.86,
+ "guidance": {
+  "filed": "2026-10-27",
+  "url": "https://www.sec.gov/Archives/edgar/data/21344/000162828026067403/a2026q3earningsreleaseex-9.htm",
+  "sentences": [
+   "Operating income and comparable currency neutral operating income (non-GAAP) both grew 7%, primarily driven by organic revenue (non-GAAP) growth and lower input costs, partially offset by an increase in marketing investments and higher operating expenses.",
+   "Comparable currency neutral operating income (non-GAAP) grew 14%, primarily driven by organic revenue (non-GAAP) growth and lower operating expenses, partially offset by an increase in marketing investments."
+  ],
+  "revenue_growth_range": [
+   0.07,
+   0.07
+  ],
+  "model_growth": 0.0236,
+  "gap": -0.04640000000000001,
+  "flag": true
+ },
  "last_filing": {
   "form": "10-Q",
   "filed": "2026-10-28",
@@ -118,7 +132,7 @@
   "period": "2026-10-02",
   "url": "https://www.sec.gov/Archives/edgar/data/21344/000162828026067844/ko-20261002.htm"
  },
- "ev_ebitda": 30.7197401694572,
+ "ev_ebitda": 30.683435973535,
  "ebitda_margin": 0.30896310047767,
  "growth_next": 0.0236,
  "quality": {
@@ -225,21 +239,21 @@
     10714,
     10631,
     13107,
-    9602.57109753685,
-    9856.83246380538,
-    10135.2882895252,
-    10439.0319689682,
-    10769.272844261
+    9602.73938406555,
+    9856.99817159189,
+    10135.451454182,
+    10439.1924470287,
+    10769.430292298
    ],
    "eps": [
     2.46923254206038,
     2.46087962962963,
     3.03895200556457,
-    2.23312438998815,
-    2.29915155613473,
-    2.37121630850747,
-    2.44962799264727,
-    2.5347266466763
+    2.23316352583499,
+    2.2991902082389,
+    2.37125448193522,
+    2.44966565050197,
+    2.53476370467833
    ]
   },
   "bs": {
@@ -340,9 +354,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 86.4719951927614,
-    "target": 119.860996785941,
-    "upside": 0.223758198845689
+    "model": 86.4294948712321,
+    "target": 120.023459644416,
+    "upside": 0.226982821962952
    },
    "base": {
     "growth": [
@@ -363,9 +377,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 67.7780446064702,
-    "target": 93.948844,
-    "upside": -0.0408
+    "model": 67.7427945443344,
+    "target": 94.073494,
+    "upside": -0.0383000000000001
    },
    "bear": {
     "growth": [
@@ -386,9 +400,9 @@
     "margin_delta": -0.009999999999999953,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 53.5487209814339,
-    "target": 74.2252223871919,
-    "upside": -0.242174461307959
+    "model": 53.5179926037682,
+    "target": 74.3197057335405,
+    "upside": -0.240240178557141
    }
   },
   "dcf_inputs": {
@@ -435,119 +449,119 @@
     0.1788,
     0.1788
    ],
-   "wacc": 0.0616095694179131,
+   "wacc": 0.0616266563403764,
    "g": 0.025,
-   "ev_ebitda_now": 30.7197401694572,
+   "ev_ebitda_now": 30.683435973535,
    "debt": -43941,
    "cash": 30505,
-   "nci_ratio": -0.002300000000000001,
+   "nci_ratio": -0.0023000000000000034,
    "shares": 4301.902,
-   "comps_value": 45.6046714145048,
+   "comps_value": 45.5001570188635,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 93.948844,
-   "base_model": 67.7780446064702,
-   "price": 97.94,
+   "anchored_base": 94.073494,
+   "base_model": 67.7427945443344,
+   "price": 97.82,
    "check": {
-    "dcf": 58.527853548211,
-    "exit": 88.114922260712,
-    "model": 67.7780446064702,
-    "target": 93.948844
+    "dcf": 58.4990055982484,
+    "exit": 88.107902253156,
+    "model": 67.7427945443344,
+    "target": 94.073494
    }
   },
   "valuation": {
-   "dcf": 58.527853548211,
-   "exit": 88.114922260712,
-   "comps": 45.6046714145048,
+   "dcf": 58.4990055982484,
+   "exit": 88.107902253156,
+   "comps": 45.5001570188635,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 67.7780446064702,
+   "model_value": 67.7427945443344,
    "anchor": {
     "street": 100,
-    "peer_up": 0.1092,
-    "peer_value": 108.640594,
+    "peer_up": 0.1117,
+    "peer_value": 108.746494,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 86.0491708032351,
+    "anchored": 86.0580207721672,
     "band": 0.15,
-    "lo": 93.948844,
-    "hi": 123.332344,
-    "upside": -0.0408
+    "lo": 94.073494,
+    "hi": 123.419494,
+    "upside": -0.0383000000000001
    },
-   "target": 93.948844
+   "target": 94.073494
   },
   "comps": [
    {
     "name": "Pepsico Inc",
     "ticker": "PEP",
-    "price": 143.09,
-    "mcap": 194994.4666,
-    "ev": 235017.4666,
+    "price": 142.83,
+    "mcap": 194640.1542,
+    "ev": 234663.1542,
     "ebitda": 14949,
-    "ev_ebitda": 15.7212834704663,
-    "pe": 23.8483333333333
+    "ev_ebitda": 15.6975820590006,
+    "pe": 23.805
    },
    {
     "name": "Keurig Dr Pepper Inc.",
     "ticker": "KDP",
-    "price": 36.05,
-    "mcap": 49062.2475,
-    "ev": 61967.2475,
+    "price": 35.94,
+    "mcap": 48912.543,
+    "ev": 61817.543,
     "ebitda": 4030,
-    "ev_ebitda": 15.3764882133995,
-    "pe": 23.562091503268
+    "ev_ebitda": 15.3393406947891,
+    "pe": 23.4901960784314
    },
    {
     "name": "Monster Beverage Corp",
     "ticker": "MNST",
-    "price": 42.29,
-    "mcap": 82783.0979,
-    "ev": 80694.9979,
+    "price": 42.2,
+    "mcap": 82606.922,
+    "ev": 80518.822,
     "ebitda": 2533.8,
-    "ev_ebitda": 31.8474220143658,
+    "ev_ebitda": 31.7778917041598,
     "pe": null
    },
    {
     "name": "Primo Brands Corp",
     "ticker": "PRMB",
-    "price": 23.84,
-    "mcap": 8619.352,
-    "ev": 13400.552,
+    "price": 23.78,
+    "mcap": 8597.659,
+    "ev": 13378.859,
     "ebitda": 1040.6,
-    "ev_ebitda": 12.8777167019027,
-    "pe": 149
+    "ev_ebitda": 12.8568700749568,
+    "pe": 148.625
    },
    {
     "name": "Molson Coors Beverage Co",
     "ticker": "TAP",
-    "price": 40.24,
-    "mcap": 8011.784,
-    "ev": 13375.384,
+    "price": 40.17,
+    "mcap": 7997.847,
+    "ev": 13361.447,
     "ebitda": -1625.6,
     "ev_ebitda": null,
     "pe": null
    }
   ],
   "comps_median": {
-   "ev_ebitda": 15.5488858419329,
-   "pe": 23.8483333333333
+   "ev_ebitda": 15.5184613768948,
+   "pe": 23.805
   },
   "comps_self": {
-   "ev_ebitda": 30.7197401694572,
-   "pe": 32.2298607614252
+   "ev_ebitda": 30.683435973535,
+   "pe": 32.1887281605249
   },
   "wacc": {
-   "rf": 0.04904,
+   "rf": 0.04906,
    "beta": 0.269,
    "erp": 0.055,
-   "ke": 0.063835,
-   "kd_at": 0.0402699387423428,
-   "we": 0.905562283171924,
-   "wd": 0.0944377168280756,
-   "wacc": 0.0616095694179131
+   "ke": 0.063855,
+   "kd_at": 0.0402863620452557,
+   "we": 0.905453014981077,
+   "wd": 0.0945469850189234,
+   "wacc": 0.0616266563403764
   },
   "sens": {
    "g": [
@@ -558,47 +572,47 @@
     0.035
    ],
    "wacc": [
-    0.0516095694179131,
-    0.0566095694179131,
-    0.0616095694179131,
-    0.0666095694179131,
-    0.0716095694179131
+    0.0516266563403763,
+    0.0566266563403764,
+    0.0616266563403764,
+    0.0666266563403763,
+    0.0716266563403764
    ],
    "grid": [
     [
-     60.7887442849886,
-     69.6190722226768,
-     81.7678784863403,
-     99.5386414066657,
-     128.008515467801
+     60.7587492020161,
+     69.579615805454,
+     81.7132778611928,
+     99.4574521777131,
+     127.873750794674
     ],
     [
-     53.0630869069157,
-     59.6451516525369,
-     68.3095176970461,
-     80.2299928158631,
-     97.666762539299
+     53.0398689394361,
+     59.6157371228756,
+     68.2708223163802,
+     80.1764415171835,
+     97.5871277118963
     ],
     [
-     46.9957339834459,
-     52.0689171195371,
-     58.527853548211,
-     67.0301384145937,
-     78.7276214943902
+     46.9772318737852,
+     52.0461478490056,
+     58.4990055982484,
+     66.9921858146514,
+     78.6750944399963
     ],
     [
-     42.1046924551441,
-     46.1187252974825,
-     51.097447969226,
-     57.4361218097225,
-     65.7800978283955
+     42.0896033665197,
+     46.1005801477797,
+     51.0751166126384,
+     57.4078268672718,
+     65.7428702760897
     ],
     [
-     38.0782565058698,
-     41.3219643511696,
-     45.2616039301904,
-     50.148054455379,
-     56.369251770241
+     38.06571677158,
+     41.3071658429111,
+     45.2438071767257,
+     50.1261505389774,
+     56.3414966511605
     ]
    ]
   },
@@ -809,18 +823,18 @@
    ],
    [
     "2026-11-24",
-    97.945
+    97.82
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-20",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:31:18Z"
+   "generated_at": "2026-11-24T18:39:15Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=21344&type=10-K"
  },
  "changes": [
-  "Target rose from $93.84 to $93.95 (+0.1%) since v10 on 2026-11-24."
+  "Target rose from $93.95 to $94.07 (+0.1%) since v11 on 2026-11-24."
  ],
  "history": [
   {
@@ -857,13 +871,20 @@
    "price": 97.94,
    "target": 93.95,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 12,
+   "price": 97.82,
+   "target": 94.07,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v11.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_tearsheet_v11.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v11.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v12.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_tearsheet_v12.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v12.pdf"
  },
  "times_generated": 6,
  "first_generated_at": "2026-11-24T02:12:39Z"
