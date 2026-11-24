@@ -9,45 +9,48 @@
  "city": "San Jose",
  "state": "CA",
  "website": "https://www.bloomenergy.com",
- "generated_at": "2026-11-24T17:55:45Z",
- "version": 3,
- "price": 154.19,
+ "generated_at": "2026-11-24T18:00:50Z",
+ "version": 4,
+ "price": 154.43,
  "price_date": "2026-11-24",
- "target": 199.29,
- "upside": 0.2925,
+ "target": 193.45,
+ "upside": 0.2527,
  "rating": "Buy",
  "scenarios": {
-  "bear": 180.72,
-  "base": 199.29,
-  "bull": 226.54
+  "bear": 150.51,
+  "base": 193.45,
+  "bull": 256.47
  },
  "model_scenarios": {
-  "base": 9.85,
-  "bull": 11.19,
-  "bear": 8.93
+  "base": 4.13,
+  "bull": 5.48,
+  "bear": 3.22
  },
- "dcf_value": -2.05451820472254,
- "comps_value": 41.2372056414861,
- "exit_value": 6.05210691526361,
- "model_value": 9.84647661251364,
- "peer_avg_upside": 0.44251817083080075,
+ "dcf_value": -2.05444136095029,
+ "comps_value": 12.6690341472687,
+ "exit_value": 6.05194123317113,
+ "model_value": 4.13280677834207,
+ "peer_avg_upside": 0.4026925223652251,
  "anchor_peers": [
   "EAF",
   "VRT",
-  "WWD"
+  "WWD",
+  "FELE"
  ],
  "wacc": 0.1005,
  "peers": [
   "PLUG",
   "EAF",
   "VRT",
-  "WWD"
+  "WWD",
+  "FELE"
  ],
  "peer_matches": {
   "PLUG": "Same industry (Yahoo Finance)",
   "EAF": "Same industry (Yahoo Finance)",
   "VRT": "Same industry (Yahoo Finance)",
-  "WWD": "Same SEC industry code and sector"
+  "WWD": "Same SEC industry code and sector",
+  "FELE": "Related SEC industry code, same sector"
  },
  "consensus": {
   "target_mean": 282.69232,
@@ -188,9 +191,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 11.1927224351735,
-    "target": 226.538301739965,
-    "upside": 0.469215265192068
+    "model": 5.47903050561668,
+    "target": 256.470469130386,
+    "upside": 0.660755482292213
    },
    "base": {
     "growth": [
@@ -211,9 +214,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 9.84647661251364,
-    "target": 199.290575,
-    "upside": 0.2925
+    "model": 4.13280677834207,
+    "target": 193.454461,
+    "upside": 0.2527
    },
    "bear": {
     "growth": [
@@ -234,9 +237,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 8.92903485346133,
-    "target": 180.721750547791,
-    "upside": 0.172071798091907
+    "model": 3.21537867974308,
+    "target": 150.510145468287,
+    "upside": -0.0253827270071397
    }
   },
   "dcf_inputs": {
@@ -283,57 +286,57 @@
     0,
     0
    ],
-   "wacc": 0.100533387033173,
+   "wacc": 0.100538599943109,
    "g": 0.025,
-   "ev_ebitda_now": 370.850818931976,
+   "ev_ebitda_now": 371.425989802866,
    "debt": -2617.879,
    "cash": 2464.145,
    "nci_ratio": -0.0,
    "shares": 295.657,
-   "comps_value": 41.2372056414861,
+   "comps_value": 12.6690341472687,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 199.290575,
-   "base_model": 9.84647661251364,
-   "price": 154.19,
+   "anchored_base": 193.454461,
+   "base_model": 4.13280677834207,
+   "price": 154.43,
    "check": {
-    "dcf": -2.05451820472254,
-    "exit": 6.05210691526361,
-    "model": 9.84647661251364,
-    "target": 199.290575
+    "dcf": -2.05444136095029,
+    "exit": 6.05194123317113,
+    "model": 4.13280677834207,
+    "target": 193.454461
    }
   },
   "valuation": {
-   "dcf": -2.05451820472254,
-   "exit": 6.05210691526361,
-   "comps": 41.2372056414861,
+   "dcf": -2.05444136095029,
+   "exit": 6.05194123317113,
+   "comps": 12.6690341472687,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 9.84647661251364,
+   "model_value": 4.13280677834207,
    "anchor": {
     "street": 295,
-    "peer_up": 0.4425,
-    "peer_value": 222.419075,
+    "peer_up": 0.4027,
+    "peer_value": 216.618961,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 134.278007056257,
+    "anchored": 129.971143639171,
     "band": 0.15,
-    "lo": 199.290575,
-    "hi": 245.547575,
-    "upside": 0.2925
+    "lo": 193.454461,
+    "hi": 239.783461,
+    "upside": 0.2527
    },
-   "target": 199.290575
+   "target": 193.454461
   },
   "comps": [
    {
     "name": "PLUG Power Inc",
     "ticker": "PLUG",
-    "price": 0.93,
-    "mcap": 1300.9491,
-    "ev": 932.4491,
+    "price": 0.94,
+    "mcap": 1314.9378,
+    "ev": 946.4378,
     "ebitda": -1429.8,
     "ev_ebitda": null,
     "pe": null
@@ -341,9 +344,9 @@
    {
     "name": "Graftech International Ltd",
     "ticker": "EAF",
-    "price": 7.75,
-    "mcap": 208.475,
-    "ev": 1164.775,
+    "price": 7.79,
+    "mcap": 209.551,
+    "ev": 1165.851,
     "ebitda": -15.4,
     "ev_ebitda": null,
     "pe": null
@@ -351,31 +354,41 @@
    {
     "name": "Vertiv Holdings Co",
     "ticker": "VRT",
-    "price": 172.58,
-    "mcap": 66453.6548,
-    "ev": 67638.2548,
+    "price": 172.9,
+    "mcap": 66576.874,
+    "ev": 67761.474,
     "ebitda": 2138.3,
-    "ev_ebitda": 31.6317891783192,
-    "pe": 50.6099706744868
+    "ev_ebitda": 31.6894140204836,
+    "pe": 50.7038123167155
    },
    {
     "name": "Woodward, Inc.",
     "ticker": "WWD",
-    "price": 341.62,
-    "mcap": 19930.1108,
-    "ev": 20561.7108,
+    "price": 342.48,
+    "mcap": 19980.2832,
+    "ev": 20611.8832,
     "ebitda": 121.9,
-    "ev_ebitda": 168.676872846596,
-    "pe": 35.9978925184405
+    "ev_ebitda": 169.088459392945,
+    "pe": 36.0885142255005
+   },
+   {
+    "name": "Franklin Electric Co Inc",
+    "ticker": "FELE",
+    "price": 98.39,
+    "mcap": 4345.8863,
+    "ev": 4413.1863,
+    "ebitda": 331.9,
+    "ev_ebitda": 13.2967348598976,
+    "pe": 30.555900621118
    }
   ],
   "comps_median": {
-   "ev_ebitda": 100.154331012457,
-   "pe": 43.3039315964636
+   "ev_ebitda": 31.6894140204836,
+   "pe": 36.0885142255005
   },
   "comps_self": {
-   "ev_ebitda": 370.850818931976,
-   "pe": -425.379669267845
+   "ev_ebitda": 371.425989802866,
+   "pe": -426.041781730549
   },
   "wacc": {
    "rf": 0.04908,
@@ -383,9 +396,9 @@
    "erp": 0.055,
    "ke": 0.10408,
    "kd_at": 0.0387732,
-   "we": 0.945693052380037,
-   "wd": 0.0543069476199634,
-   "wacc": 0.100533387033173
+   "we": 0.945772874235285,
+   "wd": 0.0542271257647153,
+   "wacc": 0.100538599943109
   },
   "sens": {
    "g": [
@@ -396,47 +409,47 @@
     0.035
    ],
    "wacc": [
-    0.0905333870331726,
-    0.0955333870331726,
-    0.100533387033173,
-    0.105533387033173,
-    0.110533387033173
+    0.0905385999431089,
+    0.0955385999431089,
+    0.100538599943109,
+    0.105538599943109,
+    0.110538599943109
    ],
    "grid": [
     [
-     -2.09875521569349,
-     -2.15656502712597,
-     -2.223196267459,
-     -2.30083486151842,
-     -2.39245398120524
+     -2.09867539505608,
+     -2.15647583991556,
+     -2.2230955828543,
+     -2.30071983250467,
+     -2.39232071277409
     ],
     [
-     -2.02669329988119,
-     -2.07640672914177,
-     -2.13316837079533,
-     -2.19859149695676,
-     -2.2748223986893
+     -2.02662257974893,
+     -2.07632841470773,
+     -2.13308086456943,
+     -2.19849270750802,
+     -2.2747095315661
     ],
     [
-     -1.96259321433692,
-     -2.00570207969457,
-     -2.05451820472255,
-     -2.11025532519413,
-     -2.17449759441431
+     -1.96253005746341,
+     -2.00563268892987,
+     -2.05444136095029,
+     -2.11016946035653,
+     -2.17440065556504
     ],
     [
-     -1.90514640586587,
-     -1.94280457717934,
-     -1.98513884280609,
-     -2.03307781746147,
-     -2.08781342796149
+     -1.90508960470319,
+     -1.94274260276144,
+     -1.98507075013751,
+     -2.03300240981166,
+     -2.08772916603051
     ],
     [
-     -1.85331797564925,
-     -1.88643114068449,
-     -1.92341567878046,
-     -1.96499266473668,
-     -2.01207410211357
+     -1.85326656840801,
+     -1.88637539857171,
+     -1.92335485909243,
+     -1.96492583977203,
+     -2.01200009701632
     ]
    ]
   },
@@ -1517,13 +1530,13 @@
    ],
    [
     "2026-11-24",
-    154.19
+    154.43
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-09",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T17:55:45Z"
+   "generated_at": "2026-11-24T18:00:50Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1664703&type=10-K"
  },
@@ -1541,12 +1554,19 @@
    "price": 154.19,
    "target": 199.29,
    "rating": "Buy"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 4,
+   "price": 154.43,
+   "target": 193.45,
+   "rating": "Buy"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v3.xlsx",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v3.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v4.xlsx",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v4.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T02:49:22Z"
