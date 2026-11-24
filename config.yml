@@ -1,0 +1,11 @@
+# Site-wide settings. Per-model settings live next to each model as <TICKER>.yml
+owner: "Jash (JJ) Rajgandhi"
+site:
+  title: "JJ Rajgandhi — Equity Coverage"
+  tagline: "Live valuation models, refreshed from SEC 10-K filings and market prices."
+  linkedin: ""        # e.g. https://www.linkedin.com/in/your-handle
+  portfolio: ""       # link to your Bloomberg-terminal-style portfolio site
+  email: ""
+ratings:              # rating = f(upside to target) unless a model's .yml sets `rating:`
+  buy_above: 0.15
+  sell_below: -0.10

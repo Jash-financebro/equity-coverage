@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Equity Coverage — Live Valuation Models</title>
+  <meta name="description" content="Live equity valuation models refreshed from SEC 10-K filings and market prices.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230b0b0b'/><path d='M3 11l3-3 2 2 5-5' stroke='white' stroke-width='1.6' fill='none'/></svg>">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-inner">
+      <a href="#/" class="brand"><span class="mark" aria-hidden="true"></span><span id="brand-name">Equity Coverage</span></a>
+      <nav id="nav">
+        <a href="#/">Coverage</a>
+        <a href="#/method">Methodology</a>
+        <a href="downloads/DCF_Template.xlsx" download>Template</a>
+      </nav>
+    </div>
+  </header>
+  <main id="app" class="wrap" aria-live="polite"><p class="muted loading">Loading…</p></main>
+  <footer class="wrap foot">
+    <span id="foot-left">Fundamentals: SEC EDGAR (10-K XBRL). Prices: Yahoo Finance. For educational purposes only — not investment advice.</span>
+    <span id="foot-right"></span>
+  </footer>
+  <div id="tip" class="tip" role="tooltip" hidden></div>
+  <script src="assets/app.js"></script>
+</body>
+</html>
