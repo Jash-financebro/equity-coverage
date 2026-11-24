@@ -1,6 +1,6 @@
 {
- "updated_at": "2026-11-24T18:46:42Z",
- "count": 7,
+ "updated_at": "2026-11-24T22:04:00Z",
+ "count": 8,
  "sectors": {
   "Consumer Discretionary": [
    "SN"
@@ -16,13 +16,101 @@
   ],
   "Information Technology": [
    "A",
-   "GOOG"
+   "GOOG",
+   "GOOGL"
   ],
   "Utilities": [
    "LNG"
   ]
  },
  "models": [
+  {
+   "ticker": "GOOGL",
+   "name": "Alphabet Inc.",
+   "cik": 1652044,
+   "sector": "Information Technology",
+   "industry": "Services-Computer Programming, Data Processing, Etc.",
+   "exchange": "Nasdaq",
+   "sic": "7370",
+   "city": "Mountain View",
+   "state": "CA",
+   "website": "https://abc.xyz",
+   "generated_at": "2026-11-24T22:03:48Z",
+   "version": 1,
+   "price": 279.05,
+   "price_date": "2026-11-24",
+   "target": 324.59,
+   "upside": 0.1632,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 283.98,
+    "base": 324.59,
+    "bull": 374.02
+   },
+   "model_scenarios": {
+    "base": 214.12,
+    "bull": 246.72,
+    "bear": 187.33
+   },
+   "dcf_value": 81.5785001839797,
+   "comps_value": 369.611069610829,
+   "exit_value": 268.913151597005,
+   "model_value": 214.11887463456,
+   "peer_avg_upside": 0.3132199213429648,
+   "anchor_peers": [
+    "META",
+    "SNAP",
+    "APP",
+    "PINS"
+   ],
+   "wacc": 0.1154,
+   "peers": [
+    "META",
+    "SNAP",
+    "APP",
+    "PINS"
+   ],
+   "peer_matches": {
+    "META": "Same industry (Yahoo Finance)",
+    "SNAP": "Same industry (Yahoo Finance)",
+    "APP": "Same SEC industry code and sector",
+    "PINS": "Same industry (Yahoo Finance)"
+   },
+   "consensus": {
+    "target_mean": 395.47815,
+    "target_median": 390.0,
+    "analysts": 54
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "pe_ttm": 14.57,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-10-29",
+    "accession": "0001652044-26-000084",
+    "period": "2026-09-30",
+    "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
+   },
+   "ev_ebitda": 22.8441251872815,
+   "ebitda_margin": 0.372794387790565,
+   "growth_next": 0.12,
+   "quality": {
+    "grade": "High",
+    "score": 3.0,
+    "reasons": [
+     "clean 10-K data, same-industry peers and a business that fits the DCF"
+    ]
+   },
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_v1.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_tearsheet_v1.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_report_v1.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T22:03:48Z"
+  },
   {
    "ticker": "SN",
    "name": "SharkNinja, Inc.",
