@@ -9,28 +9,28 @@
  "city": "Zurich",
  "state": "V8",
  "website": "https://www.chubb.com",
- "generated_at": "2026-11-24T18:10:50Z",
- "version": 5,
- "price": 373.24,
+ "generated_at": "2026-11-24T18:30:25Z",
+ "version": 6,
+ "price": 373.6,
  "price_date": "2026-11-24",
- "target": 432.24,
- "upside": 0.1581,
+ "target": 432.29,
+ "upside": 0.1571,
  "rating": "Buy",
  "scenarios": {
-  "bear": 339.4,
-  "base": 432.24,
-  "bull": 550.16
+  "bear": 339.44,
+  "base": 432.29,
+  "bull": 550.22
  },
  "model_scenarios": {
-  "base": 1532.55,
-  "bull": 1950.64,
-  "bear": 1203.37
+  "base": 1532.47,
+  "bull": 1950.52,
+  "bear": 1203.32
  },
- "dcf_value": 2923.98240469242,
+ "dcf_value": 2923.79480888511,
  "comps_value": 0,
- "exit_value": 907.395146837423,
- "model_value": 1532.55102061194,
- "peer_avg_upside": 0.008077605562577944,
+ "exit_value": 907.386811991593,
+ "model_value": 1532.47264835068,
+ "peer_avg_upside": 0.007060381200662796,
  "anchor_peers": [
   "ALL",
   "TRV",
@@ -64,12 +64,67 @@
   "metric": "P/B",
   "bvps": 193.0412,
   "tbvps": 123.8199,
-  "pb": 1.9334,
-  "ptbv": 3.0143,
+  "pb": 1.9353,
+  "ptbv": 3.0173,
   "roe": 0.1497,
-  "peer_multiple": 2.1825,
-  "implied_value": 421.3044,
+  "peer_multiple": 2.1869,
+  "implied_value": 422.1705,
   "note": "Banks, insurers and other financials are valued on book value and returns on equity: debt is their raw material, so EV/EBITDA and unlevered free cash flow don't apply. Read the DCF here as a rough cross-check and lean on P/B, P/TBV and ROE."
+ },
+ "latest_quarter": {
+  "quarter": {
+   "revenue": {
+    "cur": 16195.0,
+    "prior": 16148.0,
+    "chg": 0.00291057716125831
+   },
+   "net_income": {
+    "cur": 2844.0,
+    "prior": 2801.0,
+    "chg": 0.015351660121385224
+   },
+   "eps_diluted": {
+    "cur": 7.3,
+    "prior": 6.99,
+    "chg": 0.044349070100142995
+   }
+  },
+  "ttm": {
+   "revenue": 61849.0,
+   "net_income": 11228.0,
+   "eps_diluted": 28.53,
+   "cfo": 17808.0
+  },
+  "fy": {
+   "revenue": 59402.0,
+   "net_income": 10310.0,
+   "eps_diluted": 25.68,
+   "cfo": 12816.0
+  },
+  "as_of": "2026-09-30",
+  "is_10q": true,
+  "label": "Quarter ended Sep 30, 2026"
+ },
+ "pe_ttm": 13.09,
+ "guidance": null,
+ "last_filing": {
+  "form": "10-Q",
+  "filed": "2026-10-28",
+  "accession": "0000896159-26-000021",
+  "period": "2026-09-30",
+  "url": "https://www.sec.gov/Archives/edgar/data/896159/000089615926000021/cb-20260930.htm"
+ },
+ "ev_ebitda": 0,
+ "ebitda_margin": 0,
+ "growth_next": 0.0929,
+ "quality": {
+  "grade": "Low",
+  "score": 0.0,
+  "reasons": [
+   "gaps in operating income, capital expenditures, depreciation & amortization",
+   "business model doesn't fit EV/EBITDA and free cash flow",
+   "model value far from the street before anchoring"
+  ]
  },
  "detail": {
   "years": [
@@ -283,9 +338,9 @@
     "margin_delta": 0,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 1950.63617995132,
-    "target": 550.160945772326,
-    "upside": 0.474033640393656
+    "model": 1950.51917279178,
+    "target": 550.218581351337,
+    "upside": 0.472747808756256
    },
    "base": {
     "growth": [
@@ -306,9 +361,9 @@
     "margin_delta": 0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 1532.55102061194,
-    "target": 432.2434535,
-    "upside": 0.1581
+    "model": 1532.47264835068,
+    "target": 432.29256,
+    "upside": 0.1571
    },
    "bear": {
     "growth": [
@@ -329,9 +384,9 @@
     "margin_delta": -0.01,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 1203.37024448768,
-    "target": 339.400713790788,
-    "upside": -0.0906514292850663
+    "model": 1203.31671588395,
+    "target": 339.441532062651,
+    "upside": -0.0914305886973998
    }
   },
   "dcf_inputs": {
@@ -378,109 +433,109 @@
     0.1857,
     0.1857
    ],
-   "wacc": 0.0620931637567778,
+   "wacc": 0.0620954973472213,
    "g": 0.025,
    "ev_ebitda_now": 0,
    "debt": -17227,
    "cash": 2470,
-   "nci_ratio": -0.029400000000000055,
+   "nci_ratio": -0.029400000000000127,
    "shares": 382.079,
    "comps_value": 0,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 432.2434535,
-   "base_model": 1532.55102061194,
-   "price": 373.24,
+   "anchored_base": 432.29256,
+   "base_model": 1532.47264835068,
+   "price": 373.6,
    "check": {
-    "dcf": 2923.98240469242,
-    "exit": 907.395146837423,
-    "model": 1532.55102061194,
-    "target": 432.2434535
+    "dcf": 2923.79480888511,
+    "exit": 907.386811991593,
+    "model": 1532.47264835068,
+    "target": 432.29256
    }
   },
   "valuation": {
-   "dcf": 2923.98240469242,
-   "exit": 907.395146837423,
+   "dcf": 2923.79480888511,
+   "exit": 907.386811991593,
    "comps": 0,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 1532.55102061194,
+   "model_value": 1532.47264835068,
    "anchor": {
     "street": 379,
-    "peer_up": 0.0081,
-    "peer_value": 376.2582035,
+    "peer_up": 0.0071,
+    "peer_value": 376.25256,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 955.090061180968,
+    "anchored": 955.049464175341,
     "band": 0.15,
-    "lo": 320.2729535,
-    "hi": 432.2434535,
-    "upside": 0.1581
+    "lo": 320.21256,
+    "hi": 432.29256,
+    "upside": 0.1571
    },
-   "target": 432.2434535
+   "target": 432.29256
   },
   "comps": [
    {
     "name": "Allstate Corp",
     "ticker": "ALL",
-    "price": 269.98,
-    "mcap": 66806.551,
-    "ev": 73618.551,
+    "price": 270.53,
+    "mcap": 66942.6485,
+    "ev": 73754.6485,
     "ebitda": 482,
-    "ev_ebitda": 152.735582987552,
-    "pe": 7.09353652128219
+    "ev_ebitda": 153.017942946058,
+    "pe": 7.10798738833421
    },
    {
     "name": "Travelers Companies, INC.",
     "ticker": "TRV",
-    "price": 399.93,
-    "mcap": 81965.6535,
-    "ev": 81423.6535,
+    "price": 400.42,
+    "mcap": 82066.079,
+    "ev": 81524.079,
     "ebitda": 680,
-    "ev_ebitda": 119.740666911765,
-    "pe": 14.5800218738607
+    "ev_ebitda": 119.888351470588,
+    "pe": 14.5978855267955
    },
    {
     "name": "Progressive Corp",
     "ticker": "PGR",
-    "price": 234.56,
-    "mcap": 135894.6816,
-    "ev": 135756.6816,
+    "price": 234.78,
+    "mcap": 136022.1408,
+    "ev": 135884.1408,
     "ebitda": 313,
-    "ev_ebitda": 433.727417252396,
-    "pe": 12.1976079043162
+    "ev_ebitda": 434.13463514377,
+    "pe": 12.2090483619345
    },
    {
     "name": "Loews Corp",
     "ticker": "L",
-    "price": 110.6,
-    "mcap": 22365.532,
-    "ev": 31359.532,
+    "price": 110.73,
+    "mcap": 22391.8206,
+    "ev": 31385.8206,
     "ebitda": 607,
-    "ev_ebitda": 51.6631499176277,
-    "pe": 13.8770388958595
+    "ev_ebitda": 51.7064589785832,
+    "pe": 13.8933500627353
    },
    {
     "name": "Markel Group INC.",
     "ticker": "MKL",
-    "price": 1955.9,
-    "mcap": 23920.657,
-    "ev": 24259.757,
+    "price": 1955.64,
+    "mcap": 23917.4772,
+    "ev": 24256.5772,
     "ebitda": 3542.8,
-    "ev_ebitda": 6.84762250197584,
-    "pe": 11.5583264389552
+    "ev_ebitda": 6.84672496330586,
+    "pe": 11.556789977544
    }
   ],
   "comps_median": {
-   "ev_ebitda": 119.740666911765,
-   "pe": 12.1976079043162
+   "ev_ebitda": 119.888351470588,
+   "pe": 12.2090483619345
   },
   "comps_self": {
    "ev_ebitda": 0,
-   "pe": 14.5352768724539
+   "pe": 14.5494914451988
   },
   "wacc": {
    "rf": 0.04904,
@@ -488,9 +543,9 @@
    "erp": 0.055,
    "ke": 0.06477,
    "kd_at": 0.0399342900950629,
-   "we": 0.892218251321654,
-   "wd": 0.107781748678346,
-   "wacc": 0.0620931637567778
+   "we": 0.892312212414472,
+   "wd": 0.107687787585528,
+   "wacc": 0.0620954973472213
   },
   "sens": {
    "g": [
@@ -501,47 +556,47 @@
     0.035
    ],
    "wacc": [
-    0.0520931637567778,
-    0.0570931637567778,
-    0.0620931637567778,
-    0.0670931637567778,
-    0.0720931637567778
+    0.0520954973472213,
+    0.0570954973472213,
+    0.0620954973472213,
+    0.0670954973472213,
+    0.0720954973472213
    ],
    "grid": [
     [
-     3032.77563936655,
-     3451.49928040768,
-     4024.77247675364,
-     4857.52557496296,
-     6177.4635560054
+     3032.58058432249,
+     3451.24372745067,
+     4024.42078769325,
+     4857.00683576504,
+     6176.61354849571
     ],
     [
-     2664.49558495734,
-     2977.74638054606,
-     3388.6038807784,
-     3951.10756892762,
-     4768.21657044065
+     2664.34414072176,
+     2977.55510054725,
+     3388.35325661932,
+     3950.7626382791,
+     4767.7077621409
     ],
     [
-     2374.4687574722,
-     2616.58882975641,
-     2923.98240469242,
-     3327.15761626159,
-     3879.14350759801
+     2374.34778597519,
+     2616.44031207928,
+     2923.79480888511,
+     3326.91180267946,
+     3878.80517382852
     ],
     [
-     2140.16147179154,
-     2332.16213685883,
-     2569.77606734297,
-     2871.44868315311,
-     3267.12032570191
+     2140.06262724161,
+     2332.04349914653,
+     2569.63040590153,
+     2871.26468329323,
+     3266.87920786056
     ],
     [
-     1946.93372251034,
-     2102.37119822399,
-     2290.81505178824,
-     2524.02718522167,
-     2820.11131710814
+     1946.85145007712,
+     2102.27425712072,
+     2290.69869187783,
+     2523.88431170966,
+     2819.93082747426
     ]
    ]
   },
@@ -752,16 +807,19 @@
    ],
    [
     "2026-11-24",
-    373.235
+    373.6
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-27",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:10:50Z"
+   "generated_at": "2026-11-24T18:30:25Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=896159&type=10-K"
  },
+ "changes": [
+  "Target rose from $432.24 to $432.29 (+0.0%) since v5 on 2026-11-24."
+ ],
  "history": [
   {
    "date": "2026-11-24",
@@ -790,12 +848,20 @@
    "price": 373.24,
    "target": 432.24,
    "rating": "Buy"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 6,
+   "price": 373.6,
+   "target": 432.29,
+   "rating": "Buy"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_v5.xlsx",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_report_v5.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_v6.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_tearsheet_v6.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_report_v6.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T16:21:42Z"
