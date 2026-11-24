@@ -1,6 +1,6 @@
 {
- "updated_at": "2026-11-24T17:10:16Z",
- "count": 6,
+ "updated_at": "2026-11-24T17:39:46Z",
+ "count": 7,
  "sectors": {
   "Consumer Discretionary": [
    "SN"
@@ -15,13 +15,78 @@
    "BE"
   ],
   "Information Technology": [
-   "A"
+   "A",
+   "GOOG"
   ],
   "Utilities": [
    "LNG"
   ]
  },
  "models": [
+  {
+   "ticker": "GOOG",
+   "name": "Alphabet Inc.",
+   "cik": 1652044,
+   "sector": "Information Technology",
+   "industry": "Services-Computer Programming, Data Processing, Etc.",
+   "exchange": "Nasdaq",
+   "sic": "7370",
+   "city": "Mountain View",
+   "state": "CA",
+   "website": "https://abc.xyz",
+   "generated_at": "2026-11-24T17:39:09Z",
+   "version": 1,
+   "price": 276.99,
+   "price_date": "2026-11-24",
+   "target": 330.34,
+   "upside": 0.1926,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 280.51,
+    "base": 330.34,
+    "bull": 390.98
+   },
+   "model_scenarios": {
+    "base": 176.64,
+    "bull": 209.06,
+    "bear": 149.99
+   },
+   "dcf_value": 81.6435365510348,
+   "comps_value": 185.499986072182,
+   "exit_value": 267.194432651032,
+   "model_value": 176.635184895263,
+   "peer_avg_upside": 0.34260534093882905,
+   "anchor_peers": [
+    "META",
+    "FLUT",
+    "APP",
+    "FDS",
+    "BZ"
+   ],
+   "wacc": 0.1153,
+   "peers": [
+    "META",
+    "FLUT",
+    "APP",
+    "FDS",
+    "BZ"
+   ],
+   "consensus": {
+    "target_mean": 389.0,
+    "target_median": 380.0,
+    "analysts": 15
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_v1.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_report_v1.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T17:39:09Z"
+  },
   {
    "ticker": "BE",
    "name": "Bloom Energy Corp",
