@@ -1,0 +1,57 @@
+{
+ "updated_at": "2026-11-24T02:12:46Z",
+ "count": 1,
+ "sectors": {
+  "Consumer Staples": [
+   "KO"
+  ]
+ },
+ "models": [
+  {
+   "ticker": "KO",
+   "name": "COCA COLA Co",
+   "cik": 21344,
+   "sector": "Consumer Staples",
+   "industry": "Beverages",
+   "sic": "2080",
+   "city": "Atlanta",
+   "state": "GA",
+   "website": "https://www.coca-colacompany.com",
+   "generated_at": "2026-11-24T02:12:39Z",
+   "version": 1,
+   "price": 95.88,
+   "price_date": "2026-11-23",
+   "target": 48.53,
+   "upside": -0.4938,
+   "rating": "Sell",
+   "scenarios": {
+    "base": 48.53,
+    "bull": 62.67,
+    "bear": 38.58
+   },
+   "dcf_value": 51.0227043250495,
+   "comps_value": 42.7301313584269,
+   "wacc": 0.0618,
+   "peers": [
+    "PRMB",
+    "BF-A",
+    "BRCC",
+    "BUDA",
+    "SRXH"
+   ],
+   "consensus": {
+    "target_mean": 99.64,
+    "target_median": 100.0,
+    "analysts": 25
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "files": {
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v1.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v1.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T02:12:39Z"
+  }
+ ]
+}
