@@ -3,11 +3,13 @@
     /usr/bin/python3 tests/test_builder.py
 """
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+subprocess.run([sys.executable, str(ROOT / "tests" / "make_fixtures.py")], check=True, stdout=subprocess.DEVNULL)
 os.environ.setdefault("FIXTURES_DIR", str(ROOT / "tests" / "fixtures"))
 sys.path.insert(0, str(ROOT / "pipeline"))
 
