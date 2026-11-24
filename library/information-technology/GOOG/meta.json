@@ -9,43 +9,49 @@
  "city": "Mountain View",
  "state": "CA",
  "website": "https://abc.xyz",
- "generated_at": "2026-11-24T17:39:09Z",
- "version": 1,
- "price": 276.99,
+ "generated_at": "2026-11-24T17:55:18Z",
+ "version": 2,
+ "price": 277.02,
  "price_date": "2026-11-24",
- "target": 330.34,
- "upside": 0.1926,
- "rating": "Buy",
+ "target": 290.57,
+ "upside": 0.0489,
+ "rating": "Hold",
  "scenarios": {
-  "bear": 280.51,
-  "base": 330.34,
-  "bull": 390.98
+  "bear": 246.24,
+  "base": 290.57,
+  "bull": 344.52
  },
  "model_scenarios": {
-  "base": 176.64,
-  "bull": 209.06,
-  "bear": 149.99
+  "base": 174.49,
+  "bull": 206.88,
+  "bear": 147.87
  },
- "dcf_value": 81.6435365510348,
- "comps_value": 185.499986072182,
- "exit_value": 267.194432651032,
- "model_value": 176.635184895263,
- "peer_avg_upside": 0.34260534093882905,
+ "dcf_value": 81.5092382346012,
+ "comps_value": 175.296392249728,
+ "exit_value": 267.058733129935,
+ "model_value": 174.48646699576,
+ "peer_avg_upside": 0.19889938660839646,
  "anchor_peers": [
-  "META",
-  "FLUT",
-  "APP",
-  "FDS",
-  "BZ"
+  "BZ",
+  "BMBL",
+  "EVER",
+  "DOYU"
  ],
- "wacc": 0.1153,
+ "wacc": 0.1155,
  "peers": [
-  "META",
-  "FLUT",
-  "APP",
-  "FDS",
-  "BZ"
+  "BZ",
+  "BMBL",
+  "EVER",
+  "DOYU",
+  "DJT"
  ],
+ "peer_matches": {
+  "BZ": "Same industry (Yahoo Finance)",
+  "BMBL": "Same industry (Yahoo Finance)",
+  "EVER": "Same industry (Yahoo Finance)",
+  "DOYU": "Same industry (Yahoo Finance)",
+  "DJT": "Same industry (Yahoo Finance)"
+ },
  "consensus": {
   "target_mean": 389.0,
   "target_median": 380.0,
@@ -141,21 +147,21 @@
     73795,
     100118,
     132170,
-    115084.394819731,
-    126170.66416694,
-    135944.129989963,
-    143867.667147661,
-    149487.430881554
+    115087.972547395,
+    126174.066831807,
+    135948.582913785,
+    143874.60825972,
+    149498.471395572
    ],
    "eps": [
     5.80058166954881,
     8.04354462922793,
     10.807031888798,
-    9.59715222136079,
-    10.7309145390541,
-    11.7921014980105,
-    12.7275951486635,
-    13.4877724687402
+    9.59745057629459,
+    10.7312039383859,
+    11.7924877547006,
+    12.7282092106409,
+    13.4887686189861
    ]
   },
   "fcf": [
@@ -185,9 +191,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 209.058876600181,
-    "target": 390.976172167695,
-    "upside": 0.411517282817773
+    "model": 206.88364977354,
+    "target": 344.516185861071,
+    "upside": 0.243650948888423
    },
    "base": {
     "growth": [
@@ -208,9 +214,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 176.635184895263,
-    "target": 330.338274,
-    "upside": 0.1926
+    "model": 174.48646699576,
+    "target": 290.566278,
+    "upside": 0.0489000000000002
    },
    "bear": {
     "growth": [
@@ -231,9 +237,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 149.992881137343,
-    "target": 280.5125688666,
-    "upside": 0.0127173142228956
+    "model": 147.865384871463,
+    "target": 246.235110761814,
+    "upside": -0.111128760516159
    }
   },
   "dcf_inputs": {
@@ -280,119 +286,119 @@
     0.1678,
     0.1678
    ],
-   "wacc": 0.115341269802188,
+   "wacc": 0.115481052002277,
    "g": 0.025,
-   "ev_ebitda_now": 22.6763622440486,
+   "ev_ebitda_now": 22.6788053937073,
    "debt": -48543,
    "cash": 30708,
    "nci_ratio": 0.0,
    "shares": 12230,
-   "comps_value": 185.499986072182,
+   "comps_value": 175.296392249728,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 330.338274,
-   "base_model": 176.635184895263,
-   "price": 276.99,
+   "anchored_base": 290.566278,
+   "base_model": 174.48646699576,
+   "price": 277.02,
    "check": {
-    "dcf": 81.6435365510348,
-    "exit": 267.194432651032,
-    "model": 176.635184895263,
-    "target": 330.338274
+    "dcf": 81.5092382346012,
+    "exit": 267.058733129935,
+    "model": 174.48646699576,
+    "target": 290.566278
    }
   },
   "valuation": {
-   "dcf": 81.6435365510348,
-   "exit": 267.194432651032,
-   "comps": 185.499986072182,
+   "dcf": 81.5092382346012,
+   "exit": 267.058733129935,
+   "comps": 175.296392249728,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 176.635184895263,
+   "model_value": 174.48646699576,
    "anchor": {
     "street": 380,
-    "peer_up": 0.3426,
-    "peer_value": 371.886774,
+    "peer_up": 0.1989,
+    "peer_value": 332.119278,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 276.289285947631,
+    "anchored": 265.27305299788,
     "band": 0.15,
-    "lo": 330.338274,
-    "hi": 413.435274,
-    "upside": 0.1926
+    "lo": 290.566278,
+    "hi": 373.672278,
+    "upside": 0.0489000000000002
    },
-   "target": 330.338274
+   "target": 290.566278
   },
   "comps": [
    {
-    "name": "Meta Platforms, Inc.",
-    "ticker": "META",
-    "price": 593.82,
-    "mcap": 1528492.68,
-    "ev": 1551363.68,
-    "ebitda": 101892,
-    "ev_ebitda": 15.225569033879,
-    "pe": 25.27969348659
+    "name": "Kanzhun Ltd",
+    "ticker": "BZ",
+    "price": 12.54,
+    "mcap": 11624.4546,
+    "ev": 11037.4546,
+    "ebitda": 426.4,
+    "ev_ebitda": 25.8852124765478,
+    "pe": 29.8571428571429
    },
    {
-    "name": "Flutter Entertainment plc",
-    "ticker": "FLUT",
-    "price": 68,
-    "mcap": 11823.16,
-    "ev": 22261.16,
-    "ebitda": 1553,
-    "ev_ebitda": 14.3342949130715,
+    "name": "Bumble Inc.",
+    "ticker": "BMBL",
+    "price": 5.99,
+    "mcap": 717.602,
+    "ev": 1130.302,
+    "ebitda": -779.9,
+    "ev_ebitda": null,
     "pe": null
    },
    {
-    "name": "AppLovin Corp",
-    "ticker": "APP",
-    "price": 389,
-    "mcap": 133026.33,
-    "ev": 134052.23,
-    "ebitda": 4346.7,
-    "ev_ebitda": 30.8400004601192,
-    "pe": 39.8974358974359
+    "name": "EverQuote, Inc.",
+    "ticker": "EVER",
+    "price": 28.22,
+    "mcap": 1065.305,
+    "ev": 893.905,
+    "ebitda": 62.1,
+    "ev_ebitda": 14.3946054750403,
+    "pe": 10.7300380228137
    },
    {
-    "name": "Factset Research Systems Inc",
-    "ticker": "FDS",
-    "price": 321.38,
-    "mcap": 11331.8588,
-    "ev": 12468.5588,
-    "ebitda": 880.8,
-    "ev_ebitda": 14.1559477747502,
-    "pe": 22.0576527110501
+    "name": "DouYu International Holdings Ltd",
+    "ticker": "DOYU",
+    "price": 3.31,
+    "mcap": 99.8958,
+    "ev": -151.7042,
+    "ebitda": 1,
+    "ev_ebitda": -151.7042,
+    "pe": null
    },
    {
-    "name": "Kanzhun Ltd",
-    "ticker": "BZ",
-    "price": 12.55,
-    "mcap": 11633.7245,
-    "ev": 11046.7245,
-    "ebitda": 426.4,
-    "ev_ebitda": 25.9069523921201,
-    "pe": 29.8809523809524
+    "name": "Trump Media & Technology Group Corp.",
+    "ticker": "DJT",
+    "price": 3.72,
+    "mcap": 1035.7596,
+    "ev": 1848.3596,
+    "ebitda": -565.6,
+    "ev_ebitda": null,
+    "pe": null
    }
   ],
   "comps_median": {
-   "ev_ebitda": 15.225569033879,
-   "pe": 27.5803229337712
+   "ev_ebitda": 14.3946054750403,
+   "pe": 20.2935904399783
   },
   "comps_self": {
-   "ev_ebitda": 22.6763622440486,
-   "pe": 25.6305341605508
+   "ev_ebitda": 22.6788053937073,
+   "pe": 25.633310130892
   },
   "wacc": {
-   "rf": 0.04898,
+   "rf": 0.04912,
    "beta": 1.226,
    "erp": 0.055,
-   "ke": 0.11641,
-   "kd_at": 0.0407596149245086,
-   "we": 0.985872772534526,
-   "wd": 0.0141272274654745,
-   "wacc": 0.115341269802188
+   "ke": 0.11655,
+   "kd_at": 0.0408761185196378,
+   "we": 0.98587428083756,
+   "wd": 0.0141257191624403,
+   "wacc": 0.115481052002277
   },
   "sens": {
    "g": [
@@ -403,47 +409,47 @@
     0.035
    ],
    "wacc": [
-    0.105341269802188,
-    0.110341269802188,
-    0.115341269802188,
-    0.120341269802188,
-    0.125341269802188
+    0.105481052002277,
+    0.110481052002277,
+    0.115481052002277,
+    0.120481052002277,
+    0.125481052002277
    ],
    "grid": [
     [
-     84.4086186658114,
-     88.2041479658038,
-     92.4721031198234,
-     97.3065413136465,
-     102.828262834515
+     84.2691001893004,
+     88.0506556037826,
+     92.3020800520809,
+     97.1167484318721,
+     102.614532094851
     ],
     [
-     79.6743939917886,
-     83.0110399700233,
-     86.7386627858382,
-     90.9302592013976,
-     95.6782036087766
+     79.5492232491478,
+     82.8741626458801,
+     86.5880700441578,
+     90.7634410175106,
+     95.4919800857154
     ],
     [
-     75.4157129251966,
-     78.3663212799501,
-     81.6435365510348,
-     85.3047647713856,
-     89.421702520521
+     75.3027980840859,
+     78.2435136618447,
+     81.5092382346012,
+     85.1570035633218,
+     89.2580141265378
     ],
     [
-     71.5647804794542,
-     74.1879339623061,
-     77.0862205001608,
-     80.3053223801289,
-     83.9016276796653
+     71.4624170819647,
+     74.0771449057056,
+     76.9657205525389,
+     80.173542669535,
+     83.7566318242964
     ],
     [
-     68.0660920253791,
-     70.4094016168886,
-     72.9862451866035,
-     75.8333645324919,
-     78.9956354533054
+     67.9728773110975,
+     70.30895981256,
+     72.8775321670755,
+     75.7151183521524,
+     78.8663156328435
     ]
    ]
   },
@@ -1509,13 +1515,13 @@
    ],
    [
     "2026-11-24",
-    276.99
+    277.02
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-05",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T17:39:09Z"
+   "generated_at": "2026-11-24T17:55:18Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1652044&type=10-K"
  },
@@ -1526,12 +1532,19 @@
    "price": 276.99,
    "target": 330.34,
    "rating": "Buy"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 2,
+   "price": 277.02,
+   "target": 290.57,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_v1.xlsx",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_report_v1.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_v2.xlsx",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_report_v2.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T17:39:09Z"
