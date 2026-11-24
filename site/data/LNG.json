@@ -18,20 +18,20 @@
   "Global LNG oversupply later this decade pressuring spot cargo margins",
   "Large noncontrolling interest in CQP dilutes value attributable to LNG holders"
  ],
- "price": 296.65,
+ "price": 296.73,
  "price_date": "2026-11-24",
  "price_source": "Yahoo Finance",
  "currency": "USD",
- "target": 340.79,
+ "target": 340.81,
  "target_cell": "'LNG Comps & Target Price'!E38",
  "target_stale": false,
- "upside": 0.1488,
+ "upside": 0.1486,
  "rating": "Hold",
  "published_target": 316.32,
  "scenarios": {
-  "base": 340.79,
-  "bear": 218.61,
-  "bull": 438.9
+  "base": 340.81,
+  "bear": 218.63,
+  "bull": 438.92
  },
  "consensus": {
   "target_mean": 340.8,
@@ -55,9 +55,9 @@
   "pre_tax_cost_of_debt": 0.04906,
   "tax_rate": 0.17966674716252112,
   "after_tax_cost_of_debt": 0.040245549384206714,
-  "weight_equity": 0.7264337608631747,
-  "weight_debt": 0.27356623913682526,
-  "wacc": 0.08660252074245475,
+  "weight_equity": 0.7264839927913012,
+  "weight_debt": 0.2735160072086988,
+  "wacc": 0.08660572626535153,
   "beta_source": "default 1.0; 1Y regression -0.36 not meaningful"
  },
  "peers": {
@@ -65,131 +65,131 @@
    {
     "ticker": "LNG",
     "name": "Cheniere Energy, Inc.",
-    "price": 296.65,
+    "price": 296.73,
     "self": true,
-    "market_cap": 60578.138,
-    "pe": 12.294,
-    "ev_ebitda": 12.796193018480492,
-    "ev_sales": 4.1196,
+    "market_cap": 60593.453,
+    "pe": 12.2971,
+    "ev_ebitda": 12.798158495893224,
+    "ev_sales": 4.1203,
     "op_margin": 0.4561,
     "rev_growth": 0.2721,
     "roe": 0.6734,
     "net_debt_ebitda": 2.0797,
     "street_mean": 340.8,
     "street_median": 347.0,
-    "street_upside": 0.16970892113734815,
-    "model_target": 340.7897916536618
+    "street_upside": 0.16941327132409922,
+    "model_target": 340.81435015423943
    },
    {
     "ticker": "VG",
     "name": "Venture Global, Inc.",
-    "price": 11.96,
-    "market_cap": 31514.6,
-    "pe": 13.907,
-    "ev_ebitda": 10.3928,
-    "ev_sales": 4.602,
+    "price": 11.97,
+    "market_cap": 31540.95,
+    "pe": 13.9186,
+    "ev_ebitda": 10.3971,
+    "ev_sales": 4.6039,
     "op_margin": 0.3745,
     "rev_growth": 1.7693,
     "roe": 0.4053,
     "net_debt_ebitda": 5.2239,
     "street_mean": 17.77778,
     "street_median": 18.0,
-    "street_upside": 0.5050167224080266,
+    "street_upside": 0.5037593984962405,
     "status": "ok"
    },
    {
     "ticker": "WMB",
     "name": "Williams Companies, Inc.",
-    "price": 65.83,
-    "market_cap": 80521.084,
-    "pe": 30.7617,
-    "ev_ebitda": 16.6772,
-    "ev_sales": 9.1313,
+    "price": 65.84,
+    "market_cap": 80533.315,
+    "pe": 30.7664,
+    "ev_ebitda": 16.6791,
+    "ev_sales": 9.1323,
     "op_margin": 0.3511,
     "rev_growth": 0.1378,
     "roe": 0.2044,
     "net_debt_ebitda": 4.3708,
     "street_mean": 85.41667,
     "street_median": 85.0,
-    "street_upside": 0.2912046179553396,
+    "street_upside": 0.29100850546780066,
     "status": "ok"
    },
    {
     "ticker": "KMI",
     "name": "Kinder Morgan, Inc.",
-    "price": 30.89,
-    "market_cap": 68814.116,
-    "pe": 22.5474,
-    "ev_ebitda": 14.0385,
-    "ev_sales": 5.9488,
+    "price": 30.91,
+    "market_cap": 68858.671,
+    "pe": 22.562,
+    "ev_ebitda": 14.0447,
+    "ev_sales": 5.9514,
     "op_margin": 0.2789,
     "rev_growth": 0.1217,
     "roe": 0.0981,
     "net_debt_ebitda": 4.4503,
     "street_mean": 37.5,
     "street_median": 38.0,
-    "street_upside": 0.23017157656199405,
+    "street_upside": 0.22937560659980583,
     "status": "ok"
    },
    {
     "ticker": "TRGP",
     "name": "Targa Resources Corp.",
-    "price": 281.42,
-    "market_cap": 60379.787,
-    "pe": 33.1472,
-    "ev_ebitda": 16.0211,
-    "ev_sales": 4.5598,
+    "price": 281.63,
+    "market_cap": 60424.843,
+    "pe": 33.172,
+    "ev_ebitda": 16.0304,
+    "ev_sales": 4.5625,
     "op_margin": 0.1956,
     "rev_growth": 0.0395,
     "roe": 0.6268,
     "net_debt_ebitda": 3.5627,
     "street_mean": 333.5238,
     "street_median": 335.0,
-    "street_upside": 0.1903915855305236,
+    "street_upside": 0.18950395909526696,
     "status": "ok"
    },
    {
     "ticker": "OKE",
     "name": "Oneok Inc",
-    "price": 84.43,
-    "market_cap": 53228.894,
-    "pe": 15.5775,
-    "ev_ebitda": 11.7363,
-    "ev_sales": 2.5319,
+    "price": 84.5,
+    "market_cap": 53269.873,
+    "pe": 15.5895,
+    "ev_ebitda": 11.742,
+    "ev_sales": 2.5332,
     "op_margin": 0.1707,
     "rev_growth": 0.5499,
     "roe": 0.1509,
     "net_debt_ebitda": 4.3994,
     "street_mean": 102.42857,
     "street_median": 100.0,
-    "street_upside": 0.184413123297406,
+    "street_upside": 0.18350198236582038,
     "status": "ok"
    }
   ],
   "medians": {
-   "pe": 22.5474,
-   "ev_ebitda": 14.0385,
-   "ev_sales": 4.602,
+   "pe": 22.562,
+   "ev_ebitda": 14.0447,
+   "ev_sales": 4.6039,
    "op_margin": 0.2789,
    "rev_growth": 0.1378,
    "roe": 0.2044,
    "net_debt_ebitda": 4.3994,
-   "street_upside": 0.23017157656199405
+   "street_upside": 0.22937560659980583
   },
   "implied": {
    "ev_ebitda": {
-    "median": 344.0588529117942,
-    "low": 256.21168831168825,
-    "high": 419.7107461166284
+    "median": 344.29543201896144,
+    "low": 256.4291884586002,
+    "high": 420.06561477737944
    },
    "pe": {
     "median": null,
     "low": null,
     "high": null
    },
-   "average": 344.0588529117942
+   "average": 344.29543201896144
   },
-  "peer_avg_street_upside": 0.280239525150658,
+  "peer_avg_street_upside": 0.2794298904049869,
   "peer_street_median_count": 5,
   "basis": "model-adjusted EBITDA / net debt incl. minority interest"
  },
@@ -208,15 +208,15 @@
   },
   {
    "label": "Peer EV/EBITDA (25th\u201375th pct)",
-   "low": 256.21,
-   "high": 419.71,
-   "mid": 344.06
+   "low": 256.43,
+   "high": 420.07,
+   "mid": 344.3
   },
   {
    "label": "DCF: bear \u2192 bull",
-   "low": 218.61,
-   "high": 438.9,
-   "mid": 340.79
+   "low": 218.63,
+   "high": 438.92,
+   "mid": 340.81
   }
  ],
  "ratios": [
@@ -225,22 +225,22 @@
    "items": [
     {
      "label": "P/E",
-     "value": 12.294,
+     "value": 12.2971,
      "unit": "x"
     },
     {
      "label": "EV / EBITDA",
-     "value": 7.8816,
+     "value": 7.8831,
      "unit": "x"
     },
     {
      "label": "EV / Sales",
-     "value": 4.1196,
+     "value": 4.1203,
      "unit": "x"
     },
     {
      "label": "P / Book",
-     "value": 7.6536,
+     "value": 7.6555,
      "unit": "x"
     },
     {
@@ -347,8 +347,8 @@
   }
  ],
  "snapshot": {
-  "market_cap": 60578.138,
-  "enterprise_value": 82292.138,
+  "market_cap": 60593.453,
+  "enterprise_value": 82307.453,
   "net_debt": 21714.0,
   "ebitda": 10441.0,
   "fcf": 2461.0,
@@ -1847,7 +1847,7 @@
   ],
   [
    "2026-11-24",
-   296.655
+   296.73
   ]
  ],
  "target_history": [
@@ -1860,10 +1860,10 @@
   },
   {
    "date": "2026-11-24",
-   "price": 296.65,
-   "target": 340.79,
+   "price": 296.73,
+   "target": 340.81,
    "rating": "Hold",
-   "spy": 718.39
+   "spy": 718.94
   }
  ],
  "track_record": {
@@ -1871,8 +1871,8 @@
    {
     "date": "2026-11-24",
     "rating": "Hold",
-    "target": 340.79,
-    "price": 296.65,
+    "target": 340.81,
+    "price": 296.73,
     "return": 0.0,
     "spy_return": 0.0,
     "alpha": 0.0,
@@ -1885,9 +1885,9 @@
     "rating": "Buy",
     "target": 339.97,
     "price": 295.46,
-    "return": 0.004027617951668505,
-    "spy_return": -0.00539949327832312,
-    "alpha": 0.009427111229991625,
+    "return": 0.0042983821837137,
+    "spy_return": -0.0046380262775338466,
+    "alpha": 0.008936408461247547,
     "days": 1,
     "hit": null,
     "target_reached": false
@@ -1896,16 +1896,16 @@
   "hit_rate": null,
   "judged": 0,
   "since": "2026-11-23",
-  "since_return": 0.004027617951668505,
-  "since_spy": -0.00539949327832312
+  "since_return": 0.0042983821837137,
+  "since_spy": -0.0046380262775338466
  },
  "model_outputs": {
-  "DCF - perpetuity growth": 358.1089028922792,
-  "DCF - exit multiple": 330.60202985294296,
+  "DCF - perpetuity growth": 358.1030538088818,
+  "DCF - exit multiple": 330.66927518778465,
   "Trading comps (EV/EBITDA)": 326.5270927778646,
-  "WACC": 0.08011271453198532,
+  "WACC": 0.08011328457130894,
   "Terminal growth": 0.0275,
-  "Exit EV/EBITDA": 12.796192969712527,
+  "Exit EV/EBITDA": 12.798158485626287,
   "Monte Carlo mean (50k trials)": 302.48
  },
  "linked_inputs": [
@@ -1931,6 +1931,6 @@
  "model_file": "LNG_Final_1.xlsx",
  "model_built": false,
  "model_updated": "2026-11-23",
- "refreshed_at": "2026-11-24 18:37 UTC",
+ "refreshed_at": "2026-11-24 18:39 UTC",
  "status": "ok"
 }
