@@ -9,28 +9,28 @@
  "city": "San Jose",
  "state": "CA",
  "website": "https://www.bloomenergy.com",
- "generated_at": "2026-11-24T18:43:17Z",
- "version": 8,
- "price": 156.09,
+ "generated_at": "2026-11-24T18:45:13Z",
+ "version": 9,
+ "price": 155.91,
  "price_date": "2026-11-24",
- "target": 193.61,
- "upside": 0.2404,
+ "target": 193.81,
+ "upside": 0.2431,
  "rating": "Buy",
  "scenarios": {
-  "bear": 150.74,
-  "base": 193.61,
-  "bull": 256.52
+  "bear": 150.83,
+  "base": 193.81,
+  "bull": 256.88
  },
  "model_scenarios": {
   "base": 4.14,
-  "bull": 5.49,
-  "bear": 3.23
+  "bull": 5.48,
+  "bear": 3.22
  },
- "dcf_value": -2.05420753978799,
- "comps_value": 12.7201296929425,
- "exit_value": 6.0514369901096,
- "model_value": 4.14291771871714,
- "peer_avg_upside": 0.390367777990391,
+ "dcf_value": -2.05426396998472,
+ "comps_value": 12.6893220845215,
+ "exit_value": 6.0515586979694,
+ "model_value": 4.13678230809817,
+ "peer_avg_upside": 0.3930993343981929,
  "anchor_peers": [
   "EAF",
   "VRT",
@@ -103,7 +103,7 @@
   "is_10q": true,
   "label": "Quarter ended Sep 30, 2026"
  },
- "pe_ttm": 94.6,
+ "pe_ttm": 94.49,
  "guidance": {
   "filed": "2026-10-22",
   "url": "https://www.sec.gov/Archives/edgar/data/1664703/000162828026066890/ex991_q326financialresults.htm",
@@ -125,7 +125,7 @@
   "period": "2026-09-30",
   "url": "https://www.sec.gov/Archives/edgar/data/1664703/000162828026066931/be-20260930.htm"
  },
- "ev_ebitda": 375.404254993191,
+ "ev_ebitda": 374.972876840023,
  "ebitda_margin": 0.0609527498599304,
  "growth_next": 0.12,
  "quality": {
@@ -347,9 +347,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 5.48907418866965,
-    "target": 256.524961326252,
-    "upside": 0.643442637749066
+    "model": 5.48295501334989,
+    "target": 256.881041388775,
+    "upside": 0.647623894482555
    },
    "base": {
     "growth": [
@@ -370,9 +370,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 4.14291771871714,
-    "target": 193.614036,
-    "upside": 0.2404
+    "model": 4.13678230809817,
+    "target": 193.811721,
+    "upside": 0.2431
    },
    "bear": {
     "growth": [
@@ -393,9 +393,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 3.22553120351013,
-    "target": 150.741133895585,
-    "upside": -0.0342678333295837
+    "model": 3.21938575482091,
+    "target": 150.830922981678,
+    "upside": -0.0325769804266669
    }
   },
   "dcf_inputs": {
@@ -442,49 +442,49 @@
     0,
     0
    ],
-   "wacc": 0.100554466035631,
+   "wacc": 0.100550636349506,
    "g": 0.025,
-   "ev_ebitda_now": 375.404254993191,
+   "ev_ebitda_now": 374.972876840023,
    "debt": -2617.879,
    "cash": 2464.145,
    "nci_ratio": -0.0,
    "shares": 295.657,
-   "comps_value": 12.7201296929425,
+   "comps_value": 12.6893220845215,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 193.614036,
-   "base_model": 4.14291771871714,
-   "price": 156.09,
+   "anchored_base": 193.811721,
+   "base_model": 4.13678230809817,
+   "price": 155.91,
    "check": {
-    "dcf": -2.05420753978799,
-    "exit": 6.0514369901096,
-    "model": 4.14291771871714,
-    "target": 193.614036
+    "dcf": -2.05426396998472,
+    "exit": 6.0515586979694,
+    "model": 4.13678230809817,
+    "target": 193.811721
    }
   },
   "valuation": {
-   "dcf": -2.05420753978799,
-   "exit": 6.0514369901096,
-   "comps": 12.7201296929425,
+   "dcf": -2.05426396998472,
+   "exit": 6.0515586979694,
+   "comps": 12.6893220845215,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 4.14291771871714,
+   "model_value": 4.13678230809817,
    "anchor": {
     "street": 295,
-    "peer_up": 0.3904,
-    "peer_value": 217.027536,
+    "peer_up": 0.3931,
+    "peer_value": 217.198221,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 130.078342859359,
+    "anchored": 130.117946404049,
     "band": 0.15,
-    "lo": 193.614036,
-    "hi": 240.441036,
-    "upside": 0.2404
+    "lo": 193.811721,
+    "hi": 240.584721,
+    "upside": 0.2431
    },
-   "target": 193.614036
+   "target": 193.811721
   },
   "comps": [
    {
@@ -500,9 +500,9 @@
    {
     "name": "Graftech International Ltd",
     "ticker": "EAF",
-    "price": 8.06,
-    "mcap": 216.814,
-    "ev": 1173.114,
+    "price": 8.01,
+    "mcap": 215.469,
+    "ev": 1171.769,
     "ebitda": -15.4,
     "ev_ebitda": null,
     "pe": null
@@ -510,22 +510,22 @@
    {
     "name": "Vertiv Holdings Co",
     "ticker": "VRT",
-    "price": 173.58,
-    "mcap": 66838.7148,
-    "ev": 68023.3148,
+    "price": 173.17,
+    "mcap": 66680.8402,
+    "ev": 67865.4402,
     "ebitda": 2138.3,
-    "ev_ebitda": 31.8118668100828,
-    "pe": 50.9032258064516
+    "ev_ebitda": 31.7380349810597,
+    "pe": 50.782991202346
    },
    {
     "name": "Woodward, Inc.",
     "ticker": "WWD",
-    "price": 342.42,
-    "mcap": 19976.7828,
-    "ev": 20608.3828,
+    "price": 342.58,
+    "mcap": 19986.1172,
+    "ev": 20617.7172,
     "ebitda": 121.9,
-    "ev_ebitda": 169.059744052502,
-    "pe": 36.0821917808219
+    "ev_ebitda": 169.136318293683,
+    "pe": 36.0990516332982
    },
    {
     "name": "Franklin Electric Co Inc",
@@ -539,12 +539,12 @@
    }
   ],
   "comps_median": {
-   "ev_ebitda": 31.8118668100828,
-   "pe": 36.0821917808219
+   "ev_ebitda": 31.7380349810597,
+   "pe": 36.0990516332982
   },
   "comps_self": {
-   "ev_ebitda": 375.404254993191,
-   "pe": -430.621392930916
+   "ev_ebitda": 374.972876840023,
+   "pe": -430.124808583888
   },
   "wacc": {
    "rf": 0.04906,
@@ -552,9 +552,9 @@
    "erp": 0.055,
    "ke": 0.10406,
    "kd_at": 0.0387574,
-   "we": 0.946318615730943,
-   "wd": 0.0536813842690571,
-   "wacc": 0.100554466035631
+   "we": 0.946259970498969,
+   "wd": 0.053740029501031,
+   "wacc": 0.100550636349506
   },
   "sens": {
    "g": [
@@ -565,47 +565,47 @@
     0.035
    ],
    "wacc": [
-    0.0905544660356315,
-    0.0955544660356315,
-    0.100554466035631,
-    0.105554466035631,
-    0.110554466035631
+    0.090550636349506,
+    0.095550636349506,
+    0.100550636349506,
+    0.105550636349506,
+    0.110550636349506
    ],
    "grid": [
     [
-     -2.09843251592607,
-     -2.15620446554501,
-     -2.22278923191201,
-     -2.30036984560889,
-     -2.3919152436396
+     -2.09849113215473,
+     -2.15626995803498,
+     -2.22286316453729,
+     -2.30045430772815,
+     -2.39201309346818
     ],
     [
-     -2.02640738790598,
-     -2.07609011863397,
-     -2.13281460497569,
-     -2.19819212287607,
-     -2.27436612238722
+     -2.02645932263799,
+     -2.07614762879699,
+     -2.13287886308959,
+     -2.19826466390542,
+     -2.27444899711624
     ],
     [
-     -1.96233787657458,
-     -2.00542154214001,
-     -2.05420753978799,
-     -2.10990819505996,
-     -2.17410570167409
+     -1.96238425822412,
+     -2.00547250063727,
+     -2.05426396998472,
+     -2.10997124787368,
+     -2.17417688382462
     ],
     [
-     -1.90491676127088,
-     -1.9425540199515,
-     -1.9848635532474,
-     -2.03277295846563,
-     -2.08747277794254
+     -1.90495847628037,
+     -1.94259953323158,
+     -1.98491355847416,
+     -2.03282833405945,
+     -2.08753465371358
     ],
     [
-     -1.85311013647947,
-     -1.88620577775279,
-     -1.92316978999571,
-     -1.9647225003037,
-     -2.01177491334115
+     -1.8531478909143,
+     -1.88624671500254,
+     -1.92321445526727,
+     -1.96477157457855,
+     -2.01182925898354
     ]
    ]
   },
@@ -816,18 +816,18 @@
    ],
    [
     "2026-11-24",
-    156.09
+    155.91
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-09",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:43:17Z"
+   "generated_at": "2026-11-24T18:45:13Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1664703&type=10-K"
  },
  "changes": [
-  "Target rose from $193.25 to $193.61 (+0.2%) since v7 on 2026-11-24."
+  "Target rose from $193.61 to $193.81 (+0.1%) since v8 on 2026-11-24."
  ],
  "history": [
   {
@@ -878,13 +878,20 @@
    "price": 156.09,
    "target": 193.61,
    "rating": "Buy"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 9,
+   "price": 155.91,
+   "target": 193.81,
+   "rating": "Buy"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v8.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_tearsheet_v8.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v8.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v9.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_tearsheet_v9.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v9.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T02:49:22Z"

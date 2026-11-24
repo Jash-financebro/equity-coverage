@@ -9,28 +9,28 @@
  "city": "Santa Clara",
  "state": "CA",
  "website": "https://www.agilent.com",
- "generated_at": "2026-11-24T18:42:32Z",
- "version": 8,
- "price": 184.46,
+ "generated_at": "2026-11-24T18:45:57Z",
+ "version": 9,
+ "price": 184.39,
  "price_date": "2026-11-24",
- "target": 184.88,
- "upside": 0.0023,
+ "target": 184.85,
+ "upside": 0.0025,
  "rating": "Hold",
  "scenarios": {
-  "bear": 158.84,
-  "base": 184.88,
-  "bull": 217.19
+  "bear": 158.81,
+  "base": 184.85,
+  "bull": 217.16
  },
  "model_scenarios": {
-  "base": 111.88,
-  "bull": 131.43,
-  "bear": 96.12
+  "base": 111.84,
+  "bull": 131.39,
+  "bear": 96.08
  },
- "dcf_value": 45.1565780869098,
- "comps_value": 196.397521804027,
- "exit_value": 136.340647014763,
- "model_value": 111.878394401474,
- "peer_avg_upside": 0.15226823594289987,
+ "dcf_value": 45.1459990282202,
+ "comps_value": 196.243517052192,
+ "exit_value": 136.329577590584,
+ "model_value": 111.83893405796,
+ "peer_avg_upside": 0.15247665439872354,
  "anchor_peers": [
   "ILMN",
   "MTD",
@@ -104,7 +104,7 @@
   "is_10q": true,
   "label": "Quarter ended Jul 31, 2026"
  },
- "pe_ttm": 36.38,
+ "pe_ttm": 36.37,
  "guidance": {
   "filed": "2026-11-23",
   "url": "https://www.sec.gov/Archives/edgar/data/1090872/000109087226000082/exhibit991-q426pressrelease.htm",
@@ -129,7 +129,7 @@
   "period": "2026-07-31",
   "url": "https://www.sec.gov/Archives/edgar/data/1090872/000109087226000064/a-20260731.htm"
  },
- "ev_ebitda": 30.316708172043,
+ "ev_ebitda": 30.3055395076401,
  "ebitda_margin": 0.254317789291883,
  "growth_next": 0.0084,
  "quality": {
@@ -236,21 +236,21 @@
     1240,
     1289,
     1303,
-    1332.37162309568,
-    1372.51550669796,
-    1420.3722795351,
-    1476.37774973882,
-    1541.11863974413
+    1332.40411133568,
+    1372.55787859174,
+    1420.42489806111,
+    1476.44100905032,
+    1541.19297235708
    ],
    "eps": [
     4.18918918918919,
     4.42955326460481,
     4.5719298245614,
-    4.76456191521903,
-    5.00215702490841,
-    5.27575609400265,
-    5.5888502517864,
-    5.9457071625684
+    4.76467809318943,
+    5.00231145002428,
+    5.27595153748829,
+    5.58908972086474,
+    5.94599394123541
    ]
   },
   "bs": {
@@ -351,9 +351,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 131.430027970523,
-    "target": 217.194243180247,
-    "upside": 0.177459845929996
+    "model": 131.388107098514,
+    "target": 217.162474813807,
+    "upside": 0.177734556178792
    },
    "base": {
     "growth": [
@@ -374,9 +374,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 111.878394401474,
-    "target": 184.884258,
-    "upside": 0.00229999999999997
+    "model": 111.83893405796,
+    "target": 184.850975,
+    "upside": 0.00250000000000017
    },
    "bear": {
     "growth": [
@@ -397,9 +397,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 96.1189809721683,
-    "target": 158.841093240799,
-    "upside": -0.138885973973768
+    "model": 96.0814423433994,
+    "target": 158.806487617087,
+    "upside": -0.138746745392443
    }
   },
   "dcf_inputs": {
@@ -446,119 +446,119 @@
     0.092,
     0.092
    ],
-   "wacc": 0.112699561167567,
+   "wacc": 0.112717882157649,
    "g": 0.025,
-   "ev_ebitda_now": 30.316708172043,
+   "ev_ebitda_now": 30.3055395076401,
    "debt": -3354,
    "cash": 1789,
    "nci_ratio": 0.0,
    "shares": 281.929,
-   "comps_value": 196.397521804027,
+   "comps_value": 196.243517052192,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 184.884258,
-   "base_model": 111.878394401474,
-   "price": 184.46,
+   "anchored_base": 184.850975,
+   "base_model": 111.83893405796,
+   "price": 184.39,
    "check": {
-    "dcf": 45.1565780869098,
-    "exit": 136.340647014763,
-    "model": 111.878394401474,
-    "target": 184.884258
+    "dcf": 45.1459990282202,
+    "exit": 136.329577590584,
+    "model": 111.83893405796,
+    "target": 184.850975
    }
   },
   "valuation": {
-   "dcf": 45.1565780869098,
-   "exit": 136.340647014763,
-   "comps": 196.397521804027,
+   "dcf": 45.1459990282202,
+   "exit": 136.329577590584,
+   "comps": 196.243517052192,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 111.878394401474,
+   "model_value": 111.83893405796,
    "anchor": {
     "street": 200,
-    "peer_up": 0.1523,
-    "peer_value": 212.553258,
+    "peer_up": 0.1525,
+    "peer_value": 212.509475,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 159.077511700737,
+    "anchored": 159.04683577898,
     "band": 0.15,
-    "lo": 184.884258,
-    "hi": 240.222258,
-    "upside": 0.00229999999999997
+    "lo": 184.850975,
+    "hi": 240.167975,
+    "upside": 0.00250000000000017
    },
-   "target": 184.884258
+   "target": 184.850975
   },
   "comps": [
    {
     "name": "Illumina, INC.",
     "ticker": "ILMN",
-    "price": 207.49,
-    "mcap": 31372.488,
-    "ev": 29954.488,
+    "price": 207.5,
+    "mcap": 31374,
+    "ev": 29956,
     "ebitda": 1077,
-    "ev_ebitda": 27.8128950789229,
-    "pe": 38.0715596330275
+    "ev_ebitda": 27.8142989786444,
+    "pe": 38.0733944954128
    },
    {
     "name": "Mettler Toledo International INC/",
     "ticker": "MTD",
-    "price": 1712.52,
-    "mcap": 34062.0228,
-    "ev": 36147.3228,
+    "price": 1710.55,
+    "mcap": 34022.8395,
+    "ev": 36108.1395,
     "ebitda": 51.1,
-    "ev_ebitda": 707.384007827789,
-    "pe": 40.7258026159334
+    "ev_ebitda": 706.617211350294,
+    "pe": 40.678953626635
    },
    {
     "name": "Waters Corp",
     "ticker": "WAT",
-    "price": 461.17,
-    "mcap": 45328.3993,
-    "ev": 45687.9993,
+    "price": 461.16,
+    "mcap": 45327.4164,
+    "ev": 45687.0164,
     "ebitda": 890.7,
-    "ev_ebitda": 51.2944866958572,
-    "pe": 42.8596654275093
+    "ev_ebitda": 51.2933831817672,
+    "pe": 42.8587360594796
    },
    {
     "name": "Revvity, INC.",
     "ticker": "RVTY",
-    "price": 154.56,
-    "mcap": 17255.0784,
-    "ev": 19555.2784,
+    "price": 154.71,
+    "mcap": 17271.8244,
+    "ev": 19572.0244,
     "ebitda": 762,
-    "ev_ebitda": 25.6630950131234,
-    "pe": 74.6666666666667
+    "ev_ebitda": 25.6850713910761,
+    "pe": 74.7391304347826
    },
    {
     "name": "Danaher Corp",
     "ticker": "DHR",
-    "price": 229.53,
-    "mcap": 161481.2409,
-    "ev": 175284.2409,
+    "price": 229.34,
+    "mcap": 161347.5702,
+    "ev": 175150.5702,
     "ebitda": 5440,
-    "ev_ebitda": 32.2213678125,
-    "pe": 45.4514851485149
+    "ev_ebitda": 32.1967959926471,
+    "pe": 45.4138613861386
    }
   ],
   "comps_median": {
-   "ev_ebitda": 32.2213678125,
-   "pe": 42.8596654275093
+   "ev_ebitda": 32.1967959926471,
+   "pe": 42.8587360594796
   },
   "comps_self": {
-   "ev_ebitda": 30.316708172043,
-   "pe": 40.3462010744436
+   "ev_ebitda": 30.3055395076401,
+   "pe": 40.3308902532617
   },
   "wacc": {
-   "rf": 0.04906,
+   "rf": 0.04908,
    "beta": 1.237,
    "erp": 0.055,
-   "ke": 0.117095,
-   "kd_at": 0.0445471637630662,
-   "we": 0.939413233248224,
-   "wd": 0.060586766751776,
-   "wacc": 0.112699561167567
+   "ke": 0.117115,
+   "kd_at": 0.0445653240418119,
+   "we": 0.93939162671264,
+   "wd": 0.06060837328736,
+   "wacc": 0.112717882157649
   },
   "sens": {
    "g": [
@@ -569,47 +569,47 @@
     0.035
    ],
    "wacc": [
-    0.102699561167567,
-    0.107699561167567,
-    0.112699561167567,
-    0.117699561167567,
-    0.122699561167567
+    0.102717882157649,
+    0.107717882157649,
+    0.112717882157649,
+    0.117717882157649,
+    0.122717882157649
    ],
    "grid": [
     [
-     46.8090831787316,
-     49.0950909204025,
-     51.6753098142755,
-     54.6104440408458,
-     57.9791311850348
+     46.7980929801474,
+     49.0829651900303,
+     51.6618330861632,
+     54.5953411092654,
+     57.9620446088996
     ],
     [
-     43.9710578354508,
-     45.9738878722069,
-     48.2188993677857,
-     50.7528457636193,
-     53.6353425984291
+     43.9612220926946,
+     45.9631056925607,
+     48.2070026935981,
+     50.7396230796199,
+     53.6205237387842
     ],
     [
-     41.4237720450366,
-     43.1895056023086,
-     45.1565780869098,
-     47.3615082405035,
-     49.8502147913458
+     41.4149180829056,
+     43.1798554987823,
+     45.1459990282202,
+     47.3498352400808,
+     49.837240194511
     ],
     [
-     39.1247553130942,
-     40.6902284026389,
-     42.4245774900661,
-     44.3566868700578,
-     46.5224261935116
+     39.1167432481018,
+     40.6815410590811,
+     42.4151086666265,
+     44.3463061718511,
+     46.5109716352548
     ],
     [
-     37.0394241561854,
-     38.4344119126358,
-     39.9721830899921,
-     41.6758419110425,
-     43.5737615468984
+     37.032139466649,
+     38.4265501663997,
+     39.9636584634541,
+     41.6665501305861,
+     43.5635745817348
     ]
    ]
   },
@@ -820,18 +820,18 @@
    ],
    [
     "2026-11-24",
-    184.46
+    184.39
    ]
   ],
   "dates": {
    "tenk_filed": "2025-12-22",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:42:32Z"
+   "generated_at": "2026-11-24T18:45:57Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1090872&type=10-K"
  },
  "changes": [
-  "Target rose from $184.82 to $184.88 (+0.0%) since v7 on 2026-11-24."
+  "Target fell from $184.88 to $184.85 (-0.0%) since v8 on 2026-11-24."
  ],
  "history": [
   {
@@ -882,13 +882,20 @@
    "price": 184.46,
    "target": 184.88,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 9,
+   "price": 184.39,
+   "target": 184.85,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v8.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_tearsheet_v8.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v8.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v9.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_tearsheet_v9.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v9.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T16:20:37Z"

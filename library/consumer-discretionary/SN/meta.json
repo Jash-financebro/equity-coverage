@@ -9,28 +9,28 @@
  "city": "Needham",
  "state": "MA",
  "website": "https://www.sharkninja.com",
- "generated_at": "2026-11-24T18:42:02Z",
- "version": 8,
- "price": 229.75,
+ "generated_at": "2026-11-24T18:46:31Z",
+ "version": 9,
+ "price": 229.6,
  "price_date": "2026-11-24",
- "target": 250.35,
- "upside": 0.0897,
+ "target": 250.32,
+ "upside": 0.0902,
  "rating": "Hold",
  "scenarios": {
-  "bear": 197.23,
-  "base": 250.35,
-  "bull": 317.69
+  "bear": 197.2,
+  "base": 250.32,
+  "bull": 317.64
  },
  "model_scenarios": {
-  "base": 104.19,
+  "base": 104.18,
   "bull": 132.21,
   "bear": 82.08
  },
- "dcf_value": 55.9556065455347,
- "comps_value": 46.2741178199531,
- "exit_value": 181.379504481886,
- "model_value": 104.188867974959,
- "peer_avg_upside": 0.23972892964808037,
+ "dcf_value": 55.9562779643022,
+ "comps_value": 46.2440136568551,
+ "exit_value": 181.380287784549,
+ "model_value": 104.183429030912,
+ "peer_avg_upside": 0.2401780076525854,
  "anchor_peers": [
   "WHR",
   "AOS",
@@ -103,7 +103,7 @@
   "is_10q": true,
   "label": "Quarter ended Sep 30, 2026"
  },
- "pe_ttm": 38.55,
+ "pe_ttm": 38.52,
  "guidance": null,
  "last_filing": {
   "form": "10-Q",
@@ -112,7 +112,7 @@
   "period": "2026-09-30",
   "url": "https://www.sec.gov/Archives/edgar/data/1957132/000195713226000056/sharkninja-20260930.htm"
  },
- "ev_ebitda": 30.5050583822053,
+ "ev_ebitda": 30.4864458181434,
  "ebitda_margin": 0.16563226459357,
  "growth_next": 0.12,
  "quality": {
@@ -334,9 +334,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 132.210379283269,
-    "target": 317.685396267789,
-    "upside": 0.382773928780991
+    "model": 132.205122831903,
+    "target": 317.641439503296,
+    "upside": 0.383425620101028
    },
    "base": {
     "growth": [
@@ -357,9 +357,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 104.188867974959,
-    "target": 250.3531265,
-    "upside": 0.0897000000000003
+    "model": 104.183429030912,
+    "target": 250.315371,
+    "upside": 0.0902000000000001
    },
    "bear": {
     "growth": [
@@ -380,9 +380,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 82.0814586251028,
-    "target": 197.231721525315,
-    "upside": -0.141518981804546
+    "model": 82.0758790184501,
+    "target": 197.198866439294,
+    "upside": -0.141138623116681
    }
   },
   "dcf_inputs": {
@@ -429,70 +429,70 @@
     0.2209,
     0.2209
    ],
-   "wacc": 0.111792085631957,
+   "wacc": 0.111791088276829,
    "g": 0.025,
-   "ev_ebitda_now": 30.5050583822053,
+   "ev_ebitda_now": 30.4864458181434,
    "debt": -736.139,
    "cash": 777.289,
    "nci_ratio": 0.0,
    "shares": 140.912,
-   "comps_value": 46.2741178199531,
+   "comps_value": 46.2440136568551,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 250.3531265,
-   "base_model": 104.188867974959,
-   "price": 229.75,
+   "anchored_base": 250.315371,
+   "base_model": 104.183429030912,
+   "price": 229.6,
    "check": {
-    "dcf": 55.9556065455347,
-    "exit": 181.379504481886,
-    "model": 104.188867974959,
-    "target": 250.3531265
+    "dcf": 55.9562779643022,
+    "exit": 181.380287784549,
+    "model": 104.183429030912,
+    "target": 250.315371
    }
   },
   "valuation": {
-   "dcf": 55.9556065455347,
-   "exit": 181.379504481886,
-   "comps": 46.2741178199531,
+   "dcf": 55.9562779643022,
+   "exit": 181.380287784549,
+   "comps": 46.2440136568551,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 104.188867974959,
+   "model_value": 104.183429030912,
    "anchor": {
     "street": 250,
-    "peer_up": 0.2397,
-    "peer_value": 284.8148765,
+    "peer_up": 0.2402,
+    "peer_value": 284.756121,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 185.798153112479,
+    "anchored": 185.780744765456,
     "band": 0.15,
-    "lo": 250.3531265,
-    "hi": 319.2766265,
-    "upside": 0.0897000000000001
+    "lo": 250.315371,
+    "hi": 319.196871,
+    "upside": 0.0902000000000001
    },
-   "target": 250.3531265
+   "target": 250.315371
   },
   "comps": [
    {
     "name": "Whirlpool Corp",
     "ticker": "WHR",
-    "price": 25.98,
-    "mcap": 1707.9252,
-    "ev": 7207.9252,
+    "price": 25.97,
+    "mcap": 1707.2678,
+    "ev": 7207.2678,
     "ebitda": 1176,
-    "ev_ebitda": 6.1291880952381,
-    "pe": 4.59010600706714
+    "ev_ebitda": 6.12862908163265,
+    "pe": 4.58833922261484
    },
    {
     "name": "Smith A O Corp",
     "ticker": "AOS",
-    "price": 65.77,
-    "mcap": 4980.7621,
-    "ev": 4961.2621,
+    "price": 65.69,
+    "mcap": 4974.7037,
+    "ev": 4955.2037,
     "ebitda": 813.7,
-    "ev_ebitda": 6.09716369669411,
-    "pe": 17.0831168831169
+    "ev_ebitda": 6.08971820081111,
+    "pe": 17.0623376623377
    },
    {
     "name": "Hamilton Beach Brands Holding Co",
@@ -526,12 +526,12 @@
    }
   ],
   "comps_median": {
-   "ev_ebitda": 6.1131758959661,
+   "ev_ebitda": 6.10917364122188,
    "pe": 13.2602564102564
   },
   "comps_self": {
-   "ev_ebitda": 30.5050583822053,
-   "pe": 46.5435945016496
+   "ev_ebitda": 30.4864458181434,
+   "pe": 46.5152321728493
   },
   "wacc": {
    "rf": 0.04906,
@@ -539,9 +539,9 @@
    "erp": 0.055,
    "ke": 0.113465,
    "kd_at": 0.0382208700423647,
-   "we": 0.977766845480379,
-   "wd": 0.0222331545196214,
-   "wacc": 0.111792085631957
+   "we": 0.977753590557652,
+   "wd": 0.0222464094423476,
+   "wacc": 0.111791088276829
   },
   "sens": {
    "g": [
@@ -552,47 +552,47 @@
     0.035
    ],
    "wacc": [
-    0.101792085631957,
-    0.106792085631957,
-    0.111792085631957,
-    0.116792085631957,
-    0.121792085631957
+    0.101791088276829,
+    0.106791088276829,
+    0.111791088276829,
+    0.116791088276829,
+    0.121791088276829
    ],
    "grid": [
     [
-     57.8267040511431,
-     60.522910302522,
-     63.570221258141,
-     67.0419955691278,
-     71.0335581571444
+     57.8274016244156,
+     60.5236814996461,
+     63.5710802267817,
+     67.0429604320896,
+     71.0346525307026
     ],
     [
-     54.5215674821341,
-     56.8809239932477,
-     59.5287383047566,
-     62.5213556372693,
-     65.9308179891419
+     54.5221905693975,
+     56.8816083332735,
+     59.5294949039087,
+     62.522198383648,
+     65.9317646734619
     ],
     [
-     51.5606071201842,
-     53.6384069863233,
-     55.9556065455347,
-     58.5561097448608,
-     61.4952550292307
+     51.561166975696,
+     53.6390182843555,
+     55.9562779643022,
+     58.5568520894735,
+     61.4960819341466
     ],
     [
-     48.8930478438362,
-     50.7333957914971,
-     52.7742346567562,
-     55.0502146469693,
-     57.604458722592
+     48.8935535656002,
+     50.7339450828701,
+     52.7748344427758,
+     55.0508734476999,
+     57.6051871464661
     ],
     [
-     46.4776251959599,
-     48.1161029316746,
-     49.9238587364603,
-     51.9285548103705,
-     54.1642277134828
+     46.478084218386,
+     48.1165991374352,
+     49.9243977114384,
+     51.9291433538271,
+     54.1648741909163
     ]
    ]
   },
@@ -803,18 +803,18 @@
    ],
    [
     "2026-11-24",
-    229.7449
+    229.605
    ]
   ],
   "dates": {
    "tenk_filed": "2026-03-02",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:42:02Z"
+   "generated_at": "2026-11-24T18:46:31Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1957132&type=10-K"
  },
  "changes": [
-  "Target rose from $250.18 to $250.35 (+0.1%) since v7 on 2026-11-24."
+  "Target fell from $250.35 to $250.32 (-0.0%) since v8 on 2026-11-24."
  ],
  "history": [
   {
@@ -865,13 +865,20 @@
    "price": 229.75,
    "target": 250.35,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 9,
+   "price": 229.6,
+   "target": 250.32,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v8.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_tearsheet_v8.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v8.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v9.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_tearsheet_v9.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v9.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T16:42:38Z"

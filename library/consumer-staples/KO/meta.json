@@ -9,28 +9,28 @@
  "city": "Atlanta",
  "state": "GA",
  "website": "https://www.coca-colacompany.com",
- "generated_at": "2026-11-24T18:43:06Z",
- "version": 13,
- "price": 97.83,
+ "generated_at": "2026-11-24T18:45:25Z",
+ "version": 14,
+ "price": 97.8,
  "price_date": "2026-11-24",
- "target": 94.17,
- "upside": -0.0374,
+ "target": 94.21,
+ "upside": -0.0367,
  "rating": "Hold",
  "scenarios": {
-  "bear": 74.39,
-  "base": 94.17,
-  "bull": 120.14
+  "bear": 74.42,
+  "base": 94.21,
+  "bull": 120.2
  },
  "model_scenarios": {
-  "base": 67.74,
+  "base": 67.73,
   "bull": 86.42,
   "bear": 53.51
  },
- "dcf_value": 58.498831570892,
- "comps_value": 45.4775958655647,
- "exit_value": 88.1078598865878,
- "model_value": 67.7381957561048,
- "peer_avg_upside": 0.11261914564833715,
+ "dcf_value": 58.4997018785954,
+ "comps_value": 45.4434338495683,
+ "exit_value": 88.1080717588956,
+ "model_value": 67.7317962249101,
+ "peer_avg_upside": 0.11329527442896299,
  "anchor_peers": [
   "PEP",
   "KDP",
@@ -109,16 +109,8 @@
   "is_10q": true,
   "label": "Quarter ended Oct 02, 2026"
  },
- "pe_ttm": 28.86,
- "guidance": {
-  "filed": "2026-10-27",
-  "url": "https://www.sec.gov/Archives/edgar/data/21344/000162828026067403/a2026q3earningsreleaseex-9.htm",
-  "sentences": [
-   "Projected 2026 Free Cash Flow (In billions):.",
-   "Projected Free Cash Flow (Non-GAAP) $ 13.0."
-  ],
-  "revenue_growth_range": null
- },
+ "pe_ttm": 28.85,
+ "guidance": null,
  "last_filing": {
   "form": "10-Q",
   "filed": "2026-10-28",
@@ -126,7 +118,7 @@
   "period": "2026-10-02",
   "url": "https://www.sec.gov/Archives/edgar/data/21344/000162828026067844/ko-20261002.htm"
  },
- "ev_ebitda": 30.6848881413719,
+ "ev_ebitda": 30.6776273021874,
  "ebitda_margin": 0.30896310047767,
  "growth_next": 0.0236,
  "quality": {
@@ -348,9 +340,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 86.4248523512594,
-    "target": 120.143626092215,
-    "upside": 0.228148490592542
+    "model": 86.4186715224481,
+    "target": 120.203027938487,
+    "upside": 0.229069815321952
    },
    "base": {
     "growth": [
@@ -371,9 +363,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 67.7381957561048,
-    "target": 94.166345,
-    "upside": -0.0374
+    "model": 67.7317962249101,
+    "target": 94.21074,
+    "upside": -0.0367000000000001
    },
    "bear": {
     "growth": [
@@ -394,9 +386,9 @@
     "margin_delta": -0.009999999999999953,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 53.513421091986,
-    "target": 74.3917551453839,
-    "upside": -0.239542497874941
+    "model": 53.5068851516513,
+    "target": 74.4247683686581,
+    "upside": -0.239010548377729
    }
   },
   "dcf_inputs": {
@@ -443,79 +435,79 @@
     0.1788,
     0.1788
    ],
-   "wacc": 0.0616267594668898,
+   "wacc": 0.0616262437388478,
    "g": 0.025,
-   "ev_ebitda_now": 30.6848881413719,
+   "ev_ebitda_now": 30.6776273021874,
    "debt": -43941,
    "cash": 30505,
-   "nci_ratio": -0.002300000000000004,
+   "nci_ratio": -0.0023000000000000013,
    "shares": 4301.902,
-   "comps_value": 45.4775958655647,
+   "comps_value": 45.4434338495683,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 94.166345,
-   "base_model": 67.7381957561048,
-   "price": 97.83,
+   "anchored_base": 94.21074,
+   "base_model": 67.7317962249101,
+   "price": 97.8,
    "check": {
-    "dcf": 58.498831570892,
-    "exit": 88.1078598865878,
-    "model": 67.7381957561048,
-    "target": 94.166345
+    "dcf": 58.4997018785954,
+    "exit": 88.1080717588956,
+    "model": 67.7317962249101,
+    "target": 94.21074
    }
   },
   "valuation": {
-   "dcf": 58.498831570892,
-   "exit": 88.1078598865878,
-   "comps": 45.4775958655647,
+   "dcf": 58.4997018785954,
+   "exit": 88.1080717588956,
+   "comps": 45.4434338495683,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 67.7381957561048,
+   "model_value": 67.7317962249101,
    "anchor": {
     "street": 100,
-    "peer_up": 0.1126,
-    "peer_value": 108.840095,
+    "peer_up": 0.1133,
+    "peer_value": 108.88074,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 86.0791216280524,
+    "anchored": 86.086083112455,
     "band": 0.15,
-    "lo": 94.166345,
-    "hi": 123.513845,
-    "upside": -0.0374
+    "lo": 94.21074,
+    "hi": 123.55074,
+    "upside": -0.0367000000000001
    },
-   "target": 94.166345
+   "target": 94.21074
   },
   "comps": [
    {
     "name": "Pepsico Inc",
     "ticker": "PEP",
-    "price": 142.76,
-    "mcap": 194544.7624,
-    "ev": 234567.7624,
+    "price": 142.69,
+    "mcap": 194449.3706,
+    "ev": 234472.3706,
     "ebitda": 14949,
-    "ev_ebitda": 15.6912009097598,
-    "pe": 23.7933333333333
+    "ev_ebitda": 15.6848197605191,
+    "pe": 23.7816666666667
    },
    {
     "name": "Keurig Dr Pepper Inc.",
     "ticker": "KDP",
-    "price": 35.92,
-    "mcap": 48885.324,
-    "ev": 61790.324,
+    "price": 35.88,
+    "mcap": 48830.886,
+    "ev": 61735.886,
     "ebitda": 4030,
-    "ev_ebitda": 15.3325866004963,
-    "pe": 23.4771241830065
+    "ev_ebitda": 15.3190784119107,
+    "pe": 23.4509803921569
    },
    {
     "name": "Monster Beverage Corp",
     "ticker": "MNST",
-    "price": 42.2,
-    "mcap": 82606.922,
-    "ev": 80518.822,
+    "price": 42.16,
+    "mcap": 82528.6216,
+    "ev": 80440.5216,
     "ebitda": 2533.8,
-    "ev_ebitda": 31.7778917041598,
+    "ev_ebitda": 31.7469893440682,
     "pe": null
    },
    {
@@ -531,21 +523,21 @@
    {
     "name": "Molson Coors Beverage Co",
     "ticker": "TAP",
-    "price": 40.16,
-    "mcap": 7995.856,
-    "ev": 13359.456,
+    "price": 40.14,
+    "mcap": 7991.874,
+    "ev": 13355.474,
     "ebitda": -1625.6,
     "ev_ebitda": null,
     "pe": null
    }
   ],
   "comps_median": {
-   "ev_ebitda": 15.5118937551281,
-   "pe": 23.7933333333333
+   "ev_ebitda": 15.5019490862149,
+   "pe": 23.7816666666667
   },
   "comps_self": {
-   "ev_ebitda": 30.6848881413719,
-   "pe": 32.1903734645609
+   "ev_ebitda": 30.6776273021874,
+   "pe": 32.1821469443809
   },
   "wacc": {
    "rf": 0.04906,
@@ -553,9 +545,9 @@
    "erp": 0.055,
    "ke": 0.063855,
    "kd_at": 0.0402863620452557,
-   "we": 0.905457390563307,
-   "wd": 0.0945426094366929,
-   "wacc": 0.0616267594668898
+   "we": 0.905435508601226,
+   "wd": 0.0945644913987736,
+   "wacc": 0.0616262437388478
   },
   "sens": {
    "g": [
@@ -566,47 +558,47 @@
     0.035
    ],
    "wacc": [
-    0.0516267594668898,
-    0.0566267594668898,
-    0.0616267594668898,
-    0.0666267594668898,
-    0.0716267594668898
+    0.0516262437388478,
+    0.0566262437388478,
+    0.0616262437388478,
+    0.0666262437388478,
+    0.0716262437388478
    ],
    "grid": [
     [
-     60.7585682545141,
-     69.5793777994239,
-     81.7129485370274,
-     99.4569625572594,
-     127.872938276082
+     60.7594731697445,
+     69.5805680654531,
+     81.7145954882679,
+     99.4594111595375,
+     127.877001722113
     ],
     [
-     53.0397288674756,
-     59.6155596775945,
-     68.2705889010075,
-     80.1761185220282,
-     97.5866474654152
+     53.0404293639042,
+     59.616447078279,
+     68.2717562091988,
+     80.1777338218661,
+     97.5890491882554
     ],
     [
-     46.9771202472384,
-     52.046010483987,
-     58.498831570892,
-     66.9919568798151,
-     78.6747776225685
+     46.9776784882598,
+     52.0466974430652,
+     58.4997018785954,
+     66.9931017808827,
+     78.6763620275699
     ],
     [
-     42.0895123280912,
-     46.1004706748299,
-     51.074981889509,
-     57.4076561759652,
-     65.7426457148221
+     42.0899676081589,
+     46.1010181457765,
+     51.075655636563,
+     57.4085098001419,
+     65.7437687437106
     ],
     [
-     38.065641112189,
-     41.3070765576629,
-     45.2436998057067,
-     50.1260183945504,
-     56.3413292163699
+     38.0660194819495,
+     41.3075230701351,
+     45.2442367649595,
+     50.1266792455765,
+     56.3421665547676
     ]
    ]
   },
@@ -817,18 +809,18 @@
    ],
    [
     "2026-11-24",
-    97.825
+    97.7999
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-20",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T18:43:06Z"
+   "generated_at": "2026-11-24T18:45:25Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=21344&type=10-K"
  },
  "changes": [
-  "Target rose from $94.07 to $94.17 (+0.1%) since v12 on 2026-11-24."
+  "Target rose from $94.17 to $94.21 (+0.0%) since v13 on 2026-11-24."
  ],
  "history": [
   {
@@ -879,13 +871,20 @@
    "price": 97.83,
    "target": 94.17,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-24",
+   "version": 14,
+   "price": 97.8,
+   "target": 94.21,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v13.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_tearsheet_v13.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v13.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v14.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_tearsheet_v14.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v14.pdf"
  },
  "times_generated": 6,
  "first_generated_at": "2026-11-24T02:12:39Z"
