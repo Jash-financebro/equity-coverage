@@ -1,12 +1,76 @@
 {
- "updated_at": "2026-11-24T02:40:26Z",
- "count": 1,
+ "updated_at": "2026-11-24T02:49:45Z",
+ "count": 2,
  "sectors": {
   "Consumer Staples": [
    "KO"
+  ],
+  "Industrials": [
+   "BE"
   ]
  },
  "models": [
+  {
+   "ticker": "BE",
+   "name": "Bloom Energy Corp",
+   "cik": 1664703,
+   "sector": "Industrials",
+   "industry": "Electrical Industrial Apparatus",
+   "sic": "3620",
+   "city": "San Jose",
+   "state": "CA",
+   "website": "https://www.bloomenergy.com",
+   "generated_at": "2026-11-24T02:49:22Z",
+   "version": 1,
+   "price": 168.15,
+   "price_date": "2026-11-23",
+   "target": 198.01,
+   "upside": 0.1776,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 134.57,
+    "base": 198.01,
+    "bull": 291.09
+   },
+   "model_scenarios": {
+    "base": 2.86,
+    "bull": 4.21,
+    "bear": 1.94
+   },
+   "dcf_value": -2.04896227382465,
+   "comps_value": 6.32042773391283,
+   "exit_value": 6.04008428431009,
+   "model_value": 2.86053435097674,
+   "peer_avg_upside": 0.3276064433960347,
+   "anchor_peers": [
+    "BHE",
+    "ENR",
+    "ESE",
+    "ENS",
+    "AOS"
+   ],
+   "wacc": 0.1009,
+   "peers": [
+    "BHE",
+    "ENR",
+    "ESE",
+    "ENS",
+    "AOS"
+   ],
+   "consensus": {
+    "target_mean": 282.69232,
+    "target_median": 295.0,
+    "analysts": 26
+   },
+   "beta_source": "default 1.0",
+   "fiscal_year": "FY2025",
+   "files": {
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v1.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v1.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T02:49:22Z"
+  },
   {
    "ticker": "KO",
    "name": "COCA COLA Co",
