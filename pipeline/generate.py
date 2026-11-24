@@ -88,13 +88,13 @@ def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> l
         s2 = sorted([c for c in others if str(c["sic"])[:2] == sic[:2] and str(c["sic"])[:3] != sic[:3]],
                     key=lambda c: abs(int(c["sic"]) - int(sic)))[:60]
     pool, seen = [], set()
-    for c in s4[:40] + yahoo + s3[:40] + s2:
+    for c in yahoo + s4 + s3 + s2:
         if c["cik"] not in seen:
             seen.add(c["cik"])
             pool.append(c)
+    pool = pool[:220]
 
-    def tier(c):
-        q = sources.quote_summary(c["ticker"]) if (my_ind or my_sec) else {}
+    def tier(c, q):
         ind, sec = (q.get("industry") or "").lower(), (q.get("sector") or "").lower()
         same4 = str(c["sic"]) == sic
         same3 = str(c["sic"])[:3] == sic[:3]
@@ -110,19 +110,25 @@ def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> l
             return 4, "Related SEC industry code"
         return None, None
 
+    # screen the whole pool on Yahoo profile + TTM revenue (parallel), before any SEC downloads
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        profiles = list(ex.map(lambda c: sources.quote_summary(c["ticker"]) if (my_ind or my_sec) else {}, pool))
+    in_band = lambda t, r: bool(r and my_rev and my_rev > 0 and (  # noqa: E731
+        (0.1 <= r / my_rev <= 10) if t == 1 else (0.2 <= r / my_rev <= 5)))
+    dist = lambda r: abs(math.log(r / my_rev)) if r and my_rev and r > 0 and my_rev > 0 else 99  # noqa: E731
+    order = lambda t, r: (not in_band(t, r), t if in_band(t, r) else (0 if t <= 2 else 1), dist(r))  # noqa: E731
     ranked = []
-    for c in pool:
-        t, why = tier(c)
+    for c, q in zip(pool, profiles):
+        t, why = tier(c, q)
         if t is not None:
-            ranked.append((t, why, c))
-        if sum(1 for r in ranked if r[0] <= 2) >= 10:  # enough strong matches: stop screening
-            break
-    ranked.sort(key=lambda x: x[0])
+            ranked.append((t, why, c, q.get("revenue")))
+    ranked.sort(key=lambda x: order(x[0], x[3]))
     print(f"  peers: {len(pool)} candidates screened, {len(ranked)} qualify "
           f"({sum(1 for r in ranked if r[0] == 1)} same Yahoo industry: {my_ind or 'n/a'})")
 
     out = []
-    for t, why, c in ranked[:30]:
+    for t, why, c, _yr in ranked[:15]:
         try:
             facts = sources.company_facts(c["cik"])
             fin = fundamentals.build(facts, years=3)
@@ -132,13 +138,12 @@ def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> l
             out.append({"c": c, "fin": fin, "facts": facts, "rev": rev, "tier": t, "why": why})
         except Exception as exc:  # noqa: BLE001
             print(f"  · peer {c['ticker']} skipped: {exc}")
-    if my_rev and my_rev > 0:
-        dist = lambda p: abs(math.log(p["rev"] / my_rev))  # noqa: E731
-        # same-industry matches get a wider size band (0.1x-10x) than code-only matches (0.2x-5x)
-        inband = lambda p: (0.1 <= p["rev"] / my_rev <= 10) if p["tier"] == 1 else (0.2 <= p["rev"] / my_rev <= 5)  # noqa: E731
-        band = sorted([p for p in out if inband(p)], key=lambda p: (p["tier"], dist(p)))
-        rest = sorted([p for p in out if not inband(p)], key=lambda p: (p["tier"], dist(p)))
-        out = band + (rest if len(band) < 3 else [])
+    # final order on the audited 10-K revenue; only reach outside the size band if fewer than 3 fit
+    out.sort(key=lambda p: order(p["tier"], p["rev"]))
+    if sum(1 for p in out if in_band(p["tier"], p["rev"])) >= 3:
+        out = [p for p in out if in_band(p["tier"], p["rev"])]
+    else:  # never fill with companies 100x smaller or larger: a short list beats a meaningless one
+        out = [p for p in out if in_band(p["tier"], p["rev"]) or dist(p["rev"]) <= math.log(100)]
     peers = []
     for p in out:
         if len(peers) >= n:

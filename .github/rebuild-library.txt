@@ -1,1 +1,1 @@
-Rebuild requested 2026-11-24 13:xx: tiered peer selection (Yahoo industry first, affiliates excluded).
+Rebuild requested 2026-11-24: peers ranked on full pool with Yahoo revenue.

@@ -19,6 +19,8 @@ YAHOO = {  # ticker -> (industry, sector)
     "KO": ("Beverages - Non-Alcoholic", "Consumer Defensive"), "PEP": ("Beverages - Non-Alcoholic", "Consumer Defensive"),
     "KDP": ("Beverages - Non-Alcoholic", "Consumer Defensive"), "MNST": ("Beverages - Non-Alcoholic", "Consumer Defensive"),
     "BF-B": ("Beverages - Wineries & Distilleries", "Consumer Defensive"), "WEST": ("Packaged Foods", "Consumer Defensive"),
+    **{t: ("Internet Content & Information", "Communication Services") for t in ("GOOG", "META", "PINS", "SNAP", "RDDT")},
+    **{f"AA{i}": ("Internet Content & Information", "Communication Services") for i in range(20)},
 }
 UNI = [
     {"ticker": "SN", "cik": 1, "name": "SharkNinja, Inc.", "sic": "3630"},
@@ -42,18 +44,24 @@ UNI = [
     {"ticker": "BF-B", "cik": 24, "name": "BROWN FORMAN CORP", "sic": "2085"},
     {"ticker": "WEST", "cik": 25, "name": "Westrock Coffee Co", "sic": "2080"},
     {"ticker": "SPAC", "cik": 30, "name": "Blank Check Acquisition Corp", "sic": "6770"},
-]
+    {"ticker": "GOOG", "cik": 40, "name": "Alphabet Inc.", "sic": "7370"},
+    {"ticker": "META", "cik": 41, "name": "Meta Platforms, Inc.", "sic": "7370"},
+    {"ticker": "PINS", "cik": 42, "name": "Pinterest, Inc.", "sic": "7370"},
+    {"ticker": "SNAP", "cik": 43, "name": "Snap Inc", "sic": "7370"},
+    {"ticker": "RDDT", "cik": 44, "name": "Reddit, Inc.", "sic": "7370"},
+] + [{"ticker": f"AA{i}", "cik": 100 + i, "name": f"Tiny Web {i} Inc", "sic": "7370"} for i in range(20)]
 CIK2T = {c["cik"]: c["ticker"] for c in UNI}
 REV = {"SN": 5500, "WHR": 16000, "HELE": 1900, "IRBT": 700, "AMKR": 6300, "ADI": 9400, "ARM": 3200, "AOS": 3800,
        "LNG": 15700, "CQP": 9000, "VG": 8000, "KMI": 15100, "WMB": 10500, "ATO": 4200,
-       "KO": 47000, "PEP": 92000, "KDP": 15400, "MNST": 7500, "BF-B": 4100, "WEST": 900}
+       "KO": 47000, "PEP": 92000, "KDP": 15400, "MNST": 7500, "BF-B": 4100, "WEST": 900,
+       "GOOG": 350000, "META": 165000, "PINS": 3600, "SNAP": 5400, "RDDT": 1300, **{f"AA{i}": 50 + i for i in range(20)}}
 
 
 class S:  # stand-in for pipeline/sources.py
     @staticmethod
     def quote_summary(t):
         ind, sec = YAHOO.get(t, (None, None))
-        return {"industry": ind, "sector": sec, "target_median": 100.0, "target_mean": 100.0}
+        return {"industry": ind, "sector": sec, "target_median": 100.0, "target_mean": 100.0, "revenue": REV.get(t)}
 
     @staticmethod
     def similar_symbols(t):
@@ -99,4 +107,6 @@ ko_t = [p["ticker"] for p in ko]
 assert {"PEP", "KDP", "MNST"} <= set(ko_t), ko_t
 assert ko_t.index("BF-B") > ko_t.index("MNST") if "BF-B" in ko_t else True, ko_t
 assert "SPAC" not in ko_t
-print("OK  peers:", "SN", sn_t, "| LNG", lng_t, "| KO", ko_t, "|", {p["ticker"]: p["match"] for p in ko})
+goog_t = [p["ticker"] for p in pick("GOOG")]
+assert goog_t[0] == "META" and not any(t.startswith("AA") for t in goog_t), f"Alphabet's peers should start with Meta, not tiny names: {goog_t}"
+print("OK  peers:", "GOOG", goog_t, "|", "SN", sn_t, "| LNG", lng_t, "| KO", ko_t, "|", {p["ticker"]: p["match"] for p in ko})

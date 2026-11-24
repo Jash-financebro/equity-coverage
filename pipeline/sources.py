@@ -195,6 +195,7 @@ def _quote_summary(ticker: str) -> dict:
         "target_high": raw(fd, "targetHighPrice"), "target_low": raw(fd, "targetLowPrice"),
         "analysts": raw(fd, "numberOfAnalystOpinions"), "recommendation": fd.get("recommendationKey"),
         "beta": raw(ks, "beta"), "sector": sp.get("sector"), "industry": sp.get("industry"),
+        "revenue": (raw(fd, "totalRevenue") / 1e6) if raw(fd, "totalRevenue") else None,
         "website": sp.get("website"), "source": "Yahoo Finance",
     }
 
