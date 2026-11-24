@@ -46,38 +46,98 @@ def rating_for(up):
     return "Buy" if up >= 0.15 else "Sell" if up <= -0.10 else "Hold"
 
 
+GENERIC_WORDS = {"the", "inc", "corp", "corporation", "co", "company", "ltd", "plc", "llc", "lp", "holdings", "holding",
+                 "group", "american", "united", "national", "first", "general", "international", "global", "new", "us",
+                 "trust", "partners", "energy", "financial", "bancorp", "technologies", "industries", "brands"}
+
+
+def _name_key(name: str) -> str | None:
+    """First distinctive word of a company name, to spot affiliates (Cheniere Energy vs Cheniere Energy Partners)."""
+    for w in re.findall(r"[a-z0-9]+", (name or "").lower()):
+        if w not in GENERIC_WORDS and len(w) > 2:
+            return w
+    return None
+
+
 def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> list[dict]:
-    """Same SIC code first, then same 2-digit SIC; nearest by revenue."""
+    """Peers in tiers, best first:
+      1. same Yahoo Finance industry (the only way a company outside our 3-digit SIC group can qualify)
+      2. same 4-digit SIC and same Yahoo sector
+      3. same 4-digit SIC
+      4. same 3-digit SIC and same Yahoo sector
+    Candidates come from the SIC hierarchy plus Yahoo's 'similar companies'. Affiliates, blank-check shells and the
+    company's own share classes are excluded. Within a tier, the closest in revenue wins
+    (0.1x-10x for same-industry matches, 0.2x-5x otherwise)."""
     sic = str(me.get("sic") or "")
-    others = [c for c in uni if c["ticker"] != me["ticker"] and c.get("sic") and c["cik"] != me["cik"]]
-    tiers = [[c for c in others if str(c["sic"]) == sic], [c for c in others if str(c["sic"])[:3] == sic[:3]],
-             [c for c in others if str(c["sic"])[:2] == sic[:2]]] if sic else [[]]
-    cands, seen = [], set()
-    for tier in tiers:
-        for c in tier:
-            if c["cik"] not in seen:
-                seen.add(c["cik"])
-                cands.append(c)
-        if len(cands) >= 12:
+    mine = sources.quote_summary(me["ticker"])
+    my_ind, my_sec = (mine.get("industry") or "").lower(), (mine.get("sector") or "").lower()
+    my_key = _name_key(me.get("name"))
+    by_ticker = {c["ticker"]: c for c in uni}
+
+    def eligible(c):
+        return (c["cik"] != me["cik"] and c.get("sic") and str(c["sic"]) not in ("6770", "0000")
+                and (not my_key or _name_key(c.get("name")) != my_key))
+
+    others = [c for c in uni if eligible(c)]
+    s4 = [c for c in others if sic and str(c["sic"]) == sic]
+    s3 = [c for c in others if sic and str(c["sic"])[:3] == sic[:3] and str(c["sic"]) != sic]
+    yahoo = [by_ticker[t] for t in sources.similar_symbols(me["ticker"]) if t in by_ticker and eligible(by_ticker[t])]
+    # wider SIC group only as a screening pool for Yahoo-industry matches, nearest codes first
+    s2 = []
+    if my_ind and len(s4) + len(s3) < 15 and sic:
+        s2 = sorted([c for c in others if str(c["sic"])[:2] == sic[:2] and str(c["sic"])[:3] != sic[:3]],
+                    key=lambda c: abs(int(c["sic"]) - int(sic)))[:60]
+    pool, seen = [], set()
+    for c in s4[:40] + yahoo + s3[:40] + s2:
+        if c["cik"] not in seen:
+            seen.add(c["cik"])
+            pool.append(c)
+
+    def tier(c):
+        q = sources.quote_summary(c["ticker"]) if (my_ind or my_sec) else {}
+        ind, sec = (q.get("industry") or "").lower(), (q.get("sector") or "").lower()
+        same4 = str(c["sic"]) == sic
+        same3 = str(c["sic"])[:3] == sic[:3]
+        if my_ind and ind == my_ind:
+            return 1, "Same industry (Yahoo Finance)"
+        if same4 and my_sec and sec == my_sec:
+            return 2, "Same SEC industry code and sector"
+        if same4:
+            return 3, "Same SEC industry code"
+        if same3 and my_sec and sec == my_sec:
+            return 4, "Related SEC industry code, same sector"
+        if same3 and not my_sec:
+            return 4, "Related SEC industry code"
+        return None, None
+
+    ranked = []
+    for c in pool:
+        t, why = tier(c)
+        if t is not None:
+            ranked.append((t, why, c))
+        if sum(1 for r in ranked if r[0] <= 2) >= 10:  # enough strong matches: stop screening
             break
-    cands = cands[:40]
+    ranked.sort(key=lambda x: x[0])
+    print(f"  peers: {len(pool)} candidates screened, {len(ranked)} qualify "
+          f"({sum(1 for r in ranked if r[0] == 1)} same Yahoo industry: {my_ind or 'n/a'})")
+
     out = []
-    for c in cands:
+    for t, why, c in ranked[:30]:
         try:
             facts = sources.company_facts(c["cik"])
             fin = fundamentals.build(facts, years=3)
-            it = fin["items"]
-            rev = it["revenue"][-1]
+            rev = fin["items"]["revenue"][-1]
             if not rev or rev <= 0:
                 continue
-            out.append({"c": c, "fin": fin, "facts": facts, "rev": rev})
+            out.append({"c": c, "fin": fin, "facts": facts, "rev": rev, "tier": t, "why": why})
         except Exception as exc:  # noqa: BLE001
             print(f"  · peer {c['ticker']} skipped: {exc}")
     if my_rev and my_rev > 0:
-        band = [p for p in out if 0.2 <= p["rev"] / my_rev <= 5]
-        rest = [p for p in out if p not in band]
-        band.sort(key=lambda p: abs(math.log(p["rev"] / my_rev)))
-        rest.sort(key=lambda p: abs(math.log(p["rev"] / my_rev)))
+        dist = lambda p: abs(math.log(p["rev"] / my_rev))  # noqa: E731
+        # same-industry matches get a wider size band (0.1x-10x) than code-only matches (0.2x-5x)
+        inband = lambda p: (0.1 <= p["rev"] / my_rev <= 10) if p["tier"] == 1 else (0.2 <= p["rev"] / my_rev <= 5)  # noqa: E731
+        band = sorted([p for p in out if inband(p)], key=lambda p: (p["tier"], dist(p)))
+        rest = sorted([p for p in out if not inband(p)], key=lambda p: (p["tier"], dist(p)))
         out = band + (rest if len(band) < 3 else [])
     peers = []
     for p in out:
@@ -98,6 +158,7 @@ def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> l
                       "net_debt": last("short_term_debt") + last("long_term_debt") - last("cash"),
                       "ebitda": last("operating_income") + last("d_and_a"), "eps": last("eps_diluted"),
                       "revenue": p["rev"], "equity": last("equity"), "ni": last("net_income"),
+                      "match": p.get("why"),
                       "da": last("d_and_a")})
     return peers
 
@@ -444,6 +505,7 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
         "model_value": model["val"]["model_value"], "peer_avg_upside": anchor["peer_avg_upside"],
         "anchor_peers": anchor["peers_used"],
         "wacc": round(model["wacc"]["wacc"], 4), "peers": [p["ticker"] for p in peers],
+        "peer_matches": {p["ticker"]: p.get("match") for p in peers},
         "consensus": {k: qs.get(k) for k in ("target_mean", "target_median", "analysts")},
         "beta_source": beta_src, "fiscal_year": fin["labels"][-1],
     }

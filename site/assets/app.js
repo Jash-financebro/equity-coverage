@@ -369,11 +369,11 @@
           <tr><td>Unlevered free cash flow</td>${years.map((_, i) => `<td class="r num${i >= hn ? " proj" : ""}">${i >= hn ? mm(d.fcf?.[i - hn]) : ""}</td>`).join("")}</tr>
         </tbody></table></div></section>
 
-      <section class="section card"><div class="card-h"><h2>Peers</h2><span class="note">same SEC industry group, NYSE and Nasdaq</span></div>
-        <div class="scroll"><table><thead><tr><th>Company</th><th class="r">Price</th><th class="r">Market cap</th><th class="r">EV / EBITDA</th><th class="r">P / E</th></tr></thead><tbody>
-          ${(d.comps || []).map((p) => `<tr><td><span class="tk">${esc(p.ticker)}</span><span class="co">${esc(p.name)}</span></td><td class="r num">${usd(p.price)}</td><td class="r num">${big(p.mcap)}</td><td class="r num">${mult(p.ev_ebitda)}</td><td class="r num">${mult(p.pe)}</td></tr>`).join("")}
-          <tr class="tot"><td>Peer median</td><td></td><td></td><td class="r num">${mult(d.comps_median?.ev_ebitda)}</td><td class="r num">${mult(d.comps_median?.pe)}</td></tr>
-          <tr class="tot"><td>${esc(m.ticker)}</td><td class="r num">${usd(m.price)}</td><td></td><td class="r num">${mult(d.comps_self?.ev_ebitda)}</td><td class="r num">${mult(d.comps_self?.pe)}</td></tr>
+      <section class="section card"><div class="card-h"><h2>Peers</h2><span class="note">NYSE and Nasdaq · matched on Yahoo Finance industry first, then SEC industry code</span></div>
+        <div class="scroll"><table><thead><tr><th>Company</th><th class="hide-sm">Why it's a peer</th><th class="r">Price</th><th class="r">Market cap</th><th class="r">EV / EBITDA</th><th class="r">P / E</th></tr></thead><tbody>
+          ${(d.comps || []).map((p) => `<tr><td><a class="tk" href="#/m/${esc(p.ticker)}">${esc(p.ticker)}</a><span class="co">${esc(p.name)}</span></td><td class="hide-sm note">${esc((m.peer_matches || {})[p.ticker] || "Same SEC industry code")}</td><td class="r num">${usd(p.price)}</td><td class="r num">${big(p.mcap)}</td><td class="r num">${mult(p.ev_ebitda)}</td><td class="r num">${mult(p.pe)}</td></tr>`).join("")}
+          <tr class="tot"><td>Peer median</td><td class="hide-sm"></td><td></td><td></td><td class="r num">${mult(d.comps_median?.ev_ebitda)}</td><td class="r num">${mult(d.comps_median?.pe)}</td></tr>
+          <tr class="tot"><td>${esc(m.ticker)}</td><td class="hide-sm"></td><td class="r num">${usd(m.price)}</td><td></td><td class="r num">${mult(d.comps_self?.ev_ebitda)}</td><td class="r num">${mult(d.comps_self?.pe)}</td></tr>
         </tbody></table></div></section>
 
       <section class="section card"><div class="card-h"><h2>Where every historical number comes from</h2><span class="note"><a href="${esc(d.filings_index)}" target="_blank" rel="noopener">all ${esc(m.ticker)} 10-K filings on EDGAR ↗</a></span></div>
@@ -492,14 +492,14 @@
         <li><b>Rating.</b> Buy at 15%+ upside, Sell at 10%+ downside, otherwise Hold.</li>
       </ol>
       <h2>5. Peers</h2>
-      <p>Up to five NYSE or Nasdaq companies in the same SEC industry code (4-digit first, widening to 3 and 2 digits), within 0.2–5× the company's revenue.</p>
+      <p>Up to five NYSE or Nasdaq companies, chosen in tiers: first the same Yahoo Finance industry, then the same 4-digit SEC industry code and sector, then the same code, then a related (3-digit) code in the same sector. Candidates come from the SEC code hierarchy plus Yahoo's similar-companies list. A broad 2-digit code group only contributes companies that also share the Yahoo industry, so an appliance maker isn't benchmarked against chip makers. Affiliates (a parent and its listed partnership), blank-check shells and the company's own share classes are excluded. Within a tier the closest in revenue wins: 0.1–10× for same-industry matches, 0.2–5× otherwise. Each model page says why every peer was picked.</p>
       <h2>6. Limits</h2>
       <ul>
         <li>Revenue is modelled at the consolidated level: segment detail isn't in standardized XBRL.</li>
         <li>No management guidance, backlog, pricing or one-offs. A company in transition can be badly mispriced.</li>
         <li>US-GAAP filers reporting in dollars only. Foreign IFRS filers, funds and trusts can't be modelled yet.</li>
         <li>Banks, insurers and REITs don't fit EV/EBITDA and free cash flow. Their pages add P/B, P/TBV and ROE, or P/FFO, against peers, and say so plainly.</li>
-        <li>Peers are picked by industry code and size, which sometimes pairs unlike businesses.</li>
+        <li>Peer screens depend on Yahoo's industry labels; when Yahoo is unavailable, peers fall back to SEC industry codes only.</li>
       </ul>
       <p class="note">Automated research for educational use. Not investment advice.</p></div>`;
   }

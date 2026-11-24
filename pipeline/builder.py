@@ -626,8 +626,9 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     CO.line(r0 + 8, "Implied Equity Value to Common", {"D": f"=D{r0 + 6}+D{r0 + 7}"}, total=True)
     CO.line(r0 + 9, "Shares outstanding (mm)", {"D": "=Live_Data!$B$8"}, '#,##0.0')
     CO.line(r0 + 10, "Comps-implied value per share", {"D": f"=IFERROR(MAX(0,D{r0 + 8}/D{r0 + 9}),0)"}, PS)
-    CO.put(f"B{r0 + 12}", f"Peers: {len(peers)} NYSE/Nasdaq-listed companies in the same SEC industry (SIC) group, chosen by "
-                          "closest revenue. Inputs are hardcoded at generation (blue).")
+    CO.put(f"B{r0 + 12}", f"Peers: {len(peers)} NYSE/Nasdaq companies matched on Yahoo Finance industry first, then SEC industry "
+                          "code (" + "; ".join(f"{p['ticker']}: {p.get('match') or 'same SEC industry code'}" for p in peers)
+                          + "). Inputs are hardcoded at generation (blue).")
     comps_ref = CO.ref(f"$D${r0 + 10}")
 
     # --------------------------------------------------------- Valuation Summary

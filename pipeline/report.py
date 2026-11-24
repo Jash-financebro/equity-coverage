@@ -332,7 +332,7 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
                 f"{pct(dcf['implied_g'], 1)} perpetual growth.")]
     if has_comps:
         story.append(P(f"<b>Comps.</b> The peer set is {', '.join(p['ticker'] for p in m['comps'])}: NYSE/Nasdaq companies in "
-                       f"the same SEC industry group, picked for the closest revenue. Their median EV/EBITDA of {mult(med)} "
+                       f"the same industry (Yahoo Finance industry first, then SEC industry code), the closest in revenue. Their median EV/EBITDA of {mult(med)} "
                        f"on {yrs[2]} EBITDA of {bn(ebitda[2])} implies {usd(val['comps'])} a share."))
     story.append(P(f"<b>Blend.</b> Weighting the perpetuity DCF {pct(val['w_dcf'], 0)}, the exit-multiple DCF "
                    f"{pct(val['w_exit'], 0)} and comps {pct(val['w_comps'], 0)} gives a model value of "

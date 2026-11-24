@@ -162,8 +162,18 @@ def _yahoo_crumb():
     return _crumb
 
 
+_QS_CACHE: dict[str, dict] = {}
+
+
 def quote_summary(ticker: str) -> dict:
-    """Street consensus targets, beta, sector. Returns {} if Yahoo refuses."""
+    """Street consensus targets, beta, sector. Returns {} if Yahoo refuses. Cached per run."""
+    key = ticker.upper().replace(".", "-")
+    if key not in _QS_CACHE:
+        _QS_CACHE[key] = _quote_summary(key)
+    return dict(_QS_CACHE[key])
+
+
+def _quote_summary(ticker: str) -> dict:
     sym = ticker.upper().replace(".", "-")
     try:
         if FIXTURES:
@@ -187,6 +197,21 @@ def quote_summary(ticker: str) -> dict:
         "beta": raw(ks, "beta"), "sector": sp.get("sector"), "industry": sp.get("industry"),
         "website": sp.get("website"), "source": "Yahoo Finance",
     }
+
+
+def similar_symbols(ticker: str) -> list[str]:
+    """Yahoo Finance's 'similar companies' list for a ticker ([] if unavailable)."""
+    if FIXTURES:
+        return []
+    sym = ticker.upper().replace(".", "-")
+    try:
+        data = _get(f"https://query2.finance.yahoo.com/v6/finance/recommendationsbysymbol/{sym}",
+                    headers={"User-Agent": "Mozilla/5.0 (ModelPulse)"}, tries=2)
+        res = (data.get("finance", {}).get("result") or [{}])[0]
+        return [r["symbol"] for r in res.get("recommendedSymbols", []) if r.get("symbol")]
+    except Exception as exc:  # noqa: BLE001
+        print(f"  ! similar companies unavailable for {sym}: {exc}")
+        return []
 
 
 def rates() -> dict:
