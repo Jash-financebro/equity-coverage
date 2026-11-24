@@ -85,8 +85,9 @@ def filings_13f(subs: dict) -> list[dict]:
 
 def parse_infotable(xml: str) -> list[dict]:
     """Rows from a 13F information table (namespace-agnostic)."""
-    xml = re.sub(r'\sxmlns(:\w+)?="[^"]+"', "", xml)
-    xml = re.sub(r"<(/?)\w+:", r"<\1", xml)
+    xml = re.sub(r'\sxmlns(:\w+)?\s*=\s*"[^"]*"', "", xml)
+    xml = re.sub(r'\s[\w.-]+:[\w.-]+\s*=\s*"[^"]*"', "", xml)   # prefixed attributes such as xsi:schemaLocation
+    xml = re.sub(r"<(/?)[\w.-]+:", r"<\1", xml)
     root = ET.fromstring(xml)
     rows = []
     for it in root.iter("infoTable"):

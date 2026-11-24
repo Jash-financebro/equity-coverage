@@ -26,4 +26,11 @@ subs = {"filings": {"recent": {"form": ["13F-HR", "13F-HR/A", "13F-HR", "13F-HR"
                                "accessionNumber": ["a", "b", "c", "d"], "filingDate": ["2026-11-14", "2026-09-01", "2026-08-14", "2026-05-15"]}}}
 fl = funds.filings_13f(subs)
 assert [f["accn"] for f in fl] == ["a", "c", "d"], fl
+xsi = ('<?xml version="1.0"?>\n<informationTable xmlns="http://www.sec.gov/edgar/document/thirteenf/informationtable" '
+       'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sec.gov/x x.xsd">\n'
+       '<infoTable><nameOfIssuer>X CORP</nameOfIssuer><titleOfClass>COM</titleOfClass><cusip>123456789</cusip><value>1000</value>'
+       '<shrsOrPrnAmt><sshPrnamt>10</sshPrnamt><sshPrnamtType>SH</sshPrnamtType></shrsOrPrnAmt></infoTable></informationTable>')
+assert funds.parse_infotable(xsi)[0]["cusip"] == "123456789"
+thou = [{"value": 50.0, "shares": 1000.0, "putcall": "", "kind": "SH", "cusip": "A", "name": "A", "title": "COM"}]
+assert funds.combine(thou)[0]["A"]["value"] == 50000.0, "values reported in thousands are scaled to dollars"
 print("OK  13F parsing: sub-manager rows combined, options split out, amendments ignored")
