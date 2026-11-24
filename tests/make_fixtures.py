@@ -135,3 +135,15 @@ for cik, tick, name, k in ((1341439, "ORCL", "ORACLE CORP", 0.22), (1652044, "GO
     s2["name"] = name
     (OUT / f"submissions_{cik}.json").write_text(json.dumps(s2))
 print("fixtures written to", OUT)
+
+# NYSE universe fixtures (pretend all three are NYSE-listed software companies)
+(OUT / "company_tickers_exchange.json").write_text(json.dumps({
+    "fields": ["cik", "name", "ticker", "exchange"],
+    "data": [[CIK, "MICROSOFT CORP", "MSFT", "NYSE"], [1341439, "ORACLE CORP", "ORCL", "NYSE"],
+             [1652044, "ALPHABET INC.", "GOOGL", "NYSE"], [999999, "NASDAQ ONLY INC", "NQQQ", "Nasdaq"]]}))
+for cik in (CIK, 1341439, 1652044):
+    p = OUT / f"submissions_{cik}.json"
+    s3 = json.loads(p.read_text())
+    s3.update({"sic": "7372", "sicDescription": "SERVICES-PREPACKAGED SOFTWARE", "fiscalYearEnd": "0630",
+               "addresses": {"business": {"city": "REDMOND", "stateOrCountry": "WA"}}, "website": ""})
+    p.write_text(json.dumps(s3))

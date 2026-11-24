@@ -218,6 +218,8 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     RB = Sheet(wb, f"{T} Revenue Build", label, f"{live['company']} ({T}) - Revenue Build & Assumptions")
     WA = Sheet(wb, f"{T} WACC", label, f"{live['company']} ({T}) - Weighted Average Cost of Capital")
     DC = Sheet(wb, f"{T} DCF", label, f"{live['company']} ({T}) - Discounted Cash Flow")
+    CO = Sheet(wb, f"{T} Comps", label, f"{live['company']} ({T}) - Comparable Companies")
+    VS = Sheet(wb, f"{T} Valuation Summary", label, f"{live['company']} ({T}) - Valuation Summary & Scenarios")
     FR = Sheet(wb, f"{T} Financial Ratios", label, f"{live['company']} ({T}) - Financial Ratios")
     _write_live_data(wb, label, live, fin)
     for s in (IS, BS, CF, SC, RB, FR):
@@ -531,8 +533,86 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     for k, (lab, fn, fmt) in enumerate(ratio_rows):
         FR.line(5 + k, lab, {c: fn(c) for c in (ALL if lab != "Revenue growth" else ALL[1:])}, fmt)
 
+    # --------------------------------------------------------- Comps
+    peers = [p for p in (ctx.get("peers") or []) if p.get("price") and p.get("shares")]
+    for col, w in zip("DEFGHIJKL", (10, 11, 12, 12, 12, 12, 10, 11, 10)):
+        CO.ws.column_dimensions[col].width = w
+    CO.ws.column_dimensions["C"].width = 9
+    heads = ["Ticker", "Price", "Shares (mm)", "Market cap", "Net debt", "Enterprise value", "EBITDA (10-K)",
+             "Diluted EPS", "EV / EBITDA", "P / E"]
+    CO.put("B3", "Company ($ in millions, except per-share data)", bold=True)
+    for col, h in zip("CDEFGHIJKL", heads):
+        CO.put(f"{col}3", h, bold=True)
+        CO.ws[f"{col}3"].alignment = Alignment(horizontal="right", wrap_text=True)
+    first = 5
+    for i, p in enumerate(peers):
+        r = first + i
+        CO.put(f"B{r}", p.get("name", p["ticker"])[:40])
+        CO.put(f"C{r}", p["ticker"])
+        CO.put(f"D{r}", round(p["price"], 2), PS, note="Close from Yahoo Finance at generation")
+        CO.put(f"E{r}", round(p["shares"], 2), '#,##0.0', note="SEC 10-K / 10-Q cover page")
+        CO.put(f"F{r}", f"=D{r}*E{r}")
+        CO.put(f"G{r}", round(p.get("net_debt") or 0, 1), note="SEC 10-K: total debt less cash")
+        CO.put(f"H{r}", f"=F{r}+G{r}")
+        CO.put(f"I{r}", round(p.get("ebitda") or 0, 1), note="SEC 10-K: operating income + D&A")
+        CO.put(f"J{r}", round(p.get("eps") or 0, 2), PS, note="SEC 10-K diluted EPS")
+        CO.put(f"K{r}", f'=IF(I{r}>0,H{r}/I{r},"")', MULT)
+        CO.put(f"L{r}", f'=IF(J{r}>0,D{r}/J{r},"")', MULT)
+        for col in "FH":
+            CO.ws[f"{col}{r}"].number_format = NUM
+    last = first + max(len(peers), 1) - 1
+    rm = last + 2
+    CO.put(f"B{rm}", "Peer median")
+    CO.put(f"K{rm}", f'=IFERROR(MEDIAN(K{first}:K{last}),0)', MULT)
+    CO.put(f"L{rm}", f'=IFERROR(MEDIAN(L{first}:L{last}),0)', MULT)
+    rs = rm + 1
+    CO.put(f"B{rs}", f"{live['company']} ({T}) at current price")
+    CO.put(f"K{rs}", f"=IFERROR((Live_Data!$B$9+{BS.ref('F13')}+{BS.ref('F14')}-{BS.ref('F5')})/{IS.ref('F14')},0)", MULT)
+    CO.put(f"L{rs}", f"=IFERROR(Live_Data!$B$6/{IS.ref('F25')},0)", MULT)
+    r0 = rs + 2
+    CO.section(r0, "Comps-implied value (peer median EV / EBITDA)")
+    CO.line(r0 + 1, "Peer median EV / EBITDA", {"D": f"=K{rm}"}, MULT)
+    CO.line(r0 + 2, "EBITDA, latest fiscal year", {"D": f"={IS.ref('F14')}"})
+    CO.line(r0 + 3, "Implied enterprise value", {"D": f"=D{r0 + 1}*D{r0 + 2}"})
+    CO.line(r0 + 4, "Less: total debt", {"D": f"=-({BS.ref('F13')}+{BS.ref('F14')})"})
+    CO.line(r0 + 5, "Plus: cash", {"D": f"={BS.ref('F5')}"})
+    CO.line(r0 + 6, "Implied Equity Value", {"D": f"=SUM(D{r0 + 3}:D{r0 + 5})"}, total=True)
+    CO.line(r0 + 7, "Less: noncontrolling interests' share", {"D": f"=-D{r0 + 6}*{rb('G29')}"})
+    CO.line(r0 + 8, "Implied Equity Value to Common", {"D": f"=D{r0 + 6}+D{r0 + 7}"}, total=True)
+    CO.line(r0 + 9, "Shares outstanding (mm)", {"D": "=Live_Data!$B$8"}, '#,##0.0')
+    CO.line(r0 + 10, "Comps-implied value per share", {"D": f"=IFERROR(MAX(0,D{r0 + 8}/D{r0 + 9}),0)"}, PS)
+    CO.put(f"B{r0 + 12}", f"Peers: {len(peers)} NYSE-listed companies in the same SEC industry (SIC) group, chosen by "
+                          "closest revenue. Inputs are hardcoded at generation (blue).")
+    comps_ref = CO.ref(f"$D${r0 + 10}")
+
+    # --------------------------------------------------------- Valuation Summary
+    VS.section(4, "Blended price target")
+    VS.line(5, "DCF value per share (perpetuity growth)", {"D": f"={DC.ref('$D$29')}"}, PS)
+    VS.line(6, "Comps-implied value per share", {"D": f"={comps_ref}"}, PS)
+    w_dcf = 0.7 if peers else 1.0
+    VS.line(8, "Weight: DCF", {"D": w_dcf}, PCT)
+    VS.line(9, "Weight: trading comps", {"D": round(1 - w_dcf, 2)}, PCT,
+            note=None if peers else "No usable peers found: comps weight set to 0")
+    VS.line(11, "DCF contribution", {"D": "=D5*D8"}, PS)
+    VS.line(12, "Comps contribution", {"D": "=D6*D9"}, PS)
+    VS.line(13, "Target Price (blended, per share)", {"D": "=D11+D12"}, PS)
+    VS.line(14, "Current share price", {"D": "=Live_Data!$B$6"}, PS)
+    VS.line(15, "Implied upside / (downside)", {"D": "=IFERROR(D13/D14-1,0)"}, PCT)
+    VS.section(17, "Scenario comparison")
+    for col, name in zip("DEF", ("Bear", "Base", "Bull")):
+        VS.put(f"{col}18", name, bold=True)
+        VS.ws[f"{col}18"].alignment = Alignment(horizontal="right")
+    VS.line(19, "Revenue growth, year 1", {"D": f"={rb('G11')}", "E": f"={rb('G10')}", "F": f"={rb('G9')}"}, PCT)
+    VS.line(20, "Revenue growth, year 5", {"D": f"={rb('K11')}", "E": f"={rb('K10')}", "F": f"={rb('K9')}"}, PCT)
+    VS.line(21, "Cost of revenue % of revenue", {"D": f"={rb('G21')}", "E": f"={rb('G20')}", "F": f"={rb('G19')}"}, PCT)
+    VS.line(22, "Terminal growth rate", {"D": f"={rb('D42')}", "E": f"={rb('D41')}", "F": f"={rb('D40')}"}, PCT)
+    VS.line(23, "Target price (blended, per share)", {"D": 0, "E": 0, "F": 0}, PS,
+            note="Recorded at generation by switching Revenue Build D5 to 3 / 2 / 1 and recalculating the model")
+    VS.line(24, "Upside / (downside) vs current price", {c: f"=IFERROR({c}23/$D$14-1,0)" for c in "DEF"}, PCT)
+    VS.put("B26", "To rerun a case yourself: set Revenue Build D5 to 1 (bull), 2 (base) or 3 (bear); every tab follows.")
+
     wb.defined_names["Scenario"] = DefinedName("Scenario", attr_text=f"{RB.ref('$D$5')}")
-    wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{DC.ref('$D$29')}")
+    wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{VS.ref('$D$13')}")
     dest.parent.mkdir(parents=True, exist_ok=True)
     wb.save(dest)
     return dest

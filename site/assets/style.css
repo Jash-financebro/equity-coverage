@@ -160,3 +160,32 @@ tr.medrow td { border-top: 1px solid var(--line); color: var(--ink-2); font-weig
 .hb-fill { height: 10px; background: var(--s1); border-radius: 0 4px 4px 0; }
 .tiles + .tiles { margin-top: -20px; }
 @media (max-width: 860px) { .kvrow { grid-template-columns: repeat(2, 1fr); } }
+
+.gen-box { padding: 20px; margin-bottom: 24px; }
+.gen-row { display: flex; gap: 10px; }
+.gen-input { position: relative; flex: 1; }
+.gen-input input, .lib-tools input { width: 100%; font: 16px var(--sans); padding: 11px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.gen-input input:focus, .lib-tools input:focus { outline: 2px solid var(--s1); outline-offset: -1px; }
+.btn.big { padding: 11px 18px; font-size: 15px; }
+.btn:disabled { opacity: .5; cursor: wait; }
+.sugg { position: absolute; top: 100%; left: 0; right: 0; z-index: 10; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin-top: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.12); max-height: 320px; overflow: auto; }
+.sg { padding: 8px 12px; font-size: 14px; cursor: pointer; }
+.sg:hover { background: var(--line-2); }
+.sg b { font-family: var(--mono); margin-right: 6px; }
+.progress { list-style: none; padding: 0; margin: 16px 0 6px; }
+.progress li { padding: 5px 0 5px 26px; position: relative; color: var(--ink-3); font-size: 14px; }
+.progress li::before { content: ""; position: absolute; left: 4px; top: 11px; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--ink-3); }
+.progress li.done { color: var(--ink-2); }
+.progress li.done::before { background: var(--up); border-color: var(--up); }
+.progress li.now { color: var(--ink); font-weight: 500; }
+.progress li.now::before { border-color: var(--s1); background: var(--s1); animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+.result { margin-bottom: 26px; }
+.gen-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 0 18px 18px; }
+.lib-tools { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 13px var(--sans); border: 1px solid var(--line); background: var(--panel); color: var(--ink-2); border-radius: 99px; padding: 5px 12px; cursor: pointer; }
+.chip span { color: var(--ink-3); margin-left: 3px; font-family: var(--mono); font-size: 12px; }
+.chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip.on span { color: inherit; opacity: .7; }
+@media (max-width: 860px) { .gen-row { flex-direction: column; } }

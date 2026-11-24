@@ -300,7 +300,7 @@
     app.innerHTML = `<p class="muted loading">Loading ${esc(t)}…</p>`;
     let d;
     try { d = cache[t] || (cache[t] = await getJSON(`data/${encodeURIComponent(t)}.json`)); }
-    catch { app.innerHTML = `<a class="crumb" href="#/">← Coverage</a><p>No model found for ${esc(t)}.</p>`; return; }
+    catch { app.innerHTML = `<a class="crumb" href="#/coverage">← Coverage</a><p>No model found for ${esc(t)}.</p>`; return; }
     const s = d.snapshot || {};
     const cons = d.consensus || {};
     const peerImp = d.peers?.implied?.average;
@@ -313,7 +313,7 @@
     document.title = `${d.ticker} — ${usd(d.target)} target · Equity Coverage`;
 
     app.innerHTML = `
-      <a class="crumb" href="#/">← Coverage</a>
+      <a class="crumb" href="#/coverage">← Coverage</a>
       <div class="dhead">
         <div>
           <h1><span class="tk">${esc(d.ticker)}</span>${esc(d.name)}</h1>
@@ -444,6 +444,151 @@
     </article>`;
   }
 
+
+  // --------------------------------------------------------- generate + library
+  let API = null, SEARCH = null, LIB = null;
+  const ago = (iso) => { if (!iso) return ""; const s = (Date.now() - Date.parse(iso)) / 1000;
+    return s < 90 ? "just now" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 129600 ? Math.round(s / 3600) + " h ago" : Math.round(s / 86400) + " days ago"; };
+  async function apiBase() {
+    if (API !== null) return API;
+    try { API = (await getJSON("api.json")).api || ""; } catch { API = ""; }
+    return API;
+  }
+  async function searchList() {
+    if (!SEARCH) { try { SEARCH = await getJSON("universe/search.json"); } catch { SEARCH = []; } }
+    return SEARCH;
+  }
+  async function libraryIndex(force) {
+    if (LIB && !force) return LIB;
+    const base = await apiBase();
+    try { LIB = base ? await fetch(base + "/api/library").then((r) => r.json())
+                     : await getJSON("https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/index.json"); }
+    catch { LIB = { models: [], sectors: {}, count: 0 }; }
+    return LIB;
+  }
+  const dl = (m) => `<a class="btn sm primary" href="${esc(m.files?.xlsx)}">⤓ Model (.xlsx)</a> <a class="btn sm" href="${esc(m.files?.pdf)}" target="_blank" rel="noopener">⤓ Report (PDF)</a>`;
+
+  function resultCard(m, note) {
+    const sc = m.scenarios || {};
+    return `<div class="card result">
+      <div class="card-h"><h2>${esc(m.ticker)} · ${esc(m.name)}</h2><span class="note">${esc(m.sector)} · ${esc(m.industry || "")}</span></div>
+      <div class="kpis" style="padding:18px">
+        <div class="kpi hero-n"><div class="k">Price target</div><div class="v">${usd(m.target)}</div><div class="n">${pill(m.rating)} &nbsp;blend of DCF ${usd(m.dcf_value)} and comps ${usd(m.comps_value)}</div></div>
+        <div class="kpi"><div class="k">Price</div><div class="v">${usd(m.price)}</div><div class="n">${esc(m.price_date)}</div></div>
+        <div class="kpi"><div class="k">Upside</div><div class="v">${signed(m.upside)}</div></div>
+        <div class="kpi"><div class="k">Bear / Base / Bull</div><div class="v" style="font-size:17px">${usd(sc.bear, 0)} / ${usd(sc.base, 0)} / ${usd(sc.bull, 0)}</div></div>
+        <div class="kpi"><div class="k">WACC</div><div class="v">${pct(m.wacc, 2)}</div><div class="n">peers: ${esc((m.peers || []).join(", ") || "none")}</div></div>
+      </div>
+      <div class="gen-actions">${dl(m)}<span class="note">${note || ""} · version ${m.version} · generated ${ago(m.generated_at)}${m.times_generated > 1 ? ` · ${m.times_generated} builds` : ""}</span></div>
+    </div>`;
+  }
+
+  async function generateView() {
+    document.title = "Generate a model · " + (INDEX.site?.title || "Equity Coverage");
+    const base = await apiBase();
+    const lib = await libraryIndex();
+    app.innerHTML = `
+      <section class="hero"><h1>Model any NYSE company</h1>
+        <p>Type a ticker. We pull the company's 10-K data from SEC EDGAR and build a full Excel model: three linked statements with PP&amp;E, debt and revolver schedules, WACC, a five-year DCF with sensitivity grid, same-industry comps, and bull, base and bear cases. You also get a summary research report. It takes about two to three minutes.</p></section>
+      <div class="card gen-box">
+        <form id="gen-form" autocomplete="off">
+          <div class="gen-row">
+            <div class="gen-input"><input id="tk" placeholder="Ticker or company name, e.g. XOM or Coca-Cola" aria-label="NYSE ticker" spellcheck="false">
+              <div id="sugg" class="sugg" hidden></div></div>
+            <button class="btn primary big" id="go" type="submit">Generate model</button>
+          </div>
+          <p class="note" id="gen-hint">${base ? "NYSE-listed SEC filers only. A model built in the last 6 hours is reused instantly." : "The generation service is being set up. Browse the Library in the meantime."}</p>
+        </form>
+        <div id="gen-status"></div>
+      </div>
+      <div id="gen-result"></div>
+      <section class="section"><h2 class="sec">Recently generated</h2>
+        <div class="card">${(lib.models || []).slice(0, 6).map((m) => `<div class="kv"><span><a href="#/library" class="tk">${esc(m.ticker)}</a> ${esc(m.name)} <span class="note">${esc(m.sector)} · ${ago(m.generated_at)}</span></span><span class="num">${usd(m.target)} ${pill(m.rating)} &nbsp;<a class="btn sm" href="${esc(m.files?.xlsx)}">.xlsx</a> <a class="btn sm" href="${esc(m.files?.pdf)}" target="_blank" rel="noopener">PDF</a></span></div>`).join("") || '<div class="empty">Nothing yet. Be the first.</div>'}</div></section>`;
+
+    const tk = document.getElementById("tk"), sugg = document.getElementById("sugg"), list = await searchList();
+    tk.addEventListener("input", () => {
+      const q = tk.value.trim().toUpperCase();
+      if (!q) { sugg.hidden = true; return; }
+      const hits = list.filter(([t, n]) => t.startsWith(q) || n.toUpperCase().includes(q)).sort((a, b) => (a[0] === q ? -1 : b[0] === q ? 1 : a[0].length - b[0].length)).slice(0, 8);
+      sugg.innerHTML = hits.map(([t, n, sct]) => `<div class="sg" data-t="${esc(t)}"><b>${esc(t)}</b> ${esc(n)} <span class="note">${esc(sct)}</span></div>`).join("");
+      sugg.hidden = !hits.length;
+      sugg.querySelectorAll(".sg").forEach((el) => el.addEventListener("mousedown", (e) => { e.preventDefault(); tk.value = el.dataset.t; sugg.hidden = true; }));
+    });
+    tk.addEventListener("blur", () => setTimeout(() => (sugg.hidden = true), 100));
+    document.getElementById("gen-form").addEventListener("submit", (e) => { e.preventDefault(); startGenerate(tk.value, false); });
+  }
+
+  async function startGenerate(raw, force) {
+    const base = await apiBase(), stat = document.getElementById("gen-status"), out = document.getElementById("gen-result");
+    let t = String(raw || "").trim().toUpperCase();
+    const list = await searchList();
+    const byName = list.find(([tt, n]) => n.toUpperCase() === t) || list.find(([tt, n]) => n.toUpperCase().startsWith(t));
+    if (!list.find(([tt]) => tt === t) && byName) t = byName[0];
+    out.innerHTML = "";
+    if (!t) return;
+    if (!base) { stat.innerHTML = `<div class="warn">The generation service isn't connected yet.</div>`; return; }
+    const btn = document.getElementById("go"); btn.disabled = true;
+    const steps = ["Request accepted", "Pulling SEC 10-K data, prices and same-industry peers", "Building the three-statement model, DCF and scenarios", "Recalculating in Excel engine and writing the report", "Ready"];
+    const t0 = Date.now();
+    const draw = (k, msg) => { stat.innerHTML = `<ol class="progress">${steps.map((s, i) => `<li class="${i < k ? "done" : i === k ? "now" : ""}">${s}</li>`).join("")}</ol>
+      <p class="note">${esc(t)} · ${Math.round((Date.now() - t0) / 1000)}s elapsed${msg ? " · " + msg : ""}</p>`; };
+    draw(0);
+    try {
+      const r = await fetch(base + "/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t, force }) });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || r.status);
+      if (j.status === "ready") { stat.innerHTML = ""; out.innerHTML = resultCard(j.model, `Built ${ago(j.model.generated_at)} — reused <a href="#" id="regen">rebuild now</a>`); hookRegen(t); return; }
+      const since = j.since || new Date(Date.now() - 5000).toISOString();
+      let phase = 1;
+      for (let i = 0; i < 120; i++) {
+        await new Promise((res) => setTimeout(res, 5000));
+        const el = (Date.now() - t0) / 1000;
+        phase = el > 75 ? 3 : el > 30 ? 2 : 1;
+        const s = await fetch(`${base}/api/status?ticker=${encodeURIComponent(t)}&since=${encodeURIComponent(since)}`).then((x) => x.json());
+        if (s.status === "ready") { draw(4); LIB = null; out.innerHTML = resultCard(s.model, "Fresh build"); stat.innerHTML = ""; return; }
+        if (s.status === "failed") throw new Error(`The build failed. <a href="${esc(s.run_url)}" target="_blank" rel="noopener">See the log</a>.`);
+        draw(s.status === "queued" ? 0 : s.status === "finishing" ? 3 : phase, s.status === "queued" ? "waiting for a runner" : "");
+      }
+      throw new Error("This is taking longer than usual. Check the Library in a few minutes.");
+    } catch (e) {
+      stat.innerHTML = `<div class="warn">${String(e.message || e)}</div>`;
+    } finally { btn.disabled = false; }
+  }
+  function hookRegen(t) { const a = document.getElementById("regen"); if (a) a.addEventListener("click", (e) => { e.preventDefault(); startGenerate(t, true); }); }
+
+  async function libraryView() {
+    document.title = "Library · " + (INDEX.site?.title || "Equity Coverage");
+    app.innerHTML = `<p class="muted loading">Loading library…</p>`;
+    const lib = await libraryIndex(true);
+    const models = lib.models || [];
+    const sectors = [...new Set(models.map((m) => m.sector))].sort();
+    const render = (q, sel) => {
+      const ql = q.trim().toLowerCase();
+      const pick = models.filter((m) => (!sel || m.sector === sel) && (!ql || m.ticker.toLowerCase().includes(ql) || m.name.toLowerCase().includes(ql)));
+      const groups = [...new Set(pick.map((m) => m.sector))].sort();
+      document.getElementById("lib-body").innerHTML = groups.map((g) => {
+        const rows = pick.filter((m) => m.sector === g);
+        return `<div class="card section"><div class="card-h"><h2>${esc(g)}</h2><span class="note">${rows.length} model${rows.length > 1 ? "s" : ""}</span></div>
+          <div class="scroll"><table><thead><tr><th>Company</th><th class="r">Target</th><th class="r">Price</th><th class="r">Upside</th><th>Rating</th><th class="r hide-sm">Bear / Base / Bull</th><th class="hide-sm">Generated</th><th class="r">Download</th></tr></thead>
+          <tbody>${rows.map((m) => `<tr><td><span class="tk">${esc(m.ticker)}</span><span class="co">${esc(m.name)} · ${esc(m.industry || "")}</span></td>
+            <td class="r num"><b>${usd(m.target)}</b></td><td class="r num">${usd(m.price)}</td><td class="r num">${signed(m.upside)}</td><td>${pill(m.rating)}</td>
+            <td class="r num hide-sm">${usd(m.scenarios?.bear, 0)} / ${usd(m.scenarios?.base, 0)} / ${usd(m.scenarios?.bull, 0)}</td>
+            <td class="hide-sm note">${esc((m.generated_at || "").slice(0, 10))} · v${m.version}${m.times_generated > 1 ? ` · ${m.times_generated}×` : ""}</td>
+            <td class="r"><a class="btn sm" href="${esc(m.files?.xlsx)}">.xlsx</a> <a class="btn sm" href="${esc(m.files?.pdf)}" target="_blank" rel="noopener">PDF</a></td></tr>`).join("")}</tbody></table></div></div>`;
+      }).join("") || `<div class="empty card">No models match. <a href="#/">Generate one</a>.</div>`;
+    };
+    app.innerHTML = `<section class="hero"><h1>Model library</h1><p>Every model anyone has generated on this site, sorted by sector. Each comes with the full Excel model and a summary report.</p>
+      <div class="fresh"><span class="dot" aria-hidden="true"></span>${models.length} companies · ${sectors.length} sectors · updated ${ago(lib.updated_at)}</div></section>
+      <div class="lib-tools"><input id="lib-q" placeholder="Filter by ticker or name" aria-label="Filter library">
+        <div class="chips"><button class="chip on" data-s="">All</button>${sectors.map((s) => `<button class="chip" data-s="${esc(s)}">${esc(s)} <span>${models.filter((m) => m.sector === s).length}</span></button>`).join("")}</div></div>
+      <div id="lib-body"></div>`;
+    let sel = "";
+    const q = document.getElementById("lib-q");
+    q.addEventListener("input", () => render(q.value, sel));
+    app.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => { sel = c.dataset.s; app.querySelectorAll(".chip").forEach((x) => x.classList.toggle("on", x === c)); render(q.value, sel); }));
+    render("", "");
+  }
+
   // ----------------------------------------------------------------- router
   async function route() {
     hideTip();
@@ -458,9 +603,11 @@
       document.getElementById("foot-right").textContent = INDEX.owner ? "© " + new Date().getFullYear() + " " + INDEX.owner : "";
     }
     const h = location.hash.replace(/^#\/?/, "");
-    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "fund"].includes(h) ? h : "")));
+    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "fund", "library", "coverage"].includes(h) ? h : "")));
     window.scrollTo(0, 0);
-    if (!h) { document.title = (INDEX.site?.title || "Equity Coverage"); home(); }
+    if (!h) generateView();
+    else if (h === "coverage") { document.title = (INDEX.site?.title || "Equity Coverage"); home(); }
+    else if (h === "library") libraryView();
     else if (h === "method") method();
     else if (h === "fund") fund();
     else detail(decodeURIComponent(h).toUpperCase());

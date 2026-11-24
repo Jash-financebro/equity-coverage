@@ -1,0 +1,60 @@
+name: Generate model
+run-name: Generate ${{ inputs.ticker }}
+
+# Started by the website's API (Cloudflare Worker) when a visitor asks for a ticker.
+on:
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: "NYSE ticker"
+        required: true
+
+permissions:
+  contents: write
+  packages: read
+
+concurrency:
+  group: generate-${{ inputs.ticker }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: ghcr.io/jash-financebro/equity-coverage-runner:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - name: Validate ticker
+        env:
+          T: ${{ inputs.ticker }}
+        run: echo "$T" | grep -Eq '^[A-Z][A-Z0-9.-]{0,6}$' || { echo "bad ticker"; exit 1; }
+      - name: Build model + report
+        env:
+          T: ${{ inputs.ticker }}
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: python3 pipeline/generate.py "$T"
+      - name: Add to the shared library
+        env:
+          T: ${{ inputs.ticker }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A library ':!library/index.json'
+          git commit -q -m "Library: generate $T"
+          for i in 1 2 3 4 5 6 7 8; do
+            git fetch -q origin main && git rebase -q origin/main
+            python3 -c "import sys; sys.path.insert(0, 'pipeline'); import generate; generate.update_index()"
+            git add library/index.json
+            made=0; git commit -q -m "Library index: $T" && made=1
+            git push -q origin HEAD:main && exit 0
+            [ "$made" = 1 ] && git reset -q --hard HEAD~1
+            sleep $((RANDOM % 6 + 2))
+          done
+          exit 1

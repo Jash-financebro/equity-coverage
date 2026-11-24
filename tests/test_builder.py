@@ -38,17 +38,30 @@ live = {"ticker": "MSFT", "company": "Microsoft Corp", "price": mkt["price"], "p
         "tenk_filed": "2025-07-30", "tenk_url": "", "sources": "fixtures", "refreshed_at": "test",
         "financials": fin, "market": {**w, "street_mean": qs["target_mean"], "street_median": qs["target_median"]}}
 
+def peer(t):
+    c, _ = sources.cik_for(t)
+    f = sources.company_facts(c)
+    fi = fundamentals.build(f)
+    it = fi["items"]
+    return {"ticker": t, "name": t, "price": sources.price_history(t)["price"], "shares": fundamentals.shares_outstanding(f),
+            "net_debt": it["short_term_debt"][-1] + it["long_term_debt"][-1] - it["cash"][-1],
+            "ebitda": it["operating_income"][-1] + it["d_and_a"][-1], "eps": it["eps_diluted"][-1]}
+
+
+PEERS = [peer("ORCL"), peer("GOOGL")]
 problems = []
 for stance in ("Balanced", "Bearish"):
     dest = tmp / f"MSFT_v{1 if stance == 'Balanced' else 2}.xlsx"
-    builder.build("MSFT", dest, {"live": live, "fin": fin}, stance=stance)
+    builder.build("MSFT", dest, {"live": live, "fin": fin, "peers": PEERS}, stance=stance)
     issues = builder.verify(dest)
     problems += [f"[{stance}] {i}" for i in issues]
 
     out = tmp / f"{dest.stem}_calc.xlsx"
     calc = excel.Calc(port=2003)
     try:
-        res = excel.refresh(calc, dest, out, {**live, "model_label": dest.stem}, {})
+        vs = "'MSFT Valuation Summary'"
+        res = excel.refresh(calc, dest, out, {**live, "model_label": dest.stem},
+                            {"scenario_cells": {"bear": f"{vs}!D23", "base": f"{vs}!E23", "bull": f"{vs}!F23"}})
     finally:
         calc.close()
     wb = openpyxl.load_workbook(out, data_only=True)
@@ -71,8 +84,17 @@ for stance in ("Balanced", "Bearish"):
           + f" | sens centre {dcf['F39'].value:.2f} | IS hist NI {wb['MSFT Income Statement']['F23'].value:,.0f}")
     if not (sc["bear"] < sc["base"] < sc["bull"]) or abs(res["target"] - (sc["base"] if stance == "Balanced" else sc["bear"])) > 0.01:
         problems.append(f"[{stance}] scenarios not ordered: {sc}")
-    if abs(dcf["F39"].value - res["target"]) > 0.01:
-        problems.append(f"[{stance}] sensitivity centre != target")
+    vsh = wb["MSFT Valuation Summary"]
+    blend = vsh["D5"].value * vsh["D8"].value + vsh["D6"].value * vsh["D9"].value
+    if abs(blend - res["target"]) > 0.01 or abs(dcf["F39"].value - vsh["D5"].value) > 0.01:
+        problems.append(f"[{stance}] blend/sensitivity mismatch {blend} {res['target']}")
+    if abs(vsh["E23"].value - sc["base"]) > 0.01 or abs(vsh["F23"].value - sc["bull"]) > 0.01:
+        problems.append(f"[{stance}] scenario table not filled")
+    if not vsh["D6"].value or vsh["D6"].value <= 0:
+        problems.append(f"[{stance}] comps value missing: {vsh['D6'].value}")
+    print(f"   comps median EV/EBITDA {wb['MSFT Comps']['D' + str(next(r for r in range(5, 40) if wb['MSFT Comps'][f'B{r}'].value == 'Peer median EV / EBITDA'))].value:.1f}x"
+          f" | DCF {vsh['D5'].value:.2f} | comps {vsh['D6'].value:.2f} | blend {res['target']:.2f}"
+          f" | scenario row {vsh['D23'].value:.2f}/{vsh['E23'].value:.2f}/{vsh['F23'].value:.2f}")
     if abs(wb["MSFT Income Statement"]["F23"].value - 101832) > 0.5:
         problems.append(f"[{stance}] historical net income does not tie to 10-K")
 

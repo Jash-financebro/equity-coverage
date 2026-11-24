@@ -319,6 +319,11 @@ def refresh(calc: Calc, src: Path, dest: Path, data: dict, cfg: dict) -> dict:
         doc.calculateAll()
         target, where = find_target(doc, cfg.get("target_price"))
         scenarios = run_scenarios(doc, cfg, target if isinstance(target, float) else None)
+        for name, ref in (cfg.get("scenario_cells") or {}).items():  # record case values in the workbook
+            if scenarios.get(name) is not None:
+                _cell(doc, ref).setValue(float(scenarios[name]))
+        if cfg.get("scenario_cells"):
+            doc.calculateAll()
         outputs = read_outputs(doc, cfg.get("outputs"))
         save_xlsx(doc, dest)
     finally:

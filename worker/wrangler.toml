@@ -1,0 +1,9 @@
+name = "equity-coverage-api"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+workers_dev = true
+
+[vars]
+GH_REPO = "Jash-financebro/equity-coverage"
+ALLOWED_ORIGINS = "https://jash-financebro.github.io"
+# GH_TOKEN is a secret: set by .github/workflows/deploy-worker.yml from the GH_DISPATCH_TOKEN repo secret
