@@ -238,7 +238,7 @@
     }
     const df = [1, 2, 3, 4, 5].map((t) => 1 / (1 + o.wacc) ** t);
     const spv = ufcf.reduce((a, u, i) => a + u * df[i], 0);
-    const bridge = (ev) => ((ev + x.debt + x.cash) * (1 - x.nci_ratio)) / x.shares;
+    const bridge = (ev) => ((ev + x.debt + x.cash) * (1 + x.nci_ratio)) / x.shares;   // nci_ratio is negative (DCF D26/D25)
     const g = Math.min(o.g, o.wacc - 0.005);
     const dcf = bridge(spv + (ufcf[4] * (1 + g)) / (o.wacc - g) * df[4]);
     const exit = Math.max(0, bridge(spv + o.mult * ebitda5 * df[4]));
@@ -359,7 +359,7 @@
           <label>Exit EV/EBITDA multiple <output id="o-x"></output><input type="range" id="s-x" min="4" max="30" step="0.5"></label>
         </div>
         <div class="kpis slout" id="sl-out"></div>
-        <p class="note" style="padding:0 18px 16px">At base settings this matches the Excel model exactly (target ${usd(x.check?.target)}). Away from base it re-runs the same DCF, exit-multiple and comps blend and the street/peer anchoring; it tracks the Excel engine to within about 1%, since the workbook also re-runs its PP&amp;E, debt and interest schedules.</p></section>` : ""}
+        <p class="note" style="padding:0 18px 16px">At base settings this matches the Excel model exactly (target ${usd(x.check?.target)}). Away from base it re-runs the same DCF, exit-multiple and comps blend and the street/peer anchoring; it usually lands within 1% of the Excel engine (a few percent at most), since the workbook also re-runs its PP&amp;E, debt and interest schedules.</p></section>` : ""}
 
       <section class="section card"><div class="card-h"><h2>Financial summary</h2><span class="note">$mm except per share · shaded columns are projections (base case)</span></div>
         <div class="scroll"><table class="fin"><thead><tr><th></th>${years.map((y, i) => `<th class="r${i >= hn ? " proj" : ""}">${esc(y)}</th>`).join("")}</tr></thead><tbody>
@@ -392,7 +392,7 @@
     document.getElementById("rebuild").addEventListener("click", () => sessionStorage.setItem("mb_prefill", m.ticker));
 
     if (x) {
-      const bounded = Math.min(30, Math.max(4, x.ev_ebitda_now || 10));
+      const bounded = Math.min(30, Math.max(4, nz(x.ev_ebitda_now) ? x.ev_ebitda_now : 4));
       const S = { dg: 0, dm: 0, wacc: x.wacc, g: x.g, mult: bounded * (cs.base?.exit_factor || 1) };
       const el = (id) => document.getElementById(id);
       const sync = () => {
