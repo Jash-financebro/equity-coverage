@@ -4,7 +4,8 @@ Follows JJ's three-statement-model-builder conventions:
 * hidden historicals tab (Live_Data) labelled with its source; separate IS / BS / CF tabs,
   roll-forward schedules (PP&E, D&A, other NCA, equity/retained earnings, debt + revolver sweep,
   interest), Revenue Build, WACC, DCF and Financial Ratios tabs
-* A1 of every tab = file label (e.g. LNG_v1); column A narrow, labels in B, data from column D
+* layout and look follow JJ's LNG model: Calibri 12, navy banners, Cover first; A1 left blank;
+  column A narrow, labels in B, data from column D
 * blue = hardcoded, black = same-sheet formula, green = cross-sheet link; no SUMPRODUCT/MMULT
 * "$" number format and bold ONLY on summed (total / subtotal) rows
 * balance check row nets to zero; bull / base / bear selector drives the assumptions
@@ -16,13 +17,17 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.comments import Comment
-from openpyxl.styles import Alignment, Font
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.workbook.defined_name import DefinedName
 
 from fundamentals import LINE_ITEMS
 from layout import MARKET, MARKET_HEADER_ROW, SCALARS, YEAR_COLS, item_row
 
-FONT = "Arial"
+FONT = "Calibri"
+SIZE = 12
+NAVY, NAVY2, HILITE = "1F3864", "1F3764", "FFF2CC"
+WHITE = "FFFFFF"
+LAST_COL = "K"
 BLUE, BLACK, GREEN = "0000FF", "000000", "008000"
 NUM = '#,##0.0_);[Red](#,##0.0)'
 TOT = '$#,##0.0_);[Red]($#,##0.0)'
@@ -49,19 +54,34 @@ def LM(key: str) -> str:
     return f"Live_Data!$B${MARKET[key][0]}"
 
 
+def _cols(a, b):
+    return [chr(x) for x in range(ord(a), ord(b) + 1)]
+
+
+def banner(ws, row, first="B", last=LAST_COL, fill=NAVY):
+    """Navy band across the row, white text (the LNG model's title / section style)."""
+    for col in _cols(first, last):
+        c = ws[f"{col}{row}"]
+        c.fill = PatternFill("solid", fgColor=fill)
+        if not (isinstance(c.value, (int, float)) and not isinstance(c.value, bool)) and not (
+                isinstance(c.value, str) and c.value.startswith("=")):
+            c.font = Font(name=FONT, size=SIZE, bold=c.font.bold, color=WHITE)
+
+
 class Sheet:
     def __init__(self, wb, title, label, heading):
         self.ws = wb.create_sheet(title)
         self.title = title
         ws = self.ws
         ws.sheet_view.showGridLines = False
+        ws.sheet_view.zoomScale = 80
         ws.column_dimensions["A"].width = 2.75
-        ws.column_dimensions["B"].width = 45
-        ws.column_dimensions["C"].width = 8
+        ws.column_dimensions["B"].width = 50
+        ws.column_dimensions["C"].width = 4
         for c in ALL:
-            ws.column_dimensions[c].width = 12
-        self.put("A1", label)
-        self.put("B2", heading, bold=True)
+            ws.column_dimensions[c].width = 13
+        self.put("B2", heading)
+        banner(ws, 2)
 
     def ref(self, cell):
         return f"{_q(self.title)}!{cell}"
@@ -75,7 +95,7 @@ class Sheet:
             color = BLUE
         else:
             color = BLACK
-        c.font = Font(name=FONT, size=10, bold=bold, color=color)
+        c.font = Font(name=FONT, size=SIZE, bold=bold, color=color)
         if fmt:
             c.number_format = fmt
         if note:
@@ -83,10 +103,11 @@ class Sheet:
         return c
 
     def header(self, row, years):
-        self.put(f"B{row}", "Fiscal year ($ in millions, except per-share data)", bold=True)
+        self.put(f"B{row}", "Fiscal year ($ in millions, except per-share data)")
         for c, y in zip(ALL, years):
-            self.put(f"{c}{row}", y, bold=True)
+            self.put(f"{c}{row}", str(y))
             self.ws[f"{c}{row}"].alignment = Alignment(horizontal="right")
+        banner(self.ws, row, fill=NAVY2)
 
     def line(self, row, label, values: dict, fmt=NUM, total=False, note=None):
         self.put(f"B{row}", label, bold=total, note=note)
@@ -96,7 +117,8 @@ class Sheet:
             self.put(f"{col}{row}", v, TOT if total and fmt == NUM else fmt, bold=total)
 
     def section(self, row, text):
-        self.put(f"B{row}", text, bold=True)
+        self.put(f"B{row}", text)
+        banner(self.ws, row)
 
 
 def _avg(xs):
@@ -168,7 +190,7 @@ def _write_live_data(wb, label, live: dict, fin: dict):
     ws = wb.create_sheet("Live_Data")
     ws.sheet_state = "hidden"
     f = lambda color=BLACK, bold=False: Font(name=FONT, size=10, color=color, bold=bold)  # noqa: E731
-    ws["A1"].value, ws["A1"].font = label, f()
+    ws["A1"].value = None
     ws["A2"].value = ("LIVE DATA (historicals source: SEC EDGAR 10-K XBRL; prices & market data: Yahoo Finance). "
                       "Refreshed automatically by the pipeline.")
     ws["A2"].font = f()
@@ -223,7 +245,7 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     WA = Sheet(wb, f"{T} WACC", label, f"{live['company']} ({T}) - Weighted Average Cost of Capital")
     DC = Sheet(wb, f"{T} DCF", label, f"{live['company']} ({T}) - Discounted Cash Flow")
     CO = Sheet(wb, f"{T} Comps", label, f"{live['company']} ({T}) - Comparable Companies")
-    VS = Sheet(wb, f"{T} Valuation Summary", label, f"{live['company']} ({T}) - Valuation Summary & Scenarios")
+    VS = Sheet(wb, f"{T} Target Price", label, f"{live['company']} ({T}) - Target Price: Valuation Blend, Anchoring & Scenarios")
     FR = Sheet(wb, f"{T} Financial Ratios", label, f"{live['company']} ({T}) - Financial Ratios")
     _write_live_data(wb, label, live, fin)
     for s in (IS, BS, CF, SC, RB, FR):
@@ -668,7 +690,11 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.put("B46", "The final target blends the model with what the street and the industry's analysts see, then keeps the "
                   "upside within 15 points of the peer average so no single call stands far outside its industry.")
 
-    _cover(wb, T, label, live, ctx, VS, WA, RB)
+    _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF)
+    order = [f"{T} Cover", RB.title, IS.title, BS.title, CF.title, SC.title, WA.title, DC.title, CO.title,
+             VS.title, FR.title, "Live_Data"]
+    wb._sheets.sort(key=lambda w: order.index(w.title) if w.title in order else 99)
+    wb.active = 0
 
     wb.defined_names["Scenario"] = DefinedName("Scenario", attr_text=f"{RB.ref('$D$5')}")
     wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{VS.ref('$D$43')}")
@@ -677,71 +703,127 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     return dest
 
 
-def _big(sheet, cell, value, fmt, size, bold=True):
+def _big(sheet, cell, value, fmt, size, bold=True, fill=None):
     c = sheet.put(cell, value, fmt, bold=bold)
     c.font = Font(name=FONT, size=size, bold=bold, color=c.font.color)
+    if fill:
+        c.fill = PatternFill("solid", fgColor=fill)
     return c
 
 
-def _cover(wb, T, label, live, ctx, VS, WA, RB):
-    """First tab: the final target price, rating and the key numbers behind them, readable at a glance."""
-    CV = Sheet(wb, f"{T} Cover", label, f"{live['company']} ({T})")
+def _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF):
+    """First tab, laid out like JJ's LNG model cover: snapshot, market data, capital structure and the
+    valuation summary, with the final target price highlighted at the top and the bottom."""
+    CV = Sheet(wb, f"{T} Cover", label, "")
     ws = CV.ws
-    wb.move_sheet(ws, offset=-(len(wb.sheetnames) - 1))
-    wb.active = 0
-    ws.column_dimensions["B"].width = 50
-    ws.column_dimensions["C"].width = 2
-    for c in "DEF":
-        ws.column_dimensions[c].width = 15
-    ws.page_setup.orientation = "portrait"
+    ws["B2"].value = None
+    for col in _cols("B", LAST_COL):
+        ws[f"{col}2"].fill = PatternFill(fill_type=None)
+    widths = {"B": 2, "C": 40, "D": 26, "E": 3, "F": 34, "G": 16, "H": 3, "I": 30, "J": 16, "K": 3}
+    for k, v in widths.items():
+        ws.column_dimensions[k].width = v
+    ws.page_setup.orientation = "landscape"
     ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 1
     ws.sheet_properties.pageSetUpPr.fitToPage = True
-    ws.print_area = "A1:F30"
-    ws["B2"].font = Font(name=FONT, size=18, bold=True)
-    CV.put("B3", f"Three-statement model, DCF and valuation | {ctx.get('sector') or 'Sector n/a'} | NYSE")
+    ws.print_area = "B2:K44"
+    vs, wa = VS.ref, WA.ref
+    i_, b_, c_ = IS.ref, BS.ref, CF.ref
 
-    CV.put("B5", "12-MONTH PRICE TARGET", bold=True)
-    _big(CV, "B6", f"={VS.ref('$D$43')}", '$#,##0.00', 36)
-    CV.put("D5", "RATING", bold=True)
-    _big(CV, "D6", '=IF(D10>=0.15,"BUY",IF(D10<=-0.1,"SELL","HOLD"))', None, 28)
-    CV.put("F5", "UPSIDE", bold=True)
-    _big(CV, "F6", "=D10", PCT, 20)
-    for c in ("B6", "D6", "F6"):
+    def band(row, text, fill=NAVY, first="C", last="J"):
+        CV.put(f"{first}{row}", text)
+        banner(ws, row, first, last, fill)
+
+    def kv(row, col, label_, value, fmt=None):
+        CV.put(f"{col}{row}", label_)
+        CV.put(f"{chr(ord(col) + 1)}{row}", value, fmt)
+
+    band(3, f"{live['company'].upper()}  (NYSE: {T})")
+
+    # ---- headline: the call
+    for col in ("C", "D", "F", "G", "I", "J"):
+        ws[f"{col}5"].fill = ws[f"{col}6"].fill = PatternFill("solid", fgColor=HILITE)
+    CV.put("C5", "12-MONTH PRICE TARGET", bold=True)
+    _big(CV, "C6", f"={vs('$D$43')}", '$#,##0.00', 36, fill=HILITE)
+    CV.put("F5", "RATING", bold=True)
+    _big(CV, "F6", '=IF(G6>=0.15,"BUY",IF(G6<=-0.1,"SELL","HOLD"))', None, 28, fill=HILITE)
+    CV.put("G5", "UPSIDE", bold=True)
+    _big(CV, "G6", f"={vs('$D$44')}", PCT, 24, fill=HILITE)
+    CV.put("I5", "BEAR / BASE / BULL", bold=True)
+    _big(CV, "I6", f'=TEXT({vs("$D$24")},"$0")&" / "&TEXT({vs("$E$24")},"$0")&" / "&TEXT({vs("$F$24")},"$0")',
+         None, 16, fill=HILITE)
+    for c in ("C6", "F6", "G6", "I6"):
         ws[c].alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[6].height = 48
-    CV.put("B7", "Rating rule: Buy at 15%+ upside, Sell at 10%+ downside, otherwise Hold.")
+    ws.row_dimensions[6].height = 50
+    CV.put("C7", "Rating rule: Buy at 15%+ upside to target, Sell at 10%+ downside, otherwise Hold.")
 
-    CV.section(9, "Price and target")
-    CV.line(10, "Upside / (downside) to target", {"D": f"={VS.ref('$D$44')}"}, PCT)
-    CV.line(11, "Current share price", {"D": "=Live_Data!$B$6"}, PS)
-    CV.line(12, "Price date", {"D": "=Live_Data!$B$7"}, None)
-    CV.line(13, "Model value before anchoring", {"D": f"={VS.ref('$D$13')}"}, PS)
-    CV.line(14, "Street median price target", {"D": f"={VS.ref('$D$30')}"}, PS)
-    CV.line(15, "Industry peers' average analyst upside", {"D": f"={VS.ref('$D$31')}"}, PCT)
+    band(9, "COMPANY SNAPSHOT")
+    kv(10, "C", "Company:", live["company"]); kv(10, "F", "Ticker:", T); kv(10, "I", "Exchange:", "NYSE")
+    kv(11, "C", "Sector:", ctx.get("sector") or "n/a"); kv(11, "F", "Price date:", "=Live_Data!$B$7")
+    kv(11, "I", "Currency:", "USD ($mm)")
+    kv(12, "C", "Share price:", "=Live_Data!$B$6", PS); kv(12, "F", "Latest 10-K filed:", "=Live_Data!$B$11")
+    kv(12, "I", "Active case:", f'=CHOOSE({RB.ref("$D$5")},"Bull","Base","Bear")')
+    kv(13, "C", "Shares out. (mm):", "=Live_Data!$B$8", NUM)
 
-    CV.section(17, "Scenarios (final target per case)")
-    for col, name in zip("DEF", ("Bear", "Base", "Bull")):
-        CV.put(f"{col}17", name, bold=True)
-        ws[f"{col}17"].alignment = Alignment(horizontal="right")
-    CV.line(18, "Price target", {c: f"={VS.ref(f'${c}$24')}" for c in "DEF"}, PS)
-    CV.line(19, "Upside / (downside)", {c: f"={VS.ref(f'${c}$25')}" for c in "DEF"}, PCT)
+    band(15, "MARKET DATA")
+    for col, t in (("C", "PRICE & SHARES"), ("F", "VALUATION MULTIPLES"), ("I", "CAPITAL RETURN")):
+        band(16, t, NAVY2, col, chr(ord(col) + 1))
+    kv(17, "C", "Share price", "=D12", PS)
+    kv(18, "C", "Shares out. (mm)", "=D13", NUM)
+    kv(19, "C", "Market cap ($mm)", "=D17*D18", NUM)
+    kv(20, "C", "Beta", f"={wa('$D$6')}", "0.00")
+    kv(17, "F", "P / E (latest FY EPS)", f"=IFERROR(D17/{i_('$F$25')},0)", MULT)
+    kv(18, "F", "Enterprise value ($mm)", f"=D19+{b_('$F$13')}+{b_('$F$14')}-{b_('$F$5')}", NUM)
+    kv(19, "F", "EV / EBITDA (latest FY)", f"=IFERROR(G18/{i_('$F$14')},0)", MULT)
+    kv(20, "F", "Dividend yield", f"=IFERROR(J18/D19,0)", PCT)
+    kv(17, "I", "Latest FY buybacks ($mm)", f"=-{c_('$F$20')}", NUM)
+    kv(18, "I", "Latest FY dividends ($mm)", f"=-{c_('$F$19')}", NUM)
+    kv(19, "I", "Payout (% of net income)", f"=IFERROR(J18/{i_('$F$23')},0)", PCT)
 
-    CV.section(21, "Key inputs")
-    CV.line(22, "WACC", {"D": f"={WA.ref('$D$23')}"}, PCT)
-    CV.line(23, "Market cap ($mm)", {"D": "=Live_Data!$B$9"}, NUM)
-    CV.line(24, "Net debt, latest FY ($mm)", {"D": "=Live_Data!$B$10"}, NUM)
-    CV.line(25, "Latest 10-K filed", {"D": "=Live_Data!$B$11"}, None)
-    CV.line(26, "Active case (Revenue Build D5: 1 bull, 2 base, 3 bear)", {"D": f"={RB.ref('$D$5')}"}, "0")
+    band(22, "CAPITAL STRUCTURE (LATEST FY)")
+    kv(23, "C", "Total debt ($mm)", f"={b_('$F$13')}+{b_('$F$14')}", NUM)
+    kv(24, "C", "Cash & equivalents ($mm)", f"={b_('$F$5')}", NUM)
+    kv(25, "C", "Net debt ($mm)", "=D23-D24", NUM)
+    kv(26, "C", "Net debt / EBITDA", f"=IFERROR(D25/{i_('$F$14')},0)", MULT)
+    kv(27, "C", "WACC", f"={wa('$D$23')}", PCT)
 
-    CV.put("B28", "How the target is set: a 40/40/20 blend of perpetuity DCF, exit-multiple DCF and comps gives the "
-                  "model value; the final target anchors it to the street median and the peers' average analyst "
-                  "upside (see the Valuation Summary tab).")
-    CV.put("B29", "Sources: SEC EDGAR (10-K XBRL) for financials; Yahoo Finance for prices, beta and consensus. "
+    band(29, "VALUATION SUMMARY")
+    for col, t in (("C", "Method"), ("F", "Value / share"), ("G", "vs. current"), ("I", "Weighting"),
+                   ("J", "Wtd. contribution")):
+        CV.put(f"{col}30", t)
+    banner(ws, 30, "C", "J", NAVY2)
+    CV.put("C31", "Current share price"); CV.put("F31", "=D17", PS)
+    rows = [  # (label, value, weight, contribution)
+        ("DCF - perpetuity growth", "$D$5", "$D$8", None),
+        ("DCF - exit EV/EBITDA multiple", "$D$7", "$D$10", None),
+        ("Trading comps (peer median EV/EBITDA)", "$D$6", "$D$9", None),
+        ("Model value (step 1 blend)", "$D$13", "$D$33", "$D$36"),
+        ("Street median price target", "$D$30", "$D$34", "$D$37"),
+        ("Peer-relative value (peer avg analyst upside)", "$D$32", "$D$35", "$D$38"),
+        ("Anchored value (step 2 blend)", "$D$39", None, None),
+    ]
+    for i, (lab, v, w, contrib) in enumerate(rows):
+        r = 32 + i
+        CV.put(f"C{r}", lab, bold=lab.startswith(("Model value", "Anchored")))
+        CV.put(f"F{r}", f"={vs(v)}", PS)
+        CV.put(f"G{r}", f"=IFERROR(F{r}/$D$17-1,0)", PCT)
+        if w:
+            CV.put(f"I{r}", f"={vs(w)}", PCT)
+            CV.put(f"J{r}", f"={vs(contrib)}" if contrib else f"=F{r}*I{r}", PS)
+    CV.put("C39", "Allowed range (peer avg upside +/-15 pts)")
+    CV.put("F39", f"={vs('$D$41')}", PS); CV.put("G39", f"={vs('$D$42')}", PS)
+    CV.put("I39", "low / high")
+    CV.put("C41", "MODEL TARGET PRICE")
+    _big(CV, "F41", "=C6", '$#,##0.00', 16)
+    _big(CV, "G41", "=G6", PCT, 16)
+    banner(ws, 41, "C", "J", NAVY)
+    for col in ("F", "G"):
+        ws[f"{col}41"].fill = PatternFill("solid", fgColor=HILITE)
+
+    CV.put("C43", "Sources: SEC EDGAR (10-K XBRL) for financials; Yahoo Finance for prices, beta and consensus. "
                   "Automated model for educational use, not investment advice.")
-    for r in (28, 29):
-        ws[f"B{r}"].alignment = Alignment(wrap_text=True, vertical="top")
-        ws.merge_cells(f"B{r}:F{r}")
-        ws.row_dimensions[r].height = 30
+    ws.merge_cells("C43:J43")
+    ws["C43"].alignment = Alignment(wrap_text=True, vertical="top")
+    ws.row_dimensions[43].height = 32
 
 
 # ------------------------------------------------------------------ verify
@@ -751,8 +833,8 @@ def verify(path: Path) -> list[str]:
     wb = load_workbook(path)
     label = path.stem
     for ws in wb:
-        if ws["A1"].value != label:
-            issues.append(f"{ws.title}!A1 is {ws['A1'].value!r}, expected {label!r}")
+        if ws["A1"].value not in (None, ""):
+            issues.append(f"{ws.title}!A1 should be blank, has {ws['A1'].value!r}")
         for row in ws.iter_rows():
             for c in row:
                 v = c.value

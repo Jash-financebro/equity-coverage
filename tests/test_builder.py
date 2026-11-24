@@ -61,7 +61,7 @@ for stance in ("Balanced", "Bearish"):
     out = tmp / f"{dest.stem}_calc.xlsx"
     calc = excel.Calc(port=2003)
     try:
-        vs = "'MSFT Valuation Summary'"
+        vs = "'MSFT Target Price'"
         res = excel.refresh(calc, dest, out, {**live, "model_label": dest.stem},
                             {"scenario_cells": {"bear": f"{vs}!D23", "base": f"{vs}!E23", "bull": f"{vs}!F23"},
                              "scenario_value_ref": f"{vs}!D13"})
@@ -87,7 +87,7 @@ for stance in ("Balanced", "Bearish"):
           + f" | sens centre {dcf['F39'].value:.2f} | IS hist NI {wb['MSFT Income Statement']['F23'].value:,.0f}")
     if not (sc["bear"] < sc["base"] < sc["bull"]):
         problems.append(f"[{stance}] scenarios not ordered: {sc}")
-    vsh = wb["MSFT Valuation Summary"]
+    vsh = wb["MSFT Target Price"]
     blend = vsh["D5"].value * vsh["D8"].value + vsh["D6"].value * vsh["D9"].value + vsh["D7"].value * vsh["D10"].value
     px_ = vsh["D14"].value
     anchored = 0.5 * blend + 0.25 * 625.0 + 0.25 * px_ * 1.10

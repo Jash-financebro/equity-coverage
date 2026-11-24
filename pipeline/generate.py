@@ -127,7 +127,7 @@ def read_model(path: Path, T: str) -> dict:
                      ("value", 29), ("tv_pct", 32), ("exit_mult", 33))})
     m["sens"] = {"g": [g("DCF", f"{c}36") for c in "DEFGH"], "wacc": [g("DCF", f"C{r}") for r in range(37, 42)],
                  "grid": [[g("DCF", f"{c}{r}") for c in "DEFGH"] for r in range(37, 42)]}
-    vs = lambda r, c="D": g("Valuation Summary", f"{c}{r}")  # noqa: E731
+    vs = lambda r, c="D": g("Target Price", f"{c}{r}")  # noqa: E731
     m["dcf"].update({"ev_ebitda_now": g("DCF", "D45"), "exit_mult_used": g("DCF", "D46"), "tv_exit": g("DCF", "D48"),
                      "ev_exit": g("DCF", "D50"), "value_exit": g("DCF", "D52"), "implied_g": g("DCF", "D53")})
     m["val"] = {"dcf": vs(5), "comps": vs(6), "exit": vs(7), "w_dcf": vs(8), "w_comps": vs(9), "w_exit": vs(10),
@@ -246,7 +246,7 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
     builder.build(T, built, {"live": live, "fin": fin, "peers": peers, "anchor": anchor,
                                   "sector": me.get("sector")}, stance="Balanced")
     live["model_label"] = label
-    vs = f"'{T} Valuation Summary'"
+    vs = f"'{T} Target Price'"
     calc = excel.Calc(port=int(os.environ.get("LO_PORT", "2002")))
     try:
         res = excel.refresh(calc, built, folder / f"{label}.xlsx", live,

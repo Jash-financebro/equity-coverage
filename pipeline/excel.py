@@ -139,7 +139,7 @@ def write_live_data(doc, data: dict) -> None:
     sh = sheets.getByName(SHEET)
     sh.getCellRangeByName(f"A1:H{LAST_ROW}").clearContents(1 | 2 | 4 | 16)  # values, dates, strings, formulas
 
-    _set(sh.getCellRangeByName("A1"), data.get("model_label", ""), BLACK)
+    # A1 left blank by design (no file/version label on any tab)
     _set(sh.getCellRangeByName("A2"), "LIVE DATA (historicals source: SEC EDGAR 10-K XBRL; prices & market data: "
          "Yahoo Finance). Refreshed automatically — link your model to these cells. "
          f"Last refresh: {data['refreshed_at']}", GREY)
