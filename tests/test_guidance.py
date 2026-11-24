@@ -33,4 +33,5 @@ past = ("Comparable currency neutral operating income (non-GAAP) grew 14%, prima
 assert not list(G._sentences(past)), list(G._sentences(past))
 be = ["Raises full year 2026 revenue guidance to $4.4 billion - $4.6 billion, representing 122% year-over-year growth at the midpoint."]
 assert G.revenue_growth_range(list(G._sentences(be[0]))) == (1.22, 1.22), G.revenue_growth_range(be)
+assert not list(G._sentences("Projected 2026 Free Cash Flow (In billions): . Projected Free Cash Flow (Non-GAAP) $ 13.0."))
 print("OK  guidance:", len(sents), "sentences, revenue growth range", G.revenue_growth_range(sents))

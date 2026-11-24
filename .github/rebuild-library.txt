@@ -1,1 +1,1 @@
-Rebuild requested 2026-11-24: guidance forward-looking filter.
+Rebuild requested 2026-11-24: guidance table-row filter.

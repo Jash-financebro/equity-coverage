@@ -36,6 +36,8 @@ def _sentences(text: str):
         k = KEYWORDS.search(s)
         if k and PAST_ONLY.search(s[:k.start()]) and not re.search(r"guidance|outlook", s, re.I):
             continue  # "Revenue grew 7%, ... expected ..." - results first; only keep explicit guidance lines
+        if len(s.split()) < 9 or s.rstrip().endswith(":") or re.search(r"\((?:in|\$ in) (?:millions|billions)\)", s, re.I):
+            continue  # table rows and captions, not sentences
         if 40 <= len(s) <= 320 and k and METRICS.search(s) and NUMBER.search(s) and not NOISE.search(s):
             yield s + "."
 
