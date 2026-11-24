@@ -17,6 +17,7 @@ from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.comments import Comment
+from openpyxl.formatting.rule import FormulaRule
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.workbook.defined_name import DefinedName
 
@@ -255,8 +256,8 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
 
     # --------------------------------------------------------- Revenue Build
     rb = RB.ref
-    RB.put("B5", "Active scenario (1 = Bull, 2 = Base, 3 = Bear)")
-    RB.put("D5", d["selector"], "0", note="Change to 1 / 2 / 3 to switch the whole model")
+    RB.put("B5", "Active scenario (1 = Bull, 2 = Base, 3 = Bear) - set it on the Scenarios tab")
+    RB.put("D5", f"='{T} Scenarios'!$D$4", "0", note="Linked to the switch on the Scenarios tab")
     RB.put("B6", "Model stance")
     RB.put("D6", {1: "Bullish", 2: "Traditional / Conservative" if d["conservative"] else "Balanced / Base case",
                   3: "Bearish"}[d["selector"]])
@@ -625,7 +626,7 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     CO.line(r0 + 8, "Implied Equity Value to Common", {"D": f"=D{r0 + 6}+D{r0 + 7}"}, total=True)
     CO.line(r0 + 9, "Shares outstanding (mm)", {"D": "=Live_Data!$B$8"}, '#,##0.0')
     CO.line(r0 + 10, "Comps-implied value per share", {"D": f"=IFERROR(MAX(0,D{r0 + 8}/D{r0 + 9}),0)"}, PS)
-    CO.put(f"B{r0 + 12}", f"Peers: {len(peers)} NYSE-listed companies in the same SEC industry (SIC) group, chosen by "
+    CO.put(f"B{r0 + 12}", f"Peers: {len(peers)} NYSE/Nasdaq-listed companies in the same SEC industry (SIC) group, chosen by "
                           "closest revenue. Inputs are hardcoded at generation (blue).")
     comps_ref = CO.ref(f"$D${r0 + 10}")
 
@@ -656,7 +657,7 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.line(23, "Model value per case (blended intrinsic)", {"D": 0, "E": 0, "F": 0}, PS,
             note="Recorded at generation by switching Revenue Build D5 to 3 / 2 / 1 and recalculating the model")
     VS.line(24, "Final target per case (anchored base x case / base)",
-            {c: f"=IFERROR($D$43*{c}23/$E$23,0)" for c in "DEF"}, PS)
+            {c: f"=IFERROR($D$45*{c}23/$E$23,0)" for c in "DEF"}, PS)
     VS.line(25, "Upside / (downside) vs current price", {c: f"=IFERROR({c}24/$D$14-1,0)" for c in "DEF"}, PCT)
     VS.put("B27", "To rerun a case yourself: set Revenue Build D5 to 1 (bull), 2 (base) or 3 (bear); every tab follows.")
 
@@ -666,7 +667,7 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     w_m, w_s, w_p = 0.5, 0.25 if street else 0.0, 0.25 if peer_up is not None else 0.0
     tot = w_m + w_s + w_p
     VS.section(28, "Peer & consensus anchoring (final price target)")
-    VS.line(29, "Model value (blended intrinsic)", {"D": "=D13"}, PS)
+    VS.line(29, "Model value - base case (the anchor is set on the base case)", {"D": "=IF(E23>0,E23,D13)"}, PS)
     VS.line(30, "Street median price target", {"D": round(street, 2) if street else 0}, PS,
             note=f"Yahoo Finance consensus, {anc.get('analysts') or 'n/a'} analysts, at generation" if street
             else "No consensus available: weight set to 0")
@@ -686,25 +687,28 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.line(40, "Band around the peer average upside (+/-)", {"D": 0.15}, PCT)
     VS.line(41, "Lower bound", {"D": f"=D14*(1+{centre}-D40)"}, PS)
     VS.line(42, "Upper bound", {"D": f"=D14*(1+{centre}+D40)"}, PS)
-    VS.line(43, "Target Price (final, per share)", {"D": "=MIN(D42,MAX(D41,D39))"}, PS)
+    VS.line(43, "Target Price (final, active case = anchored base x active / base model value)",
+            {"D": "=D45*IFERROR(D13/D29,1)"}, PS)
     VS.line(44, "Upside / (downside) to final target", {"D": "=IFERROR(D43/D14-1,0)"}, PCT)
+    VS.line(45, "Anchored base-case target (anchored value kept inside the band)", {"D": "=MIN(D42,MAX(D41,D39))"}, PS)
     VS.put("B46", "The final target blends the model with what the street and the industry's analysts see, then keeps the "
                   "upside within 15 points of the peer average so no single call stands far outside its industry.")
 
     _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF)
-    order = [f"{T} Cover", RB.title, IS.title, BS.title, CF.title, SC.title, WA.title, DC.title, CO.title,
+    SN = _scenarios(wb, T, label, live, d, RB, IS, DC, VS)
+    order = [f"{T} Cover", SN.title, RB.title, IS.title, BS.title, CF.title, SC.title, WA.title, DC.title, CO.title,
              VS.title, FR.title, "Live_Data"]
     wb._sheets.sort(key=lambda w: order.index(w.title) if w.title in order else 99)
     wb.active = 0
 
-    for sheet, cells in ((RB, ["D5", "D40", "D41", "D42", "D44", "E44", "F44"]),
+    for sheet, cells in ((RB, ["D40", "D41", "D42", "D44", "E44", "F44"]),
                          (VS, ["D9", "D30", "D31", "D34", "D35", "D40"])):
         for cell in cells:
             sheet.ws[cell].fill = PatternFill("solid", fgColor="FFFF00")
     RB.put("B49", "Yellow cells are the key levers: scenario switch, terminal growth and exit multiple. "
                   "Blue = typed input, black = formula on this tab, green = link from another tab.")
 
-    wb.defined_names["Scenario"] = DefinedName("Scenario", attr_text=f"{RB.ref('$D$5')}")
+    wb.defined_names["Scenario"] = DefinedName("Scenario", attr_text=f"{SN.ref('$D$4')}")
     wb.defined_names["TargetPrice"] = DefinedName("TargetPrice", attr_text=f"{VS.ref('$D$43')}")
     dest.parent.mkdir(parents=True, exist_ok=True)
     wb.save(dest)
@@ -717,6 +721,103 @@ def _big(sheet, cell, value, fmt, size, bold=True, fill=None):
     if fill:
         c.fill = PatternFill("solid", fgColor=fill)
     return c
+
+
+ACTIVE_FILL = PatternFill(start_color=HILITE, end_color=HILITE, fill_type="solid")
+
+
+def _highlight_active(ws, switch, ranges_by_case):
+    """Conditional fill on whichever case is switched on, so flipping the switch visibly moves the highlight."""
+    for case, ranges in ranges_by_case.items():
+        for rng in ranges:
+            ws.conditional_formatting.add(rng, FormulaRule(formula=[f"{switch}={case}"], fill=ACTIVE_FILL))
+
+
+def _scenarios(wb, T, label, live, d, RB, IS, DC, VS):
+    """Scenario switch + every case-driven assumption side by side, with live outputs for the active case
+    (same idea as the Sensitivity Analysis tab in JJ's LNG model)."""
+    SN = Sheet(wb, f"{T} Scenarios", label, f"{live['company']} ({T}) - Scenarios: switch the case and see what changes")
+    ws = SN.ws
+    ws.column_dimensions["I"].width = 62
+    ws.column_dimensions["G"].width = ws.column_dimensions["H"].width = 16
+    rb, is_, dc, vs = RB.ref, IS.ref, DC.ref, VS.ref
+    SN.put("B4", "SCENARIO SWITCH: type 1 = Bull, 2 = Base, 3 = Bear")
+    SN.put("D4", d["selector"], "0", note="Every tab follows this cell")
+    ws["D4"].fill = PatternFill("solid", fgColor="FFFF00")
+    SN.put("B5", "Active case")
+    SN.put("D5", '=CHOOSE(D4,"BULL CASE","BASE CASE","BEAR CASE")')
+    SN.put("F4", "Change D4, then read across: the highlighted column is the case now flowing through the model.")
+
+    def header(row, first):
+        for col, t in (("B", first), ("D", "Bull"), ("E", "Base"), ("F", "Bear"), ("G", "Active"),
+                       ("H", "Active vs. base"), ("I", "What changes and why")):
+            SN.put(f"{col}{row}", t)
+            if col in "DEFGH":
+                ws[f"{col}{row}"].alignment = Alignment(horizontal="right")
+        banner(ws, row, fill=NAVY2)
+
+    SN.section(7, "Assumptions that change with the case (linked from the Revenue Build tab)")
+    header(8, "Driver")
+    DELTA_PCT, DELTA_X = '+0.0%;-0.0%;0.0%', '+0.00"x";-0.00"x";0.00"x"'
+    rows = [
+        (9, "Revenue growth, first projected year", (f"G9", f"G10", f"G11"), PCT, DELTA_PCT,
+         "Bull adds 3 pts of growth a year, bear takes 3 pts off: the demand call."),
+        (10, "Revenue growth, final projected year", (f"K9", f"K10", f"K11"), PCT, DELTA_PCT,
+         "Base growth fades toward long-run growth by year 5; the +/-3 pt gap holds every year."),
+        (11, "Cost of revenue % of revenue", (f"G19", f"G20", f"G21"), PCT, DELTA_PCT,
+         "Bull is 1 pt cheaper, bear 1 pt dearer than the 3-year median: gross margin moves the other way."),
+        (12, "Terminal growth rate (after year 5)", ("D40", "D41", "D42"), PCT, DELTA_PCT,
+         "Long-run growth in the perpetuity DCF: higher growth, higher terminal value."),
+        (13, "Exit multiple vs. current EV/EBITDA", ("D44", "E44", "F44"), '0.00"x"', DELTA_X,
+         "Multiple applied to year-5 EBITDA in the exit-multiple DCF."),
+    ]
+    for r, lab, (b, m, br), fmt, dfmt, why in rows:
+        SN.put(f"B{r}", lab)
+        for col, ref in zip("DEF", (b, m, br)):
+            SN.put(f"{col}{r}", f"={rb('$' + ref[0] + '$' + ref[1:])}", fmt)
+        SN.put(f"G{r}", f"=CHOOSE($D$4,D{r},E{r},F{r})", fmt)
+        SN.put(f"H{r}", f"=G{r}-E{r}", dfmt)
+        SN.put(f"I{r}", why)
+    SN.put("B14", "Held at base in every case: SG&A, D&A, capex, working capital, tax rate, buybacks and the cost "
+                  "of capital, so the three cases isolate the demand and margin call.")
+
+    SN.section(16, "What the active case produces (recalculates live when you change D4)")
+    header(17, "Output")
+    outs = [
+        (18, "Revenue, final projected year ($mm)", f"={is_('$K$5')}", NUM, None),
+        (19, "Revenue CAGR over the projection", f"=IFERROR(({is_('$K$5')}/{is_('$F$5')})^(1/5)-1,0)", PCT, None),
+        (20, "EBITDA margin, final projected year", f"={is_('$K$15')}", PCT, None),
+        (21, "Net income to common, final projected year ($mm)", f"={is_('$K$23')}", NUM, None),
+        (22, "Sum of PV of unlevered free cash flow ($mm)", f"={dc('$D$18')}", NUM, None),
+        (23, "DCF value per share - perpetuity growth", f"={vs('$D$5')}", PS, None),
+        (24, "DCF value per share - exit multiple", f"={vs('$D$7')}", PS, None),
+        (25, "Model value per share (40/40/20 blend)", f"={vs('$D$13')}", PS, "23"),
+        (26, "Final price target (anchored)", f"={vs('$D$43')}", PS, "24"),
+        (27, "Upside / (downside) to current price", f"={vs('$D$44')}", PCT, "25"),
+    ]
+    for r, lab, f, fmt, rec in outs:
+        SN.put(f"B{r}", lab)
+        SN.put(f"G{r}", f, fmt)
+        if rec:
+            for col, vcol in zip("DEF", "FED"):  # Target Price tab stores bear/base/bull in D/E/F
+                SN.put(f"{col}{r}", f"={vs('$' + vcol + '$' + rec)}", fmt)
+            SN.put(f"H{r}", f"=G{r}-E{r}", DELTA_PCT if fmt == PCT else '+#,##0.00;-#,##0.00;0.00')
+    SN.put("B28", "Rating for the active case")
+    SN.put("G28", '=IF(G27>=0.15,"BUY",IF(G27<=-0.1,"SELL","HOLD"))')
+    ws["G28"].alignment = Alignment(horizontal="right")
+    SN.put("B30", "How to read this: the Active column is the case the whole workbook is running. Flip D4 and the "
+                  "statements, DCF and target price on every tab recalculate.")
+    SN.put("B32", "Bull / Base / Bear valuation columns are recorded when the file is generated; Active is live.")
+    SN.put("B31", "The final target is anchored to the street and peers (Target Price tab), so it moves less than "
+                  "the model value.")
+
+    cases = {c: [f"{col}9:{col}13", f"{col}18:{col}27"] for c, col in ((1, "D"), (2, "E"), (3, "F"))}
+    _highlight_active(ws, "$D$4", cases)
+    # Revenue Build: the active case's rows light up too
+    _highlight_active(RB.ws, "$D$5", {1: ["B9:K9", "B19:K19", "B40:D40", "D44"],
+                                      2: ["B10:K10", "B20:K20", "B41:D41", "E44"],
+                                      3: ["B11:K11", "B21:K21", "B42:D42", "F44"]})
+    return SN
 
 
 def _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF):
@@ -745,7 +846,7 @@ def _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF):
         CV.put(f"{col}{row}", label_)
         CV.put(f"{chr(ord(col) + 1)}{row}", value, fmt)
 
-    band(3, f"{live['company'].upper()}  (NYSE: {T})")
+    band(3, f"{live['company'].upper()}  ({ctx.get('exchange') or 'NYSE'}: {T})")
 
     # ---- headline: the call
     for col in ("C", "D", "F", "G", "I", "J"):
@@ -765,7 +866,7 @@ def _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF):
     CV.put("C7", "Rating rule: Buy at 15%+ upside to target, Sell at 10%+ downside, otherwise Hold.")
 
     band(9, "COMPANY SNAPSHOT")
-    kv(10, "C", "Company:", live["company"]); kv(10, "F", "Ticker:", T); kv(10, "I", "Exchange:", "NYSE")
+    kv(10, "C", "Company:", live["company"]); kv(10, "F", "Ticker:", T); kv(10, "I", "Exchange:", ctx.get("exchange") or "NYSE")
     kv(11, "C", "Sector:", ctx.get("sector") or "n/a"); kv(11, "F", "Price date:", "=Live_Data!$B$7")
     kv(11, "I", "Currency:", "USD ($mm)")
     kv(12, "C", "Share price:", "=Live_Data!$B$6", PS); kv(12, "F", "Latest 10-K filed:", "=Live_Data!$B$11")

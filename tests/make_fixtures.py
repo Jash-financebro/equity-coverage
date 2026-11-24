@@ -140,7 +140,7 @@ print("fixtures written to", OUT)
 (OUT / "company_tickers_exchange.json").write_text(json.dumps({
     "fields": ["cik", "name", "ticker", "exchange"],
     "data": [[CIK, "MICROSOFT CORP", "MSFT", "NYSE"], [1341439, "ORACLE CORP", "ORCL", "NYSE"],
-             [1652044, "ALPHABET INC.", "GOOGL", "NYSE"], [999999, "NASDAQ ONLY INC", "NQQQ", "Nasdaq"]]}))
+             [1652044, "ALPHABET INC.", "GOOGL", "NYSE"], [999999, "NASDAQ ONLY INC", "NQQQ", "Nasdaq"], [999998, "OTC ONLY INC", "OTCX", "OTC"]]}))
 for cik in (CIK, 1341439, 1652044):
     p = OUT / f"submissions_{cik}.json"
     s3 = json.loads(p.read_text())

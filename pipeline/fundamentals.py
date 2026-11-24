@@ -80,6 +80,22 @@ def _d(s: str) -> dt.date:
     return dt.date.fromisoformat(s)
 
 
+class NonUSD(ValueError):
+    """Company reports in another currency (typically an IFRS 20-F filer)."""
+
+
+def reporting_currency(facts: dict) -> str | None:
+    """Currency of the revenue / net income facts; None if no such facts."""
+    for key in ("revenue", "net_income"):
+        for _k, _l, _kind, concepts in [x for x in LINE_ITEMS if x[0] == key]:
+            for c in concepts:
+                node = facts.get("facts", {}).get("us-gaap", {}).get(c) or facts.get("facts", {}).get("ifrs-full", {}).get(c)
+                if node and node.get("units"):
+                    units = node["units"]
+                    return "USD" if "USD" in units else next(iter(units))
+    return None
+
+
 def _facts(facts: dict, concept: str, unit_pref: str) -> list[dict]:
     node = facts.get("facts", {}).get("us-gaap", {}).get(concept) \
         or facts.get("facts", {}).get("ifrs-full", {}).get(concept)
@@ -109,6 +125,9 @@ def _annual_values(rows: list[dict], kind: str) -> dict[str, tuple[float, str]]:
 def build(facts: dict, years: int = 5) -> dict:
     """Return {"periods": [...end dates oldest->newest], "labels": [...], "items": {key: [...]},
     "concepts": {key: concept used}} in $ millions (EPS in $, shares in millions)."""
+    cur = reporting_currency(facts)
+    if cur and cur != "USD":
+        raise NonUSD(cur)
     series: dict[str, dict[str, float]] = {}
     used: dict[str, str] = {}
     for key, _label, kind, concepts in LINE_ITEMS:

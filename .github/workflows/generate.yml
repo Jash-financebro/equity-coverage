@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       ticker:
-        description: "NYSE ticker"
+        description: "NYSE or Nasdaq ticker"
         required: true
 
 permissions:

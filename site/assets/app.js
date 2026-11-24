@@ -488,16 +488,16 @@
     const base = await apiBase();
     const lib = await libraryIndex();
     app.innerHTML = `
-      <section class="hero"><h1>Model any NYSE company</h1>
+      <section class="hero"><h1>Model any NYSE or Nasdaq company</h1>
         <p>Type a ticker. We pull the company's 10-K data from SEC EDGAR and build a full Excel model: three linked statements with PP&amp;E, debt and revolver schedules, WACC, a five-year DCF with sensitivity grid, same-industry comps, and bull, base and bear cases. You also get a summary research report. It takes about two to three minutes.</p></section>
       <div class="card gen-box">
         <form id="gen-form" autocomplete="off">
           <div class="gen-row">
-            <div class="gen-input"><input id="tk" placeholder="Ticker or company name, e.g. XOM or Coca-Cola" aria-label="NYSE ticker" spellcheck="false">
+            <div class="gen-input"><input id="tk" placeholder="Ticker or company name, e.g. XOM, AAPL or Coca-Cola" aria-label="NYSE or Nasdaq ticker" spellcheck="false">
               <div id="sugg" class="sugg" hidden></div></div>
             <button class="btn primary big" id="go" type="submit">Generate model</button>
           </div>
-          <p class="note" id="gen-hint">${base ? "NYSE-listed SEC filers only. A model built in the last 6 hours is reused instantly." : "The generation service is being set up. Browse the Library in the meantime."}</p>
+          <p class="note" id="gen-hint">${base ? "NYSE and Nasdaq SEC filers (funds and trusts excluded). A model built in the last 6 hours is reused instantly." : "The generation service is being set up. Browse the Library in the meantime."}</p>
         </form>
         <div id="gen-status"></div>
       </div>
@@ -507,10 +507,11 @@
 
     const tk = document.getElementById("tk"), sugg = document.getElementById("sugg"), list = await searchList();
     tk.addEventListener("input", () => {
-      const q = tk.value.trim().toUpperCase();
+      const q = tk.value.trim().toUpperCase().replace(/[./]/g, "-");
       if (!q) { sugg.hidden = true; return; }
-      const hits = list.filter(([t, n]) => t.startsWith(q) || n.toUpperCase().includes(q)).sort((a, b) => (a[0] === q ? -1 : b[0] === q ? 1 : a[0].length - b[0].length)).slice(0, 8);
-      sugg.innerHTML = hits.map(([t, n, sct]) => `<div class="sg" data-t="${esc(t)}"><b>${esc(t)}</b> ${esc(n)} <span class="note">${esc(sct)}</span></div>`).join("");
+      const qn = tk.value.trim().toUpperCase();
+      const hits = list.filter(([t, n]) => t.startsWith(q) || n.toUpperCase().includes(qn)).sort((a, b) => (a[0] === q ? -1 : b[0] === q ? 1 : a[0].length - b[0].length)).slice(0, 8);
+      sugg.innerHTML = hits.map(([t, n, sct, x]) => `<div class="sg" data-t="${esc(t)}"><b>${esc(t)}</b> ${esc(n)} <span class="note">${esc(x || "NYSE")} · ${esc(sct)}</span></div>`).join("");
       sugg.hidden = !hits.length;
       sugg.querySelectorAll(".sg").forEach((el) => el.addEventListener("mousedown", (e) => { e.preventDefault(); tk.value = el.dataset.t; sugg.hidden = true; }));
     });
@@ -520,9 +521,10 @@
 
   async function startGenerate(raw, force) {
     const base = await apiBase(), stat = document.getElementById("gen-status"), out = document.getElementById("gen-result");
-    let t = String(raw || "").trim().toUpperCase();
+    const rawU = String(raw || "").trim().toUpperCase();
+    let t = rawU.replace(/[./]/g, "-");
     const list = await searchList();
-    const byName = list.find(([tt, n]) => n.toUpperCase() === t) || list.find(([tt, n]) => n.toUpperCase().startsWith(t));
+    const byName = list.find(([tt, n]) => n.toUpperCase() === rawU) || list.find(([tt, n]) => n.toUpperCase().startsWith(rawU));
     if (!list.find(([tt]) => tt === t) && byName) t = byName[0];
     out.innerHTML = "";
     if (!t) return;

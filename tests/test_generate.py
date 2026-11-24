@@ -16,7 +16,7 @@ tmp = Path(tempfile.mkdtemp())
 env = dict(os.environ, FIXTURES_DIR=str(ROOT / "tests" / "fixtures"), SITE_DIR=str(tmp / "site"),
            LIBRARY_DIR=str(tmp / "library"), RESULT_FILE=str(tmp / "r.json"), LO_PORT="2011")
 subprocess.run([sys.executable, str(ROOT / "pipeline" / "universe.py")], check=True, env=env, cwd=ROOT)
-u = json.loads((tmp / "site" / "universe" / "nyse.json").read_text())
+u = json.loads((tmp / "site" / "universe" / "companies.json").read_text())
 assert u["count"] == 3 and u["companies"][0]["sector"] == "Information Technology", u
 for _ in range(2):  # second run must bump the version
     subprocess.run([sys.executable, str(ROOT / "pipeline" / "generate.py"), "MSFT"], check=True, env=env, cwd=ROOT)
@@ -28,9 +28,9 @@ assert idx["count"] == 1 and idx["models"][0]["times_generated"] == 2 and idx["s
 assert r["peers"] == ["ORCL", "GOOGL"] or set(r["peers"]) == {"ORCL", "GOOGL"}, r["peers"]
 assert r["scenarios"]["bear"] < r["scenarios"]["base"] < r["scenarios"]["bull"], r["scenarios"]
 assert abs(r["target"] - r["scenarios"]["base"]) < 0.01
-bad = subprocess.run([sys.executable, str(ROOT / "pipeline" / "generate.py"), "NQQQ"], env=env, cwd=ROOT,
+bad = subprocess.run([sys.executable, str(ROOT / "pipeline" / "generate.py"), "OTCX"], env=env, cwd=ROOT,
                      capture_output=True, text=True)
-assert bad.returncode != 0 and "not an NYSE" in (bad.stdout + bad.stderr), "non-NYSE ticker must be rejected"
+assert bad.returncode != 0 and "not an NYSE- or Nasdaq" in (bad.stdout + bad.stderr), "OTC ticker must be rejected"
 sys.path.insert(0, str(ROOT / "pipeline"))
 import builder  # noqa: E402
 issues = builder.verify(folder / "MSFT_v2.xlsx")

@@ -1,5 +1,5 @@
 // Equity Coverage API - Cloudflare Worker.
-// POST /api/generate {ticker}      validate NYSE ticker, dedupe, rate-limit, dispatch the GitHub build
+// POST /api/generate {ticker}      validate NYSE / Nasdaq ticker, dedupe, rate-limit, dispatch the GitHub build
 // GET  /api/status?ticker=T&since= queued / running / ready / failed (+ model when ready)
 // GET  /api/library                shared library index (every model anyone generated, by sector)
 // GET  /api/health
@@ -65,9 +65,9 @@ async function rawFile(env, path) {
   return r.json();
 }
 
-const nyse = (env, ctx) => cached(ctx, "nyse-v1", 6 * 3600, async () => {
+const listed = (env, ctx) => cached(ctx, "universe-v2", 6 * 3600, async () => {
   const list = (await rawFile(env, "site/universe/search.json")) || [];
-  return Object.fromEntries(list.map(([t, n, s]) => [t, { name: n, sector: s }]));
+  return Object.fromEntries(list.map(([t, n, s, x]) => [t, { name: n, sector: s, exchange: x || "NYSE" }]));
 });
 const indexFresh = (env) => rawFile(env, "library/index.json").then((x) => x || { models: [], sectors: {}, count: 0 });
 const library = (env, ctx) => cached(ctx, "library-v1", 20, () => indexFresh(env));
@@ -93,12 +93,12 @@ async function rateLimit(req, ctx) {
 // ------------------------------------------------------------------ routes
 async function generate(req, env, ctx) {
   const body = await req.json().catch(() => ({}));
-  const ticker = String(body.ticker || "").toUpperCase().trim();
+  const ticker = String(body.ticker || "").toUpperCase().trim().replace(/[./]/g, "-");
   const force = !!body.force;
   if (!/^[A-Z][A-Z0-9.\-]{0,6}$/.test(ticker)) fail("Enter a ticker symbol, e.g. XOM");
-  const list = await nyse(env, ctx);
+  const list = await listed(env, ctx);
   const co = list[ticker];
-  if (!co) fail(`${ticker} isn't an NYSE-listed SEC filer in our universe. Only NYSE tickers are supported.`, 404);
+  if (!co) fail(`${ticker} isn't an NYSE- or Nasdaq-listed SEC filer in our universe. Funds, trusts and OTC tickers aren't supported.`, 404);
 
   const idx = await indexFresh(env);
   const have = idx.models.find((m) => m.ticker === ticker);

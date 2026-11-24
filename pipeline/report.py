@@ -206,10 +206,10 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
                 f"{', '.join(rec.get('anchor_peers') or [])}, and our final call stays within 15 points of that. ")
     th1 += f"Before anchoring, our model value is {usd(val['model_value'])}. "
     th1 += (f"The target blends a perpetuity-growth DCF ({pct(val['w_dcf'], 0)}, {usd(val['dcf'])}), an exit-multiple DCF "
-            f"({pct(val['w_exit'], 0)}, {usd(val['exit'])}) and an EV/EBITDA comparison against {len(m['comps'])} NYSE peers "
+            f"({pct(val['w_exit'], 0)}, {usd(val['exit'])}) and an EV/EBITDA comparison against {len(m['comps'])} listed peers "
             f"in the same industry ({pct(val['w_comps'], 0)}, {usd(val['comps'])})." if has_comps else
             f"The target averages a perpetuity-growth DCF ({usd(val['dcf'])}) and an exit-multiple DCF "
-            f"({usd(val['exit'])}); no usable NYSE peers were found for a comps cross-check.")
+            f"({usd(val['exit'])}); no usable listed peers were found for a comps cross-check.")
     if nz(cagr):
         head = ("Revenue is growing." if cagr > 0.03 else "Revenue is roughly flat." if cagr > -0.02
                 else "Revenue is shrinking.")
@@ -232,12 +232,12 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
     side = [P("EQUITY RESEARCH", "side_h"), P("Automated initiation", "side"),
             P("Sector", "side_h"), P(rec["sector"], "side"), P("Industry (SEC SIC)", "side_h"),
             P(f"{rec['industry'] or 'n/a'}{f' ({rec[chr(115) + chr(105) + chr(99)]})' if rec.get('sic') else ''}", "side"),
-            P("Exchange", "side_h"), P("NYSE", "side"), P("Headquarters", "side_h"),
+            P("Exchange", "side_h"), P(rec.get("exchange") or "NYSE", "side"), P("Headquarters", "side_h"),
             P(", ".join(x for x in (rec.get("city"), rec.get("state")) if x) or "n/a", "side"),
             P("Report date", "side_h"), P(today, "side"), P("Pricing date", "side_h"), P(rec["price_date"], "side"),
             P("Model", "side_h"), P(f"{T}_v{rec['version']}.xlsx", "side"),
             P("Prices in USD; financials in $mm unless noted.", "small")]
-    main = [P(f"{name} (NYSE: {T})", "title"),
+    main = [P(f"{name} ({rec.get('exchange') or 'NYSE'}: {T})", "title"),
             P(" | ".join(x for x in ((rec.get("website") or "").replace("https://", "").replace("http://", ""),
                                      "Automated Initiation of Coverage", today) if x), "sub"), Spacer(1, 6),
             P(f"{rec['rating'].upper()} | Price Target {usd(target)} | Upside {pct(up)}", "rating"),
@@ -331,7 +331,7 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
                 f"That gives enterprise value of {bn(dcf['ev_exit'])} and {usd(dcf['value_exit'])} a share, and implies "
                 f"{pct(dcf['implied_g'], 1)} perpetual growth.")]
     if has_comps:
-        story.append(P(f"<b>Comps.</b> The peer set is {', '.join(p['ticker'] for p in m['comps'])}: NYSE companies in "
+        story.append(P(f"<b>Comps.</b> The peer set is {', '.join(p['ticker'] for p in m['comps'])}: NYSE/Nasdaq companies in "
                        f"the same SEC industry group, picked for the closest revenue. Their median EV/EBITDA of {mult(med)} "
                        f"on {yrs[2]} EBITDA of {bn(ebitda[2])} implies {usd(val['comps'])} a share."))
     story.append(P(f"<b>Blend.</b> Weighting the perpetuity DCF {pct(val['w_dcf'], 0)}, the exit-multiple DCF "
@@ -417,7 +417,7 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
         risks.append(("Cash burn.", f"Free cash flow was {bn(fcf[2])} in {yrs[2]}, so the company may need outside "
                       "funding."))
     if len(m["comps"]) < 3:
-        risks.append(("Thin peer set.", f"Only {len(m['comps'])} usable NYSE peers were found in the same industry, so "
+        risks.append(("Thin peer set.", f"Only {len(m['comps'])} usable listed peers were found in the same industry, so "
                       "the comps cross-check carries little weight."))
     mv = val.get("model_value")
     if nz(cons.get("target_median")) and nz(mv) and abs(mv / cons["target_median"] - 1) > 0.25:

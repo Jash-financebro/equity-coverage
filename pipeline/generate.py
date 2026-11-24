@@ -1,4 +1,4 @@
-"""Generate a full model + report for one NYSE ticker and add it to the shared library.
+"""Generate a full model + report for one NYSE or Nasdaq ticker and add it to the shared library.
 
     python pipeline/generate.py XOM                  # live data
     FIXTURES_DIR=tests/fixtures python pipeline/generate.py MSFT
@@ -178,12 +178,12 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
     import excel
     import report
 
-    T = ticker.upper().strip()
+    T = ticker.upper().strip().replace(".", "-").replace("/", "-")
     uni = universe.load()["companies"]
     me = next((c for c in uni if c["ticker"] == T or T in c.get("other_tickers", [])), None)
     if me is None:
         if not allow_any:
-            raise SystemExit(f"{T} is not an NYSE-listed SEC filer")
+            raise SystemExit(f"{T} is not an NYSE- or Nasdaq-listed SEC filer")
         cik, name = sources.cik_for(T)
         me = {"ticker": T, "cik": cik, "name": name, "sic": None, "industry": "", "sector": "Other"}
     now = dt.datetime.now(dt.timezone.utc)
@@ -193,6 +193,9 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
     subs = sources.submissions(me["cik"])
     try:
         fin = fundamentals.build(facts)
+    except fundamentals.NonUSD as e:
+        raise SystemExit(f"{T}: files its financials with the SEC in {e} (IFRS / 20-F filer). Models are built in "
+                         "US dollars from US-GAAP 10-K data, so this company can't be modeled yet")
     except ValueError:
         raise SystemExit(f"{T}: no annual 10-K XBRL financials on file with the SEC yet - nothing to model")
     if len(fin["labels"]) < 2:
@@ -244,7 +247,8 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
     work = Path(tempfile.mkdtemp())
     built = work / f"{label}.xlsx"
     builder.build(T, built, {"live": live, "fin": fin, "peers": peers, "anchor": anchor,
-                                  "sector": me.get("sector")}, stance="Balanced")
+                                  "sector": me.get("sector"),
+                                  "exchange": me.get("exchange", "NYSE")}, stance="Balanced")
     live["model_label"] = label
     vs = f"'{T} Target Price'"
     calc = excel.Calc(port=int(os.environ.get("LO_PORT", "2002")))
@@ -259,6 +263,7 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
     upside = target / price - 1 if target else None
     rec = {
         "ticker": T, "name": name, "cik": me["cik"], "sector": me["sector"], "industry": me["industry"],
+        "exchange": me.get("exchange", "NYSE"),
         "sic": me["sic"], "city": me.get("city"), "state": me.get("state"), "website": me.get("website") or qs.get("website"),
         "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "version": n, "price": round(price, 2),
         "price_date": mkt["as_of"], "target": round(target, 2) if target else None,

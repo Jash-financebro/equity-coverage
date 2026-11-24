@@ -47,7 +47,7 @@ jobs:
           python3 tests/test_offline.py
           python3 tests/test_generate.py
 
-      - name: NYSE universe for the Generate tab (rebuilt weekly from SEC bulk data)
+      - name: NYSE + Nasdaq universe for the Generate tab (rebuilt weekly from SEC bulk data)
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
         run: python3 pipeline/universe.py --if-stale 7
