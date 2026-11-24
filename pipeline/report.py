@@ -200,10 +200,11 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
     # ---------------- thesis
     th1 = (f"We rate {name} <b>{rec['rating'].upper()}</b> with a 12-month price target of <b>{usd(target)}</b>, "
            f"{pct(abs(up or 0))} {direction} the {usd(price)} close on {rec['price_date']}. ")
-    th1 += (f"The target blends a five-year DCF ({pct(val['w_dcf'], 0)} weight, {usd(val['dcf'])}) with an EV/EBITDA "
-            f"comparison against {len(m['comps'])} NYSE peers in the same industry ({pct(val['w_comps'], 0)}, "
-            f"{usd(val['comps'])})." if has_comps else f"The target is a five-year DCF ({usd(val['dcf'])}); no usable "
-                                                        "NYSE peers were found for a comps cross-check.")
+    th1 += (f"The target blends a perpetuity-growth DCF ({pct(val['w_dcf'], 0)}, {usd(val['dcf'])}), an exit-multiple DCF "
+            f"({pct(val['w_exit'], 0)}, {usd(val['exit'])}) and an EV/EBITDA comparison against {len(m['comps'])} NYSE peers "
+            f"in the same industry ({pct(val['w_comps'], 0)}, {usd(val['comps'])})." if has_comps else
+            f"The target averages a perpetuity-growth DCF ({usd(val['dcf'])}) and an exit-multiple DCF "
+            f"({usd(val['exit'])}); no usable NYSE peers were found for a comps cross-check.")
     if nz(cagr):
         head = ("Revenue is growing." if cagr > 0.03 else "Revenue is roughly flat." if cagr > -0.02
                 else "Revenue is shrinking.")
@@ -245,7 +246,8 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
         ["Rating", rec["rating"].upper(), "Price target (12-mo)", usd(target)],
         ["Current price", usd(price), "Upside to target", pct(up)],
         ["Market cap", bn(snap.get("market_cap")), "Valuation method",
-         f"DCF ({pct(val['w_dcf'], 0)}) + comps ({pct(val['w_comps'], 0)})" if has_comps else "DCF (100%)"],
+         f"DCF ({pct((val['w_dcf'] or 0) + (val['w_exit'] or 0), 0)}) + comps ({pct(val['w_comps'], 0)})" if has_comps
+         else "DCF (perpetuity + exit)"],
         ["52-week range", f"{usd(min(closes))} – {usd(max(closes))}" if closes else "n/a", "Fiscal year end",
          fy_month(rec.get("fye") or subs.get("fiscalYearEnd"))],
         ["EV / EBITDA (latest FY)", mult(self_ev), "P / E (latest FY)", mult(rg.get("P/E"))],
@@ -316,15 +318,22 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
               P(f"<b>DCF.</b> Unlevered free cash flow goes from {bn(dcf['ufcf'][0])} in {yrs[3]} to {bn(dcf['ufcf'][4])} in "
                 f"{yrs[7]}, worth {bn(dcf['sum_pv'])} today. A terminal value at {pct(dcf['g'], 2)} growth adds "
                 f"{bn(dcf['pv_tv'])} in present value, for enterprise value of {bn(dcf['ev'])}. After debt, cash and any "
-                f"minority interests, equity to common is {bn(dcf['eq_common'])}, or {usd(dcf['value'])} a share. The "
-                f"terminal value implies {mult(dcf['exit_mult'])} {yrs[7]} EBITDA.")]
+                f"minority interests, and adding equity-method and long-term investments, equity to common is "
+                f"{bn(dcf['eq_common'])}, or {usd(dcf['value'])} a share. The terminal value implies "
+                f"{mult(dcf['exit_mult'])} {yrs[7]} EBITDA."),
+              P(f"<b>Exit multiple.</b> The second DCF capitalizes {yrs[7]} EBITDA at {mult(dcf['exit_mult_used'])}, the "
+                f"company's current EV/EBITDA of {mult(dcf['ev_ebitda_now'])} held constant (bounded between 4x and 30x). "
+                f"That gives enterprise value of {bn(dcf['ev_exit'])} and {usd(dcf['value_exit'])} a share, and implies "
+                f"{pct(dcf['implied_g'], 1)} perpetual growth.")]
     if has_comps:
         story.append(P(f"<b>Comps.</b> The peer set is {', '.join(p['ticker'] for p in m['comps'])}: NYSE companies in "
                        f"the same SEC industry group, picked for the closest revenue. Their median EV/EBITDA of {mult(med)} "
                        f"on {yrs[2]} EBITDA of {bn(ebitda[2])} implies {usd(val['comps'])} a share."))
-    story.append(P(f"<b>Blend.</b> Weighting the DCF {pct(val['w_dcf'], 0)} and comps {pct(val['w_comps'], 0)} gives "
-                   f"{usd(target)}, {pct(up)} versus the current price."))
+    story.append(P(f"<b>Blend.</b> Weighting the perpetuity DCF {pct(val['w_dcf'], 0)}, the exit-multiple DCF "
+                   f"{pct(val['w_exit'], 0)} and comps {pct(val['w_comps'], 0)} gives {usd(target)}, {pct(up)} versus the "
+                   "current price."))
     blend = [["DCF (perpetuity growth)", usd(val["dcf"]), pct(val["w_dcf"], 0), usd((val["dcf"] or 0) * (val["w_dcf"] or 0))],
+             ["DCF (exit multiple)", usd(val["exit"]), pct(val["w_exit"], 0), usd((val["exit"] or 0) * (val["w_exit"] or 0))],
              ["Trading comps (EV/EBITDA)", usd(val["comps"]), pct(val["w_comps"], 0),
               usd((val["comps"] or 0) * (val["w_comps"] or 0))],
              ["Blended target price", "", "", usd(target)]]
@@ -333,7 +342,7 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
     story += [P("Scenarios", "h2"),
               P("Each case reruns the whole model with the Revenue Build selector switched: bull adds 3 points of revenue "
                 "growth a year and takes 1 point off cost of revenue, bear does the opposite, and terminal growth moves "
-                "between 2.0% and 3.0%."),
+                "between 2.0% and 3.0% with the exit multiple 10% higher or lower."),
               table(["", "Bear", "Base", "Bull"],
                     [["Revenue growth, year 1", *[pct(sc[k]["g1"]) for k in ("bear", "base", "bull")]],
                      ["Revenue growth, year 5", *[pct(sc[k]["g5"]) for k in ("bear", "base", "bull")]],
@@ -352,6 +361,8 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
     if mults and imp(min(mults)) and imp(max(mults)) and imp(min(mults)) > 0:
         rows.append(("Peer EV/EBITDA, low to high", imp(min(mults)), imp(max(mults))))
     grid = m["sens"]["grid"]
+    if nz(dcf.get("value_exit")) and nz(dcf.get("value")) and dcf["value_exit"] > 0:
+        rows.append(("DCF: perpetuity vs. exit multiple", min(dcf["value"], dcf["value_exit"]), max(dcf["value"], dcf["value_exit"])))
     if all(nz(v) for v in (grid[1][2], grid[3][2])):
         rows.append(("DCF, WACC ±50 bp", min(grid[1][2], grid[3][2]), max(grid[1][2], grid[3][2])))
     if nz(sc["bear"]["target"]) and nz(sc["bull"]["target"]):
@@ -455,7 +466,8 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
                 "XBRL company facts for financial statements, Yahoo Finance for prices and consensus, and the 10-year "
                 "Treasury yield for the risk-free rate. The model is a linked three-statement build (income statement, "
                 "balance sheet, cash flow with PP&E, equity, debt and revolver schedules), a WACC, a five-year DCF with a "
-                "sensitivity grid, a same-industry comps table, and bull, base and bear cases. No analyst reviewed it.",
+                "sensitivity grid and an exit-multiple cross-check, a same-industry comps table, and bull, base and bear "
+                "cases. The target blends perpetuity DCF 40%, exit-multiple DCF 40% and comps 20%. No analyst reviewed it.",
                 "small"),
               P("For information and education only. This is not investment advice or a recommendation to buy or sell "
                 "any security. Projections are mechanical estimates and will differ from actual results.", "small")]

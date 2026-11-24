@@ -100,8 +100,12 @@ class Sheet:
 
 
 def _avg(xs):
-    xs = [x for x in xs if x is not None]
-    return sum(xs) / len(xs) if xs else None
+    """Median of the available years: robust to one-off impairments or gains."""
+    xs = sorted(x for x in xs if x is not None)
+    if not xs:
+        return None
+    n = len(xs)
+    return xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2
 
 
 def _clip(x, lo, hi, default):
@@ -252,16 +256,16 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
         cogs_rows = {k: v + 0.005 for k, v in cogs_rows.items()}
     RB.line(19, "Cost of revenue % of revenue - bull", {c: round(max(0, cogs_rows["bull"]), 4) for c in PROJ}, PCT)
     RB.line(20, "Cost of revenue % of revenue - base", {c: round(cogs_rows["base"], 4) for c in PROJ}, PCT,
-            note="3-year average from the 10-K")
+            note="3-year median from the 10-K")
     RB.line(21, "Cost of revenue % of revenue - bear", {c: round(cogs_rows["bear"], 4) for c in PROJ}, PCT)
     RB.line(22, "Selected cost of revenue % of revenue",
             {**{c: f"=IFERROR({IS.ref(c + '7')}/{IS.ref(c + '5')},0)" for c in HIST},
              **{c: f"=CHOOSE($D$5,{c}19,{c}20,{c}21)" for c in PROJ}}, PCT)
     drivers = [
-        (23, "Operating expenses (incl. D&A) % of revenue", d["opex"], PCT, "3-year average from the 10-K"),
+        (23, "Operating expenses (incl. D&A) % of revenue", d["opex"], PCT, "3-year median from the 10-K"),
         (24, "D&A % of beginning PP&E" if d["ppe_mode"] else "D&A % of revenue", d["da_rate"], PCT,
          "Latest 10-K D&A over prior-year net PP&E" if d["ppe_mode"] else "PP&E not tagged: D&A tied to revenue"),
-        (25, "Capital expenditures % of revenue", d["capex"], PCT, "3-year average from the 10-K"),
+        (25, "Capital expenditures % of revenue", d["capex"], PCT, "3-year median from the 10-K"),
         (26, "Other current assets % of revenue", d["oca"], PCT, "Latest 10-K"),
         (27, "Current liabilities (excl. debt) % of revenue", d["ocl"], PCT, "Latest 10-K"),
         (28, "Tax rate", d["tax"], PCT, "Latest 10-K effective rate (clipped 0-35%)"),
@@ -287,11 +291,14 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     RB.line(41, "Base", {"D": 0.02 if d["conservative"] else 0.025}, PCT)
     RB.line(42, "Bear", {"D": 0.02}, PCT)
     RB.line(43, "Selected terminal growth rate", {"D": "=CHOOSE($D$5,D40,D41,D42)"}, PCT)
-    RB.put("B45", f"Stance note: {RB.ws['D6'].value}. Bull = base growth +3 pts and cost of revenue -1 pt, "
-                  "terminal growth 3.0%; bear = growth -3 pts, cost of revenue +1 pt, terminal growth 2.0%."
+    RB.line(44, "Exit multiple vs. current EV/EBITDA: bull / base / bear", {"D": 1.1, "E": 1.0, "F": 0.9}, '0.00"x"')
+    RB.line(45, "Selected exit multiple factor", {"D": "=CHOOSE($D$5,D44,E44,F44)"}, '0.00"x"')
+    RB.put("B47", f"Stance note: {RB.ws['D6'].value}. Bull = base growth +3 pts and cost of revenue -1 pt, "
+                  "terminal growth 3.0%, exit multiple +10%; bear = growth -3 pts, cost of revenue +1 pt, terminal growth 2.0%, "
+                  "exit multiple -10%."
                   + (" Conservative: base growth -1 pt, cost of revenue +0.5 pt, terminal 2.0%." if d["conservative"]
                      else ""))
-    RB.put("B46", "Historicals source: SEC EDGAR 10-K XBRL company facts (hidden Live_Data tab).")
+    RB.put("B48", "Historicals source: SEC EDGAR 10-K XBRL company facts (hidden Live_Data tab).")
 
     # --------------------------------------------------------- Income Statement
     IS.line(5, "Total Revenue", {c: f"={rb(c + '14')}" for c in ALL}, total=True)
@@ -485,7 +492,8 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     DC.line(21, "PV of terminal value", {"D": "=D20*K15"})
     DC.line(22, "Enterprise Value", {"D": "=D18+D21"}, total=True)
     DC.line(23, "Less: total debt incl. revolver (latest 10-K)", {"D": f"=-({BS.ref('F13')}+{BS.ref('F14')})"})
-    DC.line(24, "Plus: cash (latest 10-K)", {"D": f"={BS.ref('F5')}"})
+    DC.line(24, "Plus: cash and equity-method / long-term investments (latest 10-K)",
+            {"D": f"={BS.ref('F5')}+{L('equity_investments', 'F')}"})
     DC.line(25, "Equity Value (incl. noncontrolling interests)", {"D": "=D22+D23+D24"}, total=True)
     DC.line(26, "Less: noncontrolling interests' share", {"D": f"=-D25*{rb('G29')}"})
     DC.line(27, "Equity Value to Common", {"D": "=D25+D26"}, total=True)
@@ -510,6 +518,19 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
             pv = "+".join(f"${c}$11/(1+{w})^${c}$13" for c in PROJ)
             tv = f"($K$11*(1+{g})/({w}-{g}))/(1+{w})^$K$13"
             DC.put(f"{gc}{r}", f"=IFERROR(({pv}+{tv}+$D$23+$D$24)*(1+$D$26/$D$25)/$D$28,0)", PS)
+
+    DC.section(44, "Terminal value - exit multiple method")
+    DC.line(45, "Current EV / EBITDA (market, latest FY)",
+            {"D": f"=IFERROR((Live_Data!$B$9+{BS.ref('F13')}+{BS.ref('F14')}-{BS.ref('F5')})/{IS.ref('F14')},0)"}, MULT)
+    DC.line(46, "Exit multiple (current, bounded 4x-30x, scenario factor applied)",
+            {"D": f"=MIN(30,MAX(4,D45))*{rb('$D$45')}"}, MULT)
+    DC.line(47, "Final-year EBITDA", {"D": f"={IS.ref('K14')}"})
+    DC.line(48, "Terminal value (exit multiple)", {"D": "=D46*D47"})
+    DC.line(49, "PV of terminal value", {"D": "=D48*K15"})
+    DC.line(50, "Enterprise Value (exit multiple)", {"D": "=D18+D49"}, total=True)
+    DC.line(51, "Equity Value to Common (exit multiple)", {"D": "=(D50+D23+D24)*(1+D26/D25)"}, total=True)
+    DC.line(52, "Exit-multiple value per share", {"D": "=IFERROR(MAX(0,D51/D28),0)"}, PS)
+    DC.line(53, "Implied perpetual growth in exit terminal value", {"D": "=IFERROR((D48*K14-K11)/(D48+K11),0)"}, PCT)
 
     # --------------------------------------------------------- Financial Ratios
     i_, b_ = IS.ref, BS.ref
@@ -589,12 +610,14 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.section(4, "Blended price target")
     VS.line(5, "DCF value per share (perpetuity growth)", {"D": f"={DC.ref('$D$29')}"}, PS)
     VS.line(6, "Comps-implied value per share", {"D": f"={comps_ref}"}, PS)
-    w_dcf = 0.7 if peers else 1.0
-    VS.line(8, "Weight: DCF", {"D": w_dcf}, PCT)
-    VS.line(9, "Weight: trading comps", {"D": round(1 - w_dcf, 2)}, PCT,
+    VS.line(7, "DCF value per share (exit multiple)", {"D": f"={DC.ref('$D$52')}"}, PS)
+    w_c = 0.2 if peers else 0.0
+    VS.line(8, "Weight: DCF perpetuity growth", {"D": round((1 - w_c) / 2, 2)}, PCT)
+    VS.line(9, "Weight: trading comps", {"D": w_c}, PCT,
             note=None if peers else "No usable peers found: comps weight set to 0")
-    VS.line(11, "DCF contribution", {"D": "=D5*D8"}, PS)
-    VS.line(12, "Comps contribution", {"D": "=D6*D9"}, PS)
+    VS.line(10, "Weight: DCF exit multiple", {"D": round((1 - w_c) / 2, 2)}, PCT)
+    VS.line(11, "DCF perpetuity contribution", {"D": "=D5*D8"}, PS)
+    VS.line(12, "Comps + exit-multiple contribution", {"D": "=D6*D9+D7*D10"}, PS)
     VS.line(13, "Target Price (blended, per share)", {"D": "=D11+D12"}, PS)
     VS.line(14, "Current share price", {"D": "=Live_Data!$B$6"}, PS)
     VS.line(15, "Implied upside / (downside)", {"D": "=IFERROR(D13/D14-1,0)"}, PCT)
@@ -606,6 +629,7 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     VS.line(20, "Revenue growth, year 5", {"D": f"={rb('K11')}", "E": f"={rb('K10')}", "F": f"={rb('K9')}"}, PCT)
     VS.line(21, "Cost of revenue % of revenue", {"D": f"={rb('G21')}", "E": f"={rb('G20')}", "F": f"={rb('G19')}"}, PCT)
     VS.line(22, "Terminal growth rate", {"D": f"={rb('D42')}", "E": f"={rb('D41')}", "F": f"={rb('D40')}"}, PCT)
+    VS.put("B25", "Exit multiple factor bull / base / bear: Revenue Build row 44.")
     VS.line(23, "Target price (blended, per share)", {"D": 0, "E": 0, "F": 0}, PS,
             note="Recorded at generation by switching Revenue Build D5 to 3 / 2 / 1 and recalculating the model")
     VS.line(24, "Upside / (downside) vs current price", {c: f"=IFERROR({c}23/$D$14-1,0)" for c in "DEF"}, PCT)

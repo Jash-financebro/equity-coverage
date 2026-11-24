@@ -48,11 +48,19 @@ def rating_for(up):
 
 def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> list[dict]:
     """Same SIC code first, then same 2-digit SIC; nearest by revenue."""
-    same = [c for c in uni if c["sic"] == me["sic"] and c["ticker"] != me["ticker"]]
-    if len(same) < 3 and me.get("sic"):
-        same += [c for c in uni if str(c["sic"])[:2] == str(me["sic"])[:2] and c["ticker"] != me["ticker"]
-                 and c not in same]
-    cands = same[:24]
+    sic = str(me.get("sic") or "")
+    others = [c for c in uni if c["ticker"] != me["ticker"] and c.get("sic") and c["cik"] != me["cik"]]
+    tiers = [[c for c in others if str(c["sic"]) == sic], [c for c in others if str(c["sic"])[:3] == sic[:3]],
+             [c for c in others if str(c["sic"])[:2] == sic[:2]]] if sic else [[]]
+    cands, seen = [], set()
+    for tier in tiers:
+        for c in tier:
+            if c["cik"] not in seen:
+                seen.add(c["cik"])
+                cands.append(c)
+        if len(cands) >= 12:
+            break
+    cands = cands[:40]
     out = []
     for c in cands:
         try:
@@ -66,7 +74,11 @@ def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> l
         except Exception as exc:  # noqa: BLE001
             print(f"  · peer {c['ticker']} skipped: {exc}")
     if my_rev and my_rev > 0:
-        out.sort(key=lambda p: abs(math.log(p["rev"] / my_rev)))
+        band = [p for p in out if 0.2 <= p["rev"] / my_rev <= 5]
+        rest = [p for p in out if p not in band]
+        band.sort(key=lambda p: abs(math.log(p["rev"] / my_rev)))
+        rest.sort(key=lambda p: abs(math.log(p["rev"] / my_rev)))
+        out = band + (rest if len(band) < 3 else [])
     peers = []
     for p in out:
         if len(peers) >= n:
@@ -114,7 +126,10 @@ def read_model(path: Path, T: str) -> dict:
     m["sens"] = {"g": [g("DCF", f"{c}36") for c in "DEFGH"], "wacc": [g("DCF", f"C{r}") for r in range(37, 42)],
                  "grid": [[g("DCF", f"{c}{r}") for c in "DEFGH"] for r in range(37, 42)]}
     vs = lambda r, c="D": g("Valuation Summary", f"{c}{r}")  # noqa: E731
-    m["val"] = {"dcf": vs(5), "comps": vs(6), "w_dcf": vs(8), "w_comps": vs(9), "target": vs(13), "price": vs(14),
+    m["dcf"].update({"ev_ebitda_now": g("DCF", "D45"), "exit_mult_used": g("DCF", "D46"), "tv_exit": g("DCF", "D48"),
+                     "ev_exit": g("DCF", "D50"), "value_exit": g("DCF", "D52"), "implied_g": g("DCF", "D53")})
+    m["val"] = {"dcf": vs(5), "comps": vs(6), "exit": vs(7), "w_dcf": vs(8), "w_comps": vs(9), "w_exit": vs(10),
+                "target": vs(13), "price": vs(14),
                 "upside": vs(15), "cases": {n: {"g1": vs(19, c), "g5": vs(20, c), "cogs": vs(21, c), "tg": vs(22, c),
                                                 "target": vs(23, c), "upside": vs(24, c)}
                                             for n, c in (("bear", "D"), ("base", "E"), ("bull", "F"))}}
@@ -171,7 +186,12 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
 
     facts = sources.company_facts(me["cik"])
     subs = sources.submissions(me["cik"])
-    fin = fundamentals.build(facts)
+    try:
+        fin = fundamentals.build(facts)
+    except ValueError:
+        raise SystemExit(f"{T}: no annual 10-K XBRL financials on file with the SEC yet - nothing to model")
+    if len(fin["labels"]) < 2:
+        raise SystemExit(f"{T}: fewer than two years of annual XBRL financials - nothing to model")
     shares = fundamentals.shares_outstanding(facts) or fin["items"]["shares_diluted"][-1]
     mkt = sources.price_history(T)
     qs = sources.quote_summary(T)
@@ -230,7 +250,7 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
         "price_date": mkt["as_of"], "target": round(target, 2) if target else None,
         "upside": round(upside, 4) if upside is not None else None, "rating": rating_for(upside),
         "scenarios": {k: round(v, 2) for k, v in res["scenarios"].items() if v},
-        "dcf_value": model["val"]["dcf"], "comps_value": model["val"]["comps"],
+        "dcf_value": model["val"]["dcf"], "comps_value": model["val"]["comps"], "exit_value": model["val"]["exit"],
         "wacc": round(model["wacc"]["wacc"], 4), "peers": [p["ticker"] for p in peers],
         "consensus": {k: qs.get(k) for k in ("target_mean", "target_median", "analysts")},
         "beta_source": beta_src, "fiscal_year": fin["labels"][-1],

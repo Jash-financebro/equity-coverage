@@ -546,7 +546,7 @@
         phase = el > 75 ? 3 : el > 30 ? 2 : 1;
         const s = await fetch(`${base}/api/status?ticker=${encodeURIComponent(t)}&since=${encodeURIComponent(since)}`).then((x) => x.json());
         if (s.status === "ready") { draw(4); LIB = null; out.innerHTML = resultCard(s.model, "Fresh build"); stat.innerHTML = ""; return; }
-        if (s.status === "failed") throw new Error(`The build failed. <a href="${esc(s.run_url)}" target="_blank" rel="noopener">See the log</a>.`);
+        if (s.status === "failed") throw new Error(`We couldn't build ${esc(t)}. This usually means the company has no annual XBRL financials on file with the SEC yet (new registrants, recent reorganizations, funds and trusts). <a href="${esc(s.run_url)}" target="_blank" rel="noopener">Build log</a>.`);
         draw(s.status === "queued" ? 0 : s.status === "finishing" ? 3 : phase, s.status === "queued" ? "waiting for a runner" : "");
       }
       throw new Error("This is taking longer than usual. Check the Library in a few minutes.");

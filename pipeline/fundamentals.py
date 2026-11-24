@@ -61,6 +61,8 @@ LINE_ITEMS: list[tuple[str, str, str, list[str]]] = [
     ("cff", "Cash from financing", "flow", [
         "NetCashProvidedByUsedInFinancingActivities",
         "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations"]),
+    ("equity_investments", "Equity-method & long-term investments", "stock", [
+        "EquityMethodInvestments", "LongTermInvestments"]),
 ]
 
 PER_SHARE = {"eps_diluted"}

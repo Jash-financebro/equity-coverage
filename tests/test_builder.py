@@ -85,7 +85,7 @@ for stance in ("Balanced", "Bearish"):
     if not (sc["bear"] < sc["base"] < sc["bull"]) or abs(res["target"] - (sc["base"] if stance == "Balanced" else sc["bear"])) > 0.01:
         problems.append(f"[{stance}] scenarios not ordered: {sc}")
     vsh = wb["MSFT Valuation Summary"]
-    blend = vsh["D5"].value * vsh["D8"].value + vsh["D6"].value * vsh["D9"].value
+    blend = vsh["D5"].value * vsh["D8"].value + vsh["D6"].value * vsh["D9"].value + vsh["D7"].value * vsh["D10"].value
     if abs(blend - res["target"]) > 0.01 or abs(dcf["F39"].value - vsh["D5"].value) > 0.01:
         problems.append(f"[{stance}] blend/sensitivity mismatch {blend} {res['target']}")
     if abs(vsh["E23"].value - sc["base"]) > 0.01 or abs(vsh["F23"].value - sc["bull"]) > 0.01:
