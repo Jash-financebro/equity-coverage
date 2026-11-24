@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-24T02:19:11Z",
+ "updated_at": "2026-11-24T02:40:26Z",
  "count": 1,
  "sectors": {
   "Consumer Staples": [
@@ -17,14 +17,19 @@
    "city": "Atlanta",
    "state": "GA",
    "website": "https://www.coca-colacompany.com",
-   "generated_at": "2026-11-24T02:19:00Z",
-   "version": 2,
+   "generated_at": "2026-11-24T02:40:12Z",
+   "version": 3,
    "price": 95.88,
    "price_date": "2026-11-23",
-   "target": 66.37,
-   "upside": -0.3078,
-   "rating": "Sell",
+   "target": 112.63,
+   "upside": 0.1747,
+   "rating": "Buy",
    "scenarios": {
+    "bear": 88.29,
+    "base": 112.63,
+    "bull": 144.63
+   },
+   "model_scenarios": {
     "base": 66.37,
     "bull": 85.22,
     "bear": 52.03
@@ -32,6 +37,14 @@
    "dcf_value": 58.987807950517,
    "comps_value": 36.8512066493076,
    "exit_value": 88.5050109071176,
+   "model_value": 66.3673688729154,
+   "peer_avg_upside": 0.32465350870670284,
+   "anchor_peers": [
+    "TAP",
+    "PRMB",
+    "SAM",
+    "BRCC"
+   ],
    "wacc": 0.0618,
    "peers": [
     "TAP",
@@ -48,10 +61,10 @@
    "beta_source": "Yahoo Finance",
    "fiscal_year": "FY2025",
    "files": {
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v2.xlsx",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v2.pdf"
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v3.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v3.pdf"
    },
-   "times_generated": 2,
+   "times_generated": 3,
    "first_generated_at": "2026-11-24T02:12:39Z"
   }
  ]
