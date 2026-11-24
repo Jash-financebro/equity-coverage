@@ -1,0 +1,19 @@
+name: E2E update check
+on:
+  push:
+    branches: [main]
+    paths: ["tools/e2e_update.py"]
+permissions:
+  contents: read
+  packages: read
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/jash-financebro/equity-coverage-runner:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: python3 tools/e2e_update.py

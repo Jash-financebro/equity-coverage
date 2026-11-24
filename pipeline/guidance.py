@@ -9,8 +9,10 @@ import re
 
 import sources
 
-KEYWORDS = re.compile(r"\b(guidance|outlook|expects?|expected|anticipates?|forecasts?|targets?|reaffirm\w*|raises?|"
-                      r"narrows?|lowers?)\b", re.I)
+# forward-looking language only: a line about last quarter's results ("grew 7%") is not guidance
+KEYWORDS = re.compile(r"\b(guidance|outlook|expects?|expected|expecting|anticipates?|anticipated|forecasts?|forecasted|"
+                      r"reaffirm\w*|projects?|projected|will (?:be|deliver|grow|generate))\b", re.I)
+PAST_ONLY = re.compile(r"\b(grew|increased|decreased|declined|rose|fell|was|were|reported|delivered)\b", re.I)
 METRICS = re.compile(r"\b(revenue|revenues|net sales|sales|organic|EPS|earnings per share|operating income|"
                      r"operating margin|free cash flow|EBITDA)\b", re.I)
 NUMBER = re.compile(r"\d")
@@ -31,7 +33,10 @@ def _sentences(text: str):
     text = re.sub(r"\s*[•▪●◦]\s*", " . ", text)
     for s in re.split(r"(?<=[.!?])\s+(?=[A-Z(\"“$])|\s\.\s", text):
         s = re.sub(r"\s+", " ", s).strip(" .")
-        if 40 <= len(s) <= 320 and KEYWORDS.search(s) and METRICS.search(s) and NUMBER.search(s) and not NOISE.search(s):
+        k = KEYWORDS.search(s)
+        if k and PAST_ONLY.search(s[:k.start()]) and not re.search(r"guidance|outlook", s, re.I):
+            continue  # "Revenue grew 7%, ... expected ..." - results first; only keep explicit guidance lines
+        if 40 <= len(s) <= 320 and k and METRICS.search(s) and NUMBER.search(s) and not NOISE.search(s):
             yield s + "."
 
 
@@ -45,11 +50,11 @@ def revenue_growth_range(sentences: list[str]):
         m = re.search(r"(-?\d+(?:\.\d+)?)\s*%?\s*(?:to|-|–|and)\s*(-?\d+(?:\.\d+)?)\s*%", s)
         if m:
             lo, hi = sorted((float(m.group(1)) / 100, float(m.group(2)) / 100))
-            if -0.5 < lo < 1 and -0.5 < hi < 1:
+            if -0.5 < lo < 3 and -0.5 < hi < 3:
                 rng = (lo, hi)
         else:
             m = re.search(r"(-?\d+(?:\.\d+)?)\s*%", s)
-            if m and -50 < float(m.group(1)) < 100:
+            if m and -50 < float(m.group(1)) < 300:
                 rng = (float(m.group(1)) / 100,) * 2
         if not rng:
             continue

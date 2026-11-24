@@ -28,4 +28,9 @@ assert G.revenue_growth_range(agilent) == (0.06, 0.08), G.revenue_growth_range(a
 ko = "Full Year 2026 . Organic revenues (non-GAAP): The company continues to expect to deliver 5% to 6% organic revenue growth."
 assert any("5% to 6% organic revenue growth" in s for s in G._sentences(ko)), list(G._sentences(ko))
 assert not list(G._sentences("(5) Core or organic constant currency revenue growth outlook is based on forecasted rates of 2%."))
+past = ("Comparable currency neutral operating income (non-GAAP) grew 14%, primarily driven by organic revenue (non-GAAP) "
+        "growth and lower operating expenses.")
+assert not list(G._sentences(past)), list(G._sentences(past))
+be = ["Raises full year 2026 revenue guidance to $4.4 billion - $4.6 billion, representing 122% year-over-year growth at the midpoint."]
+assert G.revenue_growth_range(list(G._sentences(be[0]))) == (1.22, 1.22), G.revenue_growth_range(be)
 print("OK  guidance:", len(sents), "sentences, revenue growth range", G.revenue_growth_range(sents))
