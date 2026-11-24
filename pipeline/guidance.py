@@ -14,8 +14,8 @@ KEYWORDS = re.compile(r"\b(guidance|outlook|expects?|expected|anticipates?|forec
 METRICS = re.compile(r"\b(revenue|revenues|net sales|sales|organic|EPS|earnings per share|operating income|"
                      r"operating margin|free cash flow|EBITDA)\b", re.I)
 NUMBER = re.compile(r"\d")
-NOISE = re.compile(r"forward-looking|safe harbor|risks and uncertainties|non-gaap|reconciliation|conference call|"
-                   r"webcast|press release|investor relations", re.I)
+NOISE = re.compile(r"forward-looking|safe harbor|risks and uncertainties|non-gaap|reconcil|conference call|"
+                   r"webcast|press release|investor relations|following table|see table|footnote", re.I)
 
 
 def _text(raw: str) -> str:
@@ -27,8 +27,10 @@ def _text(raw: str) -> str:
 
 
 def _sentences(text: str):
-    for s in re.split(r"(?<=[.!?])\s+(?=[A-Z(\"“])", text):
-        s = s.strip(" .")
+    # bullets and paragraph breaks end a statement even without a full stop
+    text = re.sub(r"\s*[•▪●◦]\s*", " . ", text)
+    for s in re.split(r"(?<=[.!?])\s+(?=[A-Z(\"“$])|\s\.\s", text):
+        s = re.sub(r"\s+", " ", s).strip(" .")
         if 40 <= len(s) <= 320 and KEYWORDS.search(s) and METRICS.search(s) and NUMBER.search(s) and not NOISE.search(s):
             yield s + "."
 
@@ -61,7 +63,9 @@ def latest(subs: dict, cik: int, model_growth: float | None = None) -> dict | No
         try:
             idx = sources._sec(f"{base}/index.json")
             names = [it["name"] for it in idx.get("directory", {}).get("item", [])]
-            ex = [n for n in names if re.search(r"ex-?99", n, re.I) and n.lower().endswith((".htm", ".html", ".txt"))]
+            primary = (recent.get("primaryDocument") or [""] * (i + 1))[i]
+            docs = [n for n in names if n.lower().endswith((".htm", ".html")) and n != primary and "index" not in n.lower()]
+            ex = sorted(docs, key=lambda n: (not re.search(r"ex-?9|99|release|press|earn", n, re.I), n))
             if not ex:
                 return None
             raw = sources._get(f"{base}/{ex[0]}", headers={"User-Agent": sources.SEC_UA}, as_json=False)

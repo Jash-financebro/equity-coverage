@@ -14,4 +14,12 @@ sents = list(G._sentences(G._text(html)))
 assert any("organic revenue growth of 5% to 6%" in s for s in sents), sents
 assert not any("forward-looking" in s or "webcast" in s for s in sents), sents
 assert G.revenue_growth_range(sents) == (0.05, 0.06), G.revenue_growth_range(sents)
+lng = ("CHENIERE ENERGY, INC. NEWS RELEASE . Cheniere Reports Third Quarter 2026 Results . . • Raising full year 2026 "
+       "Consolidated Adjusted EBITDA 3 guidance from $7.90 billion - $8.40 billion to $8.75 billion - $9.25 billion and full "
+       "year 2026 Distributable Cash Flow 3 guidance from $5.30 billion - $5.80 billion to $6.05 billion - $6.55 billion. . "
+       "Capital Allocation . • For the third quarter 2026, the Board declared a quarterly cash dividend of $0.625 per share. "
+       "The following table reconciles our actual Consolidated Adjusted EBITDA to net income and forecast amounts for full year 2026 (in billions):")
+ls = list(G._sentences(lng))
+assert any(s.startswith("Raising full year 2026 Consolidated Adjusted EBITDA") for s in ls), ls
+assert not any("following table" in s for s in ls), ls
 print("OK  guidance:", len(sents), "sentences, revenue growth range", G.revenue_growth_range(sents))
