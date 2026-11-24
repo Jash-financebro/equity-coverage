@@ -750,7 +750,7 @@
   const loadFunds = async () => (FUNDS = FUNDS || await getJSON("funds/index.json"));
   const SCREEN_PRESETS = [
     { id: "growers", t: "Profitable and growing", d: "Companies making a profit whose sales grew more than 10% last year. Growth plus profit is what most investors pay up for.", f: { net_m_min: 0.0001, rev_growth_min: 0.10 } },
-    { id: "dividends", t: "Steady dividend payers", d: "Yield above 2%, paying out no more than 75% of profits (so the dividend is affordable) and modest debt.", f: { div_yield_min: 0.02, payout_max: 0.75, de_max: 1.0 } },
+    { id: "dividends", t: "Steady dividend payers", d: "Over $1B in market value, yield above 2%, paying out no more than 75% of profits and modest debt. Stocks down more than 30% in a year are left out, since a falling price can make a yield look higher than it will stay.", f: { div_yield_min: 0.02, payout_max: 0.75, de_max: 1.0, mcap_min: 1000, chg_1y_min: -0.3 } },
     { id: "cheap", t: "Cheap versus earnings", d: "Profitable companies whose P/E is below the median of their own sector. Cheap can mean a bargain, or that the market sees trouble.", f: { pe_min: 0.01, cheap_vs_sector: true, mcap_min: 300 } },
     { id: "bigstable", t: "Big and stable", d: "Over $50B in market value with a beta below 0.9: large companies that have moved less than the market.", f: { mcap_min: 50000, beta_max: 0.9 } },
     { id: "smallprofit", t: "Small but profitable", d: "$300M to $2B in market value and generating free cash flow. Small companies can grow faster, but they swing more.", f: { mcap_min: 300, mcap_max: 2000, fcf_pos: true } },
