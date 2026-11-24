@@ -1,0 +1,61 @@
+{
+ "ticker": "A",
+ "name": "Agilent Technologies, INC.",
+ "cik": 1090872,
+ "sector": "Information Technology",
+ "industry": "Laboratory Analytical Instruments",
+ "sic": "3826",
+ "city": "Santa Clara",
+ "state": "CA",
+ "website": "https://www.agilent.com",
+ "generated_at": "2026-11-24T16:20:37Z",
+ "version": 1,
+ "price": 180.24,
+ "price_date": "2026-11-24",
+ "target": 218.77,
+ "upside": 0.2138,
+ "rating": "Buy",
+ "scenarios": {
+  "bear": 192.23,
+  "base": 218.77,
+  "bull": 251.69
+ },
+ "model_scenarios": {
+  "base": 129.03,
+  "bull": 148.44,
+  "bear": 113.38
+ },
+ "dcf_value": 45.3393963242103,
+ "comps_value": 284.366536951596,
+ "exit_value": 135.042735413444,
+ "model_value": 129.026160085381,
+ "peer_avg_upside": 0.36378436226274175,
+ "anchor_peers": [
+  "COHR",
+  "AVTR",
+  "AME",
+  "VLTO",
+  "KEYS"
+ ],
+ "wacc": 0.1124,
+ "peers": [
+  "COHR",
+  "AVTR",
+  "AME",
+  "VLTO",
+  "KEYS"
+ ],
+ "consensus": {
+  "target_mean": 183.137,
+  "target_median": 185.0,
+  "analysts": 20
+ },
+ "beta_source": "Yahoo Finance",
+ "fiscal_year": "FY2025",
+ "files": {
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v1.xlsx",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v1.pdf"
+ },
+ "times_generated": 1,
+ "first_generated_at": "2026-11-24T16:20:37Z"
+}
