@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-24 03:08 UTC",
+ "generated_at": "2026-11-24 16:34 UTC",
  "site": {
   "title": "JJ Rajgandhi \u2014 Equity Coverage",
   "tagline": "Live valuation models, refreshed from SEC 10-K filings and market prices.",
@@ -13,31 +13,30 @@
   "sell_below": -0.1
  },
  "rates": {
-  "rf_10y": 0.04918,
-  "tbill_3m": 0.04147
+  "rf_10y": 0.04884,
+  "tbill_3m": 0.04168
  },
  "coverage": [
   {
    "ticker": "LNG",
    "name": "Cheniere Energy, Inc.",
    "sector": "Energy",
-   "price": 295.46,
-   "target": 339.97,
-   "upside": 0.1506,
+   "price": 296.39,
+   "target": 341.49,
+   "upside": 0.1522,
    "rating": "Buy",
-   "refreshed_at": "2026-11-24 03:08 UTC",
+   "refreshed_at": "2026-11-24 16:34 UTC",
    "status": "ok",
    "target_stale": false,
    "error": null,
    "needs_review": false,
-   "pe": 12.2445,
-   "ev_ebitda": 7.8583,
+   "pe": 12.2831,
+   "ev_ebitda": 7.8765,
    "op_margin": 0.4561,
-   "market_cap": 60334.114,
+   "market_cap": 60524.024,
    "street_median": 347.0,
    "street_mean": 340.8,
    "spark": [
-    291.69,
     294.13,
     295.86,
     290.85,
@@ -96,7 +95,8 @@
     296.49,
     295.37,
     294.84,
-    295.46
+    295.46,
+    296.39
    ],
    "has_report": true
   }
