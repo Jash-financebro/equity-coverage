@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-24T16:42:54Z",
+ "updated_at": "2026-11-24T17:10:16Z",
  "count": 6,
  "sectors": {
   "Consumer Discretionary": [
@@ -23,6 +23,331 @@
  },
  "models": [
   {
+   "ticker": "BE",
+   "name": "Bloom Energy Corp",
+   "cik": 1664703,
+   "sector": "Industrials",
+   "industry": "Electrical Industrial Apparatus",
+   "exchange": "NYSE",
+   "sic": "3620",
+   "city": "San Jose",
+   "state": "CA",
+   "website": "https://www.bloomenergy.com",
+   "generated_at": "2026-11-24T17:10:04Z",
+   "version": 2,
+   "price": 155.0,
+   "price_date": "2026-11-24",
+   "target": 175.86,
+   "upside": 0.1346,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 131.73,
+    "base": 175.86,
+    "bull": 240.63
+   },
+   "model_scenarios": {
+    "base": 3.66,
+    "bull": 5.0,
+    "bear": 2.74
+   },
+   "dcf_value": -2.05630290485904,
+   "comps_value": 10.2849023997962,
+   "exit_value": 6.05595015793786,
+   "model_value": 3.65683938119076,
+   "peer_avg_upside": 0.28456173788509265,
+   "anchor_peers": [
+    "FELE",
+    "GNRC",
+    "WWD",
+    "EAF"
+   ],
+   "wacc": 0.1004,
+   "peers": [
+    "FELE",
+    "GNRC",
+    "WWD",
+    "PLUG",
+    "EAF"
+   ],
+   "consensus": {
+    "target_mean": 282.69232,
+    "target_median": 295.0,
+    "analysts": 26
+   },
+   "beta_source": "default 1.0",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v2.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v2.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T02:49:22Z"
+  },
+  {
+   "ticker": "KO",
+   "name": "COCA COLA Co",
+   "cik": 21344,
+   "sector": "Consumer Staples",
+   "industry": "Beverages",
+   "exchange": "NYSE",
+   "sic": "2080",
+   "city": "Atlanta",
+   "state": "GA",
+   "website": "https://www.coca-colacompany.com",
+   "generated_at": "2026-11-24T17:09:50Z",
+   "version": 7,
+   "price": 98.07,
+   "price_date": "2026-11-24",
+   "target": 106.18,
+   "upside": 0.0827,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 83.84,
+    "base": 106.18,
+    "bull": 135.54
+   },
+   "model_scenarios": {
+    "base": 67.75,
+    "bull": 86.49,
+    "bear": 53.5
+   },
+   "dcf_value": 58.6899984843947,
+   "comps_value": 45.0704538455828,
+   "exit_value": 88.1542702169347,
+   "model_value": 67.7517982496483,
+   "peer_avg_upside": 0.23265081455640374,
+   "anchor_peers": [
+    "PEP",
+    "KDP",
+    "PRMB",
+    "WEST"
+   ],
+   "wacc": 0.0615,
+   "peers": [
+    "PEP",
+    "KDP",
+    "PRMB",
+    "BF-A",
+    "WEST"
+   ],
+   "consensus": {
+    "target_mean": 99.64,
+    "target_median": 100.0,
+    "analysts": 25
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v7.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v7.pdf"
+   },
+   "times_generated": 6,
+   "first_generated_at": "2026-11-24T02:12:39Z"
+  },
+  {
+   "ticker": "LNG",
+   "name": "Cheniere Energy, Inc.",
+   "cik": 3570,
+   "sector": "Utilities",
+   "industry": "Natural Gas Distribution",
+   "exchange": "NYSE",
+   "sic": "4924",
+   "city": "Houston",
+   "state": "TX",
+   "website": "https://www.cheniere.com",
+   "generated_at": "2026-11-24T17:09:37Z",
+   "version": 2,
+   "price": 294.95,
+   "price_date": "2026-11-24",
+   "target": 313.13,
+   "upside": 0.0616,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 256.35,
+    "base": 313.13,
+    "bull": 374.7
+   },
+   "model_scenarios": {
+    "base": 274.12,
+    "bull": 328.02,
+    "bear": 224.41
+   },
+   "dcf_value": 286.240097139882,
+   "comps_value": 331.89075853903,
+   "exit_value": 233.114890520529,
+   "model_value": 274.12014677197,
+   "peer_avg_upside": 0.21130059790147193,
+   "anchor_peers": [
+    "VG",
+    "CQP",
+    "ATO"
+   ],
+   "wacc": 0.0864,
+   "peers": [
+    "VG",
+    "CQP",
+    "ATO"
+   ],
+   "consensus": {
+    "target_mean": 340.8,
+    "target_median": 347.0,
+    "analysts": 20
+   },
+   "beta_source": "default 1.0",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v2.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v2.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T03:10:47Z"
+  },
+  {
+   "ticker": "A",
+   "name": "Agilent Technologies, INC.",
+   "cik": 1090872,
+   "sector": "Information Technology",
+   "industry": "Laboratory Analytical Instruments",
+   "exchange": "NYSE",
+   "sic": "3826",
+   "city": "Santa Clara",
+   "state": "CA",
+   "website": "https://www.agilent.com",
+   "generated_at": "2026-11-24T17:09:24Z",
+   "version": 2,
+   "price": 181.19,
+   "price_date": "2026-11-24",
+   "target": 180.88,
+   "upside": -0.0017,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 159.86,
+    "base": 180.88,
+    "bull": 206.95
+   },
+   "model_scenarios": {
+    "base": 135.1,
+    "bull": 154.58,
+    "bear": 119.41
+   },
+   "dcf_value": 45.2687979661944,
+   "comps_value": 313.78108055462,
+   "exit_value": 135.601012945895,
+   "model_value": 135.10414047576,
+   "peer_avg_upside": 0.14830789192980282,
+   "anchor_peers": [
+    "AVTR",
+    "ILMN",
+    "MTD",
+    "BRKR",
+    "WAT"
+   ],
+   "wacc": 0.1125,
+   "peers": [
+    "AVTR",
+    "ILMN",
+    "MTD",
+    "BRKR",
+    "WAT"
+   ],
+   "consensus": {
+    "target_mean": 183.137,
+    "target_median": 185.0,
+    "analysts": 20
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v2.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v2.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T16:20:37Z"
+  },
+  {
+   "ticker": "CB",
+   "name": "Chubb Ltd",
+   "cik": 896159,
+   "sector": "Financials",
+   "industry": "Fire, Marine & Casualty Insurance",
+   "exchange": "NYSE",
+   "sic": "6331",
+   "city": "Zurich",
+   "state": "V8",
+   "website": "https://www.chubb.com",
+   "generated_at": "2026-11-24T17:08:59Z",
+   "version": 2,
+   "price": 374.42,
+   "price_date": "2026-11-24",
+   "target": 445.59,
+   "upside": 0.1901,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 349.77,
+    "base": 445.59,
+    "bull": 567.39
+   },
+   "model_scenarios": {
+    "base": 1536.26,
+    "bull": 1956.17,
+    "bear": 1205.9
+   },
+   "dcf_value": 2932.8582211927,
+   "comps_value": 0,
+   "exit_value": 907.788416815616,
+   "model_value": 1536.25865520333,
+   "peer_avg_upside": 0.040082774385498746,
+   "anchor_peers": [
+    "ALL",
+    "PGR",
+    "HIG",
+    "AIG",
+    "ACGL"
+   ],
+   "wacc": 0.062,
+   "peers": [
+    "ALL",
+    "PGR",
+    "HIG",
+    "AIG",
+    "ACGL"
+   ],
+   "consensus": {
+    "target_mean": 375.6087,
+    "target_median": 379.0,
+    "analysts": 23
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": {
+    "kind": "insurer",
+    "metric": "P/B",
+    "bvps": 193.0412,
+    "tbvps": 123.8199,
+    "pb": 1.9396,
+    "ptbv": 3.0239,
+    "roe": 0.1497,
+    "peer_multiple": 1.9465,
+    "implied_value": 375.7597,
+    "note": "Banks, insurers and other financials are valued on book value and returns on equity: debt is their raw material, so EV/EBITDA and unlevered free cash flow don't apply. Read the DCF here as a rough cross-check and lean on P/B, P/TBV and ROE."
+   },
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_v2.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_report_v2.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T16:21:42Z"
+  },
+  {
    "ticker": "SN",
    "name": "SharkNinja, Inc.",
    "cik": 1957132,
@@ -33,28 +358,28 @@
    "city": "Needham",
    "state": "MA",
    "website": "https://www.sharkninja.com",
-   "generated_at": "2026-11-24T16:42:38Z",
-   "version": 1,
-   "price": 227.44,
+   "generated_at": "2026-11-24T17:08:36Z",
+   "version": 2,
+   "price": 229.62,
    "price_date": "2026-11-24",
-   "target": 298.89,
-   "upside": 0.3141,
+   "target": 296.4,
+   "upside": 0.2908,
    "rating": "Buy",
    "scenarios": {
-    "bear": 236.31,
-    "base": 298.89,
-    "bull": 378.2
+    "bear": 234.48,
+    "base": 296.4,
+    "bull": 374.88
    },
    "model_scenarios": {
-    "base": 105.72,
-    "bull": 133.77,
-    "bear": 83.58
+    "base": 105.92,
+    "bull": 133.97,
+    "bear": 83.79
    },
-   "dcf_value": 56.0741572762263,
-   "comps_value": 53.4020517091688,
-   "exit_value": 181.517594201591,
-   "model_value": 105.717110932961,
-   "peer_avg_upside": 0.4640987478164174,
+   "dcf_value": 56.0501192881466,
+   "comps_value": 54.5277637177928,
+   "exit_value": 181.489629466069,
+   "model_value": 105.921452245245,
+   "peer_avg_upside": 0.4407671619842712,
    "anchor_peers": [
     "AMKR",
     "ARM",
@@ -62,7 +387,7 @@
     "ADI",
     "WHR"
    ],
-   "wacc": 0.1116,
+   "wacc": 0.1117,
    "peers": [
     "AMKR",
     "ARM",
@@ -77,315 +402,14 @@
    },
    "beta_source": "Yahoo Finance",
    "fiscal_year": "FY2025",
+   "sector_check": null,
    "files": {
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v1.xlsx",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v1.pdf"
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v2.xlsx",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v2.pdf"
    },
    "times_generated": 1,
    "first_generated_at": "2026-11-24T16:42:38Z"
-  },
-  {
-   "ticker": "CB",
-   "name": "Chubb Ltd",
-   "cik": 896159,
-   "sector": "Financials",
-   "industry": "Fire, Marine & Casualty Insurance",
-   "sic": "6331",
-   "city": "Zurich",
-   "state": "V8",
-   "website": "https://www.chubb.com",
-   "generated_at": "2026-11-24T16:21:42Z",
-   "version": 1,
-   "price": 375.35,
-   "price_date": "2026-11-24",
-   "target": 439.42,
-   "upside": 0.1707,
-   "rating": "Buy",
-   "scenarios": {
-    "bear": 344.86,
-    "base": 439.42,
-    "bull": 559.69
-   },
-   "model_scenarios": {
-    "base": 1538.71,
-    "bull": 1959.84,
-    "bear": 1207.58
-   },
-   "dcf_value": 2938.73116123915,
-   "comps_value": 0,
-   "exit_value": 908.047476685026,
-   "model_value": 1538.71145516967,
-   "peer_avg_upside": 0.020674974645769638,
-   "anchor_peers": [
-    "ALL",
-    "TRV",
-    "PGR",
-    "HIG",
-    "AIG"
-   ],
-   "wacc": 0.0619,
-   "peers": [
-    "ALL",
-    "TRV",
-    "PGR",
-    "HIG",
-    "AIG"
-   ],
-   "consensus": {
-    "target_mean": 375.6087,
-    "target_median": 379.0,
-    "analysts": 23
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "files": {
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_v1.xlsx",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_report_v1.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T16:21:42Z"
-  },
-  {
-   "ticker": "A",
-   "name": "Agilent Technologies, INC.",
-   "cik": 1090872,
-   "sector": "Information Technology",
-   "industry": "Laboratory Analytical Instruments",
-   "sic": "3826",
-   "city": "Santa Clara",
-   "state": "CA",
-   "website": "https://www.agilent.com",
-   "generated_at": "2026-11-24T16:20:37Z",
-   "version": 1,
-   "price": 180.24,
-   "price_date": "2026-11-24",
-   "target": 218.77,
-   "upside": 0.2138,
-   "rating": "Buy",
-   "scenarios": {
-    "bear": 192.23,
-    "base": 218.77,
-    "bull": 251.69
-   },
-   "model_scenarios": {
-    "base": 129.03,
-    "bull": 148.44,
-    "bear": 113.38
-   },
-   "dcf_value": 45.3393963242103,
-   "comps_value": 284.366536951596,
-   "exit_value": 135.042735413444,
-   "model_value": 129.026160085381,
-   "peer_avg_upside": 0.36378436226274175,
-   "anchor_peers": [
-    "COHR",
-    "AVTR",
-    "AME",
-    "VLTO",
-    "KEYS"
-   ],
-   "wacc": 0.1124,
-   "peers": [
-    "COHR",
-    "AVTR",
-    "AME",
-    "VLTO",
-    "KEYS"
-   ],
-   "consensus": {
-    "target_mean": 183.137,
-    "target_median": 185.0,
-    "analysts": 20
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "files": {
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v1.xlsx",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v1.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T16:20:37Z"
-  },
-  {
-   "ticker": "LNG",
-   "name": "Cheniere Energy, Inc.",
-   "cik": 3570,
-   "sector": "Utilities",
-   "industry": "Natural Gas Distribution",
-   "sic": "4924",
-   "city": "Houston",
-   "state": "TX",
-   "website": "https://www.cheniere.com",
-   "generated_at": "2026-11-24T03:10:47Z",
-   "version": 1,
-   "price": 295.46,
-   "price_date": "2026-11-23",
-   "target": 333.6,
-   "upside": 0.1291,
-   "rating": "Hold",
-   "scenarios": {
-    "bear": 273.16,
-    "base": 333.6,
-    "bull": 399.11
-   },
-   "model_scenarios": {
-    "base": 273.54,
-    "bull": 327.25,
-    "bear": 223.98
-   },
-   "dcf_value": 284.742151224466,
-   "comps_value": 332.06411308038,
-   "exit_value": 233.079729380935,
-   "model_value": 273.541574858236,
-   "peer_avg_upside": 0.27910005402603155,
-   "anchor_peers": [
-    "TRGP",
-    "KMI",
-    "TRP",
-    "VG"
-   ],
-   "wacc": 0.0867,
-   "peers": [
-    "TRGP",
-    "KMI",
-    "TRP",
-    "VG",
-    "TCPA"
-   ],
-   "consensus": {
-    "target_mean": 340.8,
-    "target_median": 347.0,
-    "analysts": 20
-   },
-   "beta_source": "default 1.0",
-   "fiscal_year": "FY2025",
-   "files": {
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v1.xlsx",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v1.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T03:10:47Z"
-  },
-  {
-   "ticker": "KO",
-   "name": "COCA COLA Co",
-   "cik": 21344,
-   "sector": "Consumer Staples",
-   "industry": "Beverages",
-   "sic": "2080",
-   "city": "Atlanta",
-   "state": "GA",
-   "website": "https://www.coca-colacompany.com",
-   "generated_at": "2026-11-24T03:07:59Z",
-   "version": 6,
-   "price": 95.88,
-   "price_date": "2026-11-23",
-   "target": 112.63,
-   "upside": 0.1747,
-   "rating": "Buy",
-   "scenarios": {
-    "bear": 88.34,
-    "base": 112.63,
-    "bull": 144.53
-   },
-   "model_scenarios": {
-    "base": 65.86,
-    "bull": 84.52,
-    "bear": 51.66
-   },
-   "dcf_value": 58.3690246801084,
-   "comps_value": 36.4286471860749,
-   "exit_value": 88.0761988822423,
-   "model_value": 65.8638188621553,
-   "peer_avg_upside": 0.32465350870670284,
-   "anchor_peers": [
-    "TAP",
-    "PRMB",
-    "SAM",
-    "BRCC"
-   ],
-   "wacc": 0.0617,
-   "peers": [
-    "TAP",
-    "PRMB",
-    "BF-A",
-    "SAM",
-    "BRCC"
-   ],
-   "consensus": {
-    "target_mean": 99.64,
-    "target_median": 100.0,
-    "analysts": 25
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "files": {
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v6.xlsx",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v6.pdf"
-   },
-   "times_generated": 6,
-   "first_generated_at": "2026-11-24T02:12:39Z"
-  },
-  {
-   "ticker": "BE",
-   "name": "Bloom Energy Corp",
-   "cik": 1664703,
-   "sector": "Industrials",
-   "industry": "Electrical Industrial Apparatus",
-   "sic": "3620",
-   "city": "San Jose",
-   "state": "CA",
-   "website": "https://www.bloomenergy.com",
-   "generated_at": "2026-11-24T02:49:22Z",
-   "version": 1,
-   "price": 168.15,
-   "price_date": "2026-11-23",
-   "target": 198.01,
-   "upside": 0.1776,
-   "rating": "Buy",
-   "scenarios": {
-    "bear": 134.57,
-    "base": 198.01,
-    "bull": 291.09
-   },
-   "model_scenarios": {
-    "base": 2.86,
-    "bull": 4.21,
-    "bear": 1.94
-   },
-   "dcf_value": -2.04896227382465,
-   "comps_value": 6.32042773391283,
-   "exit_value": 6.04008428431009,
-   "model_value": 2.86053435097674,
-   "peer_avg_upside": 0.3276064433960347,
-   "anchor_peers": [
-    "BHE",
-    "ENR",
-    "ESE",
-    "ENS",
-    "AOS"
-   ],
-   "wacc": 0.1009,
-   "peers": [
-    "BHE",
-    "ENR",
-    "ESE",
-    "ENS",
-    "AOS"
-   ],
-   "consensus": {
-    "target_mean": 282.69232,
-    "target_median": 295.0,
-    "analysts": 26
-   },
-   "beta_source": "default 1.0",
-   "fiscal_year": "FY2025",
-   "files": {
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v1.xlsx",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v1.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T02:49:22Z"
   }
  ]
 }
