@@ -434,7 +434,7 @@
     }
     document.addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
-      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method" }[e.key];
+      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz" }[e.key];
       if (e.key === "/") { e.preventDefault(); if (location.hash.replace(/^#\/?/, "")) { location.hash = "#/"; setTimeout(() => document.getElementById("tk")?.focus(), 300); } else document.getElementById("tk")?.focus(); }
       else if (e.key === "t") toggleTheme();
       else if (go) location.hash = go;
@@ -449,6 +449,298 @@
     const root = document.documentElement;
     const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
     root.dataset.theme = dark ? "light" : "dark"; store.set("mb_theme", root.dataset.theme);
+  }
+
+  // ------------------------------------------------------------- "Explain this model" walkthrough (opens on click)
+  function explainSteps(m) {
+    const d = m.detail || {}, x = d.dcf_inputs || {}, v = d.valuation || {}, cs = d.cases || {}, an = v.anchor || {}, w = d.wacc || {};
+    const hn = d.hist_n || 3, yrs = d.years || [], is = d.is || {};
+    const lastY = yrs[hn - 1], y5 = yrs[yrs.length - 1];
+    const g = cs.base?.growth || [];
+    const lq = m.latest_quarter?.quarter?.revenue;
+    const tvShare = (() => { try { if (!x.rev) return null; const S = { dg: 0, dm: 0, wacc: x.wacc, g: x.g, mult: 10 };
+      const r = valuate(x, S); const df5 = 1 / (1 + x.wacc) ** 5; const tv = (r.ufcf[4] * (1 + x.g)) / (x.wacc - x.g) * df5;
+      const spv = r.ufcf.reduce((a, u, i) => a + u / (1 + x.wacc) ** (i + 1), 0); return tv / (tv + spv); } catch { return null; } })();
+    return [
+      { t: "The answer first", sel: ".kpis", b: `We think ${esc(m.name)} is worth <b>${usd(m.target)}</b> a share over the next 12 months, against ${usd(m.price)} today: ${signed(m.upside)}, so the rating is <b>${esc(m.rating)}</b> (Buy needs 15%+ upside, Sell 10%+ downside). The next steps show where that number comes from.` },
+      { t: "Where the revenue comes from", sel: "#sec-fin", b: `Revenue was ${big(is.revenue?.[hn - 1])} in ${esc(lastY)}${nz(is.growth?.[hn - 1]) ? `, up ${pct(is.growth[hn - 1])} on the year before` : ""}. The base case grows it ${pct(g[0])} next year, fading to ${pct(g[4])} by ${esc(y5)} as growth settles toward the long-run economy${lq && nz(lq.chg) ? `. For context, the latest quarter was ${signed(lq.chg)} year on year` : ""}.` },
+      { t: "How much of it is profit", sel: "#sec-fin", b: `Out of each dollar of sales, ${pct(is.gm?.[hn - 1])} is left after the direct cost of making the product (gross margin) and ${pct(is.ebitda_m?.[hn - 1])} after running the business (EBITDA margin). The model holds these near their three-year medians, so one unusual year doesn't drive the forecast.` },
+      { t: "Turning profit into cash", sel: "#sec-fin", b: `What a business is worth depends on the cash it can hand back to owners. Free cash flow is operating profit after tax, plus non-cash charges like depreciation, minus what it spends on equipment (capex) and extra working capital. Year-one free cash flow comes to ${big(d.fcf?.[0])}.` },
+      { t: "The discount rate (WACC)", sel: ".kpis", b: `A dollar next year is worth less than a dollar today, and a risky dollar less still. The cost of equity is the risk-free rate ${pct(w.rf)} plus beta ${nz(w.beta) ? Number(w.beta).toFixed(2) : "—"} × the market's extra return ${pct(w.erp)}, which gives ${pct(w.ke)}. Blended with the after-tax cost of debt (${pct(w.kd_at)}), the WACC is <b>${pct(w.wacc, 2)}</b>. A higher WACC means a lower value.` },
+      { t: "Three ways to value it", sel: "#ff", b: `<b>DCF, perpetuity growth:</b> discount five years of cash flow, then assume ${pct(x.g)} growth forever: ${usd(v.dcf)} a share${nz(tvShare) ? ` (about ${pct(tvShare, 0)} of that comes from the years after year 5, which is normal and why terminal growth matters)` : ""}. <b>DCF, exit multiple:</b> assume it sells in year 5 at today's EV/EBITDA: ${usd(v.exit)}. <b>Comps:</b> price it like its peers: ${usd(v.comps)}. Blended 40/40/20, that's a <b>model value of ${usd(v.model_value)}</b>.` },
+      { t: "A sanity check against the market", sel: "#ff", b: `A formula can land far from what professionals expect. So the final target blends the model value with the street's median target (${usd(an.street)}) and a peer-relative value (today's price × the ${pct(an.peer_up)} average upside analysts see for its peers), then keeps the result within 15 points of that peer average. That's how ${usd(v.model_value)} becomes <b>${usd(m.target)}</b>.` },
+      { t: "What could go better or worse", sel: "#sec-cases", b: `The bull case adds 3 points of growth a year and a little margin; the bear case takes them away. That moves the target from <b>${usd(cs.bear?.target)}</b> (bear) to <b>${usd(cs.bull?.target)}</b> (bull). In the Excel file you can flip between them on the Scenarios tab, cell D4.` },
+      { t: "Now try it yourself", sel: "#sl", b: `Drag the sliders to see how much each assumption matters. Notice how sensitive the value is to WACC and terminal growth; that's the main lesson of any DCF. The reverse DCF line tells you what growth today's price already assumes.` },
+    ];
+  }
+  function openExplain(m) {
+    const steps = explainSteps(m);
+    let i = 0;
+    document.getElementById("tour")?.remove();
+    document.body.insertAdjacentHTML("beforeend", `<div id="tour" class="tour" role="dialog" aria-label="Explain this model"><div class="tour-h"><span class="note" id="tour-n"></span><button class="tour-x" aria-label="Close">×</button></div><h3 id="tour-t"></h3><p id="tour-b"></p>
+      <div class="tour-f"><button class="btn sm" id="tour-back">Back</button><button class="btn sm primary" id="tour-next">Next</button></div></div>`);
+    const tour = document.getElementById("tour");
+    const show = () => {
+      const s = steps[i];
+      document.getElementById("tour-n").textContent = `Step ${i + 1} of ${steps.length}`;
+      document.getElementById("tour-t").textContent = s.t;
+      document.getElementById("tour-b").innerHTML = s.b;
+      document.getElementById("tour-back").disabled = i === 0;
+      document.getElementById("tour-next").textContent = i === steps.length - 1 ? "Done" : "Next";
+      document.querySelectorAll(".spot").forEach((e) => e.classList.remove("spot"));
+      const el = document.querySelector(s.sel);
+      const box = el?.closest("section") || el;
+      if (box) { box.classList.add("spot"); box.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    };
+    const close = () => { tour.remove(); document.querySelectorAll(".spot").forEach((e) => e.classList.remove("spot")); };
+    tour.querySelector(".tour-x").addEventListener("click", close);
+    document.getElementById("tour-back").addEventListener("click", () => { if (i > 0) { i--; show(); } });
+    document.getElementById("tour-next").addEventListener("click", () => { if (i < steps.length - 1) { i++; show(); } else close(); });
+    window.addEventListener("hashchange", close, { once: true });
+    show();
+  }
+
+  // ------------------------------------------------------------- quiz
+  const CONCEPTS = [
+    { q: "A company's P/E ratio is 20. What does that mean?", o: ["Investors pay $20 for each $1 of yearly earnings", "The stock has risen 20% this year", "It earns 20% on its equity", "It trades at 20 times its revenue"], a: 0, e: "P/E is share price divided by earnings per share. At 20×, you pay $20 for every $1 the company earns in a year." },
+    { q: "Why must terminal growth be lower than WACC in a DCF?", o: ["Otherwise the formula gives an infinite or negative value", "Because regulators require it", "Because WACC is always 10%", "It doesn't have to be"], a: 0, e: "The perpetuity value is cash flow × (1+g) / (WACC − g). If g reaches WACC the denominator hits zero, and no business can outgrow the economy forever anyway." },
+    { q: "Which is a better measure of the cash a business can return to owners?", o: ["Free cash flow", "Revenue", "Gross profit", "Number of employees"], a: 0, e: "Free cash flow is what's left after running the business and investing in it: the cash that can pay dividends, buy back shares or pay down debt." },
+    { q: "A stock has a beta of 1.5. If the market falls 10%, it would typically fall about…", o: ["15%", "10%", "5%", "1.5%"], a: 0, e: "Beta measures how much a stock tends to move with the market. 1.5 means roughly 1.5× the market's moves, up and down." },
+    { q: "What's the difference between enterprise value and market cap?", o: ["Enterprise value adds debt and subtracts cash", "They're the same thing", "Market cap includes debt", "Enterprise value only counts cash"], a: 0, e: "Market cap is the value of the shares. Enterprise value is what you'd pay for the whole business: shares plus debt, minus the cash you'd get with it." },
+    { q: "A 10-Q is…", o: ["A company's quarterly report to the SEC", "An annual report", "A filing about insider trades", "A credit rating"], a: 0, e: "Companies file a 10-K once a year and a 10-Q for each of the other three quarters. Both are on SEC EDGAR for free." },
+    { q: "If a company's WACC goes up, what happens to its DCF value, all else equal?", o: ["It goes down", "It goes up", "Nothing", "It doubles"], a: 0, e: "Future cash flows are discounted at the WACC. A higher rate makes each future dollar worth less today." },
+    { q: "Owning 10 stocks all in the same industry is…", o: ["Less diversified than it looks", "Perfectly diversified", "The same as owning an index fund", "Risk-free"], a: 0, e: "Stocks in one industry tend to rise and fall together. Spreading across sectors does more to reduce risk than adding more of the same kind of company." },
+    { q: "Dividend yield is…", o: ["Annual dividends per share ÷ share price", "Dividends ÷ revenue", "The share price ÷ dividends", "The growth rate of dividends"], a: 0, e: "A $100 stock paying $3 a year in dividends yields 3%. A very high yield can be a warning sign that the market expects a cut." },
+    { q: "EBITDA margin measures…", o: ["Operating profit before depreciation and amortization, as a share of revenue", "Net income ÷ assets", "How much debt a company has", "The share price trend"], a: 0, e: "EBITDA is earnings before interest, taxes, depreciation and amortization. Dividing by revenue shows how much of each sales dollar the core business keeps." },
+    { q: "Why do analysts use 'comps' (comparable companies)?", o: ["To check a valuation against how the market prices similar businesses", "To copy other analysts' targets", "To calculate taxes", "Because DCFs are illegal"], a: 0, e: "If peers trade at 12× EBITDA and the model implies 25×, either this company is special or the model is too optimistic: comps keep it honest." },
+    { q: "A company with negative earnings has a P/E that is…", o: ["Not meaningful", "Very attractive", "Zero", "Infinite and good"], a: 0, e: "P/E only makes sense with positive earnings. For loss-making companies, analysts look at revenue multiples or cash flow instead." },
+    { q: "Market cap of $300 million to $2 billion is usually called…", o: ["Small cap", "Mega cap", "Large cap", "Penny stock"], a: 0, e: "Rough ranges: small cap $300M–$2B, mid cap $2B–$10B, large cap above $10B, mega cap above about $200B." },
+    { q: "Which part of a DCF usually holds most of the value?", o: ["The terminal value (everything after the forecast years)", "Year 1 cash flow", "The tax rate", "The share count"], a: 0, e: "For most healthy companies, more than half of DCF value comes from the years after the explicit forecast. That's why terminal growth and WACC deserve the most thought." },
+    { q: "Gross margin is…", o: ["(Revenue − cost of goods sold) ÷ revenue", "Net income ÷ revenue", "Revenue ÷ assets", "Cash ÷ debt"], a: 0, e: "It shows how much of each sale is left after the direct cost of making the product, before overheads like marketing and R&D." },
+    { q: "A 'margin of safety' means…", o: ["Buying only when the price is well below your estimate of value", "Keeping cash in a savings account", "A stop-loss order", "Borrowing to invest"], a: 0, e: "Valuations are estimates. Buying at a discount to your value leaves room for being wrong." },
+  ];
+  const shuffle = (a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  const numOpts = (right, f, spread = [0.75, 0.88, 1.15, 1.3]) => {
+    const picks = shuffle(spread).slice(0, 3).map((k) => right * k);
+    const all = shuffle([right, ...picks]);
+    const o = all.map(f);
+    if (new Set(o).size < o.length) return null;  // options would look identical once rounded
+    return { o, a: all.indexOf(right) };
+  };
+  function modelQuestions(m) {
+    const d = m.detail || {}, x = d.dcf_inputs, cs = d.cases || {}, T = esc(m.ticker), out = [];
+    if (x) {
+      const S = { dg: 0, dm: 0, wacc: x.wacc, g: x.g, mult: Math.min(30, Math.max(4, nz(x.ev_ebitda_now) ? x.ev_ebitda_now : 4)) };
+      const base = valuate(x, S), hi = valuate(x, { ...S, wacc: x.wacc + 0.01 });
+      out.push({ q: `${T}'s WACC is ${pct(x.wacc, 1)}. If it rose to ${pct(x.wacc + 0.01, 1)}, what would happen to the perpetuity DCF value (now ${usd(base.dcf)})?`,
+        o: ["It would fall", "It would rise", "It wouldn't change"], a: 0, e: `It falls to about ${usd(hi.dcf)} (${signed(hi.dcf / base.dcf - 1)}). Every future cash flow is discounted harder, and the terminal value shrinks most.` });
+      const up = valuate(x, { ...S, dg: 0.03 });
+      const n = numOpts(up.target, (v) => usd(v, 0));
+      if (n) out.push({ q: `If ${T} grew revenue 3 points faster every year than the base case, roughly where would the target land (base: ${usd(m.target, 0)})?`, ...n,
+        e: `About ${usd(up.target, 0)}. Faster growth means more cash flow every year and a bigger business at year 5, which also lifts the exit and terminal values.` });
+    }
+    if (nz(m.upside) && nz(m.target)) {
+      const n = Math.abs(m.upside) >= 0.01 ? numOpts(m.upside, (v) => pct(v), [m.upside >= 0 ? 0.5 : 1.5, 2, -1, 0.25]) : null;
+      if (n) out.push({ q: `${T}'s price is ${usd(m.price)} and the model's target is ${usd(m.target)}. What's the upside?`, ...n,
+        e: `(${usd(m.target)} ÷ ${usd(m.price)}) − 1 = ${pct(m.upside)}. That's what sets the ${esc(m.rating)} rating: Buy at 15%+, Sell at 10%+ downside.` });
+    }
+    const sm = d.comps_self?.ev_ebitda, pm = d.comps_median?.ev_ebitda;
+    if (nz(sm) && nz(pm) && sm > 0 && pm > 0) {
+      out.push({ q: `${T} trades at ${mult(sm)} EV/EBITDA. Its peers' median is ${mult(pm)}. On this measure, ${T} is…`,
+        o: [`More expensive than its peers`, `Cheaper than its peers`, `Priced exactly like its peers`], a: sm > pm ? 0 : 1,
+        e: sm > pm ? `At ${mult(sm)} vs ${mult(pm)}, investors pay more per dollar of EBITDA, usually because they expect faster growth or steadier profits.` : `At ${mult(sm)} vs ${mult(pm)}, investors pay less per dollar of EBITDA. That can mean a bargain, or that the market sees more risk or slower growth.` });
+    }
+    if (nz(cs.bear?.target) && nz(cs.bull?.target)) {
+      out.push({ q: `Which change moves ${T} from the base case to the bull case?`,
+        o: ["Faster revenue growth and a slightly lower cost of revenue", "A higher WACC", "Fewer shares outstanding", "A lower tax rate"], a: 0,
+        e: `The bull case adds 3 points of growth a year and trims cost of revenue by 1 point, taking the target from ${usd(m.target, 0)} to ${usd(cs.bull.target, 0)}. Everything else stays at base.` });
+    }
+    return shuffle(out).slice(0, 4);
+  }
+  async function quizView() {
+    document.title = "Quiz · " + SITE;
+    const r = await recentData();
+    const seen = new Set(), models = [...(r.trending || []), ...(r.models || [])].filter((m) => !seen.has(m.ticker) && seen.add(m.ticker));
+    const best = Number(store.get("mb_quiz_best") || 0);
+    app.innerHTML = `<section class="hero"><h1>Quiz</h1><p>Six questions: some on investing basics, some on a real company's model from this site, so you see the ideas at work on actual numbers. ${best ? `Your best so far: ${best}/6.` : ""}</p></section>
+      <div class="card gen-box"><form id="qz-f" class="gen-row" autocomplete="off">
+        <div class="gen-input"><input id="qz-t" list="qz-l" placeholder="Company to quiz on, e.g. ${esc(models[0]?.ticker || "KO")}" aria-label="Ticker" value="${esc(models[0]?.ticker || "")}" autocapitalize="characters">
+          <datalist id="qz-l">${models.map((m) => `<option value="${esc(m.ticker)}">${esc(m.name)}</option>`).join("")}</datalist></div>
+        <button class="btn primary big" type="submit">Start quiz</button></form>
+        <p class="note">Any company that has a model on the site works. No model yet? <a href="#/">Generate one</a> first.</p></div>
+      <div id="qz"></div>`;
+    document.getElementById("qz-f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const t = document.getElementById("qz-t").value.trim().toUpperCase().replace(/[./]/g, "-");
+      const box = document.getElementById("qz");
+      box.innerHTML = `<p class="muted loading">Loading ${esc(t)}…</p>`;
+      let m = null;
+      if (t) { try { const base = await apiBase(); const res = await fetch(`${base}/api/model?ticker=${encodeURIComponent(t)}`); if (res.ok) m = await res.json(); } catch { /* concept-only round */ } }
+      const mq = m ? modelQuestions(m) : [];
+      const qs = [...mq, ...shuffle(CONCEPTS).slice(0, 6 - mq.length)].slice(0, 6).map((q) => ({ ...q, ...(q.o.length && q.a === 0 && !q.fixed ? reorder(q) : {}) }));
+      runQuiz(box, qs, m);
+    });
+  }
+  function reorder(q) { const idx = shuffle(q.o.map((_, i) => i)); return { o: idx.map((i) => q.o[i]), a: idx.indexOf(q.a), fixed: true }; }
+  function runQuiz(box, qs, m) {
+    let i = 0, score = 0;
+    const draw = () => {
+      if (i >= qs.length) {
+        const best = Math.max(score, Number(store.get("mb_quiz_best") || 0)); store.set("mb_quiz_best", String(best));
+        box.innerHTML = `<div class="card qz-card"><h2 class="sec">Done</h2><p class="qz-score">${score} / ${qs.length}</p>
+          <p class="muted">${score === qs.length ? "Perfect round." : score >= 4 ? "Solid. Review the explanations you missed and try another company." : "Every analyst started here. Open the model page and use \"Explain this model\" to see these ideas step by step."}</p>
+          <div class="gen-actions">${m ? `<a class="btn sm" href="#/m/${esc(m.ticker)}">Open the ${esc(m.ticker)} model</a>` : ""}<button class="btn sm primary" id="qz-again">Another round</button></div></div>`;
+        document.getElementById("qz-again").addEventListener("click", () => document.getElementById("qz-f").requestSubmit());
+        return;
+      }
+      const q = qs[i];
+      box.innerHTML = `<div class="card qz-card"><div class="note">Question ${i + 1} of ${qs.length} · score ${score}</div><h3 class="qz-q">${q.q}</h3>
+        <div class="qz-opts">${q.o.map((o, k) => `<button class="qz-o" data-k="${k}">${o}</button>`).join("")}</div><div id="qz-e"></div></div>`;
+      box.querySelectorAll(".qz-o").forEach((b) => b.addEventListener("click", () => {
+        const k = Number(b.dataset.k), right = k === q.a;
+        if (right) score++;
+        box.querySelectorAll(".qz-o").forEach((x) => { x.disabled = true; const kk = Number(x.dataset.k); if (kk === q.a) x.classList.add("ok"); else if (kk === k) x.classList.add("no"); });
+        document.getElementById("qz-e").innerHTML = `<p class="qz-exp"><b>${right ? "Right." : "Not quite."}</b> ${q.e}</p><button class="btn sm primary" id="qz-n">${i === qs.length - 1 ? "See score" : "Next"}</button>`;
+        document.getElementById("qz-n").addEventListener("click", () => { i++; draw(); });
+      }));
+    };
+    draw();
+  }
+
+  // ------------------------------------------------------------- practice portfolio
+  function portfolioChart(el, series) {
+    const W = 1040, H = 260, L = 64, R = 20, T = 14, B = 28;
+    const all = series.flatMap((s) => s.pts.map((p) => p[1]));
+    if (!all.length) { el.innerHTML = `<p class="empty">Not enough price history.</p>`; return; }
+    const ticks = niceTicks(Math.min(...all) * 0.98, Math.max(...all) * 1.02, 5);
+    const mn = ticks[0], mx = ticks[ticks.length - 1], n = series[0].pts.length;
+    const x = (i) => L + (i / Math.max(1, n - 1)) * (W - L - R), y = (v) => T + (1 - (v - mn) / (mx - mn)) * (H - T - B);
+    el.innerHTML = `<div class="legend">${series.map((s) => `<span><i style="background:${s.c}"></i>${esc(s.name)} ${usd(s.pts.at(-1)[1], 0)}</span>`).join("")}</div>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Portfolio value over the past year vs the S&P 500"><style>.ax{font:11px var(--mono);fill:var(--ink-3)}</style>
+      ${ticks.map((t) => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line-2)"/><text class="ax" x="${L - 8}" y="${y(t) + 4}" text-anchor="end">$${Math.round(t).toLocaleString()}</text>`).join("")}
+      ${series.map((s) => `<path d="${s.pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join("")}" fill="none" stroke="${s.c}" stroke-width="2"/>`).join("")}
+      <text class="ax" x="${L}" y="${H - 8}">${esc(series[0].pts[0][0])}</text><text class="ax" x="${W - R}" y="${H - 8}" text-anchor="end">${esc(series[0].pts.at(-1)[0])}</text></svg>`;
+  }
+  async function portfolioView() {
+    document.title = "Practice portfolio · " + SITE;
+    let saved; try { saved = JSON.parse(store.get("mb_portfolio") || "null"); } catch { saved = null; }
+    const P = saved || { budget: 10000, rows: [] };
+    app.innerHTML = `<section class="hero"><h1>Practice portfolio</h1><p>Pick 5 to 12 stocks and split $10,000 of play money between them. You'll see what you'd own, how spread out it is across sectors, what you're paying for earnings, the dividends it would pay, and how the same mix did over the past year against the S&amp;P 500. It's for learning how portfolios behave, not a recommendation.</p></section>
+      <div class="card gen-box"><form id="pf-add" class="gen-row" autocomplete="off">
+          <div class="gen-input"><input id="pf-t" placeholder="Add a ticker or company, e.g. KO" aria-label="Add a stock" autocapitalize="characters"><div id="pf-sugg" class="sugg" hidden></div></div>
+          <button class="btn" type="submit">Add</button>
+          <label class="pf-budget">Budget $<input id="pf-b" type="number" min="100" step="100" value="${P.budget}"></label></form>
+        <div id="pf-rows"></div>
+        <div class="gen-actions"><button class="btn primary" id="pf-go">Analyze portfolio</button> <button class="btn sm" id="pf-eq">Split evenly</button> <button class="btn sm" id="pf-clear">Clear</button><span class="note">Saved in this browser only.</span></div></div>
+      <div id="pf-out"></div>`;
+    const save = () => store.set("mb_portfolio", JSON.stringify(P));
+    const rowsEl = document.getElementById("pf-rows");
+    const drawRows = () => {
+      rowsEl.innerHTML = P.rows.length ? `<div class="scroll"><table class="pf-in"><thead><tr><th>Stock</th><th class="r">Amount ($)</th><th class="r">Share of budget</th><th></th></tr></thead><tbody>
+        ${P.rows.map((r, i) => `<tr><td><span class="tk">${esc(r.t)}</span><span class="co">${esc(r.n || "")}</span></td>
+          <td class="r"><input class="pf-amt" data-i="${i}" type="number" min="0" step="50" value="${Math.round(r.amt)}"></td>
+          <td class="r num">${pct(r.amt / (P.rows.reduce((a, z) => a + z.amt, 0) || 1), 0)}</td><td class="r"><button class="btn sm pf-del" data-i="${i}" aria-label="Remove ${esc(r.t)}">×</button></td></tr>`).join("")}
+        </tbody></table></div>${(() => { const tot = P.rows.reduce((a, z) => a + z.amt, 0), gap = tot - P.budget;
+          return Math.abs(gap) < 1 ? `<p class="note" style="padding:6px 0 0">Total ${usd(tot, 0)}: the full budget is invested.</p>`
+            : `<p class="${gap > 0 ? "down" : "note"}" style="padding:6px 0 0;font-size:13px">Total ${usd(tot, 0)}: ${gap > 0 ? `${usd(gap, 0)} over` : `${usd(-gap, 0)} left`} of the ${usd(P.budget, 0)} budget. <button class="btn sm" id="pf-scale">Scale to budget</button></p>`; })()}` : `<p class="note" style="padding:8px 0">No stocks yet. Add at least five for a meaningful picture.</p>`;
+      rowsEl.querySelectorAll(".pf-amt").forEach((el) => el.addEventListener("change", () => { P.rows[el.dataset.i].amt = Math.max(0, Number(el.value) || 0); save(); drawRows(); }));
+      const sc = document.getElementById("pf-scale");
+      if (sc) sc.addEventListener("click", () => { const tot = P.rows.reduce((a, z) => a + z.amt, 0) || 1; P.rows.forEach((r) => (r.amt = r.amt * P.budget / tot)); save(); drawRows(); });
+      rowsEl.querySelectorAll(".pf-del").forEach((el) => el.addEventListener("click", () => { P.rows.splice(Number(el.dataset.i), 1); save(); drawRows(); }));
+    };
+    const even = () => { const k = P.rows.length || 1; P.rows.forEach((r) => (r.amt = P.budget / k)); save(); drawRows(); };
+    const tk = document.getElementById("pf-t"), sugg = document.getElementById("pf-sugg");
+    tk.addEventListener("input", async () => {
+      const q = tk.value.trim().toUpperCase().replace(/[./]/g, "-"), qn = tk.value.trim().toUpperCase();
+      if (!q) { sugg.hidden = true; return; }
+      const hits = (await searchList()).filter(([t, n]) => t.startsWith(q) || n.toUpperCase().includes(qn)).sort((a, b) => (a[0] === q ? -1 : b[0] === q ? 1 : a[0].length - b[0].length)).slice(0, 6);
+      sugg.innerHTML = hits.map(([t, n, sct]) => `<div class="sg" data-t="${esc(t)}" data-n="${esc(n)}"><b>${esc(t)}</b> ${esc(n)} <span class="note">${esc(sct)}</span></div>`).join("");
+      sugg.hidden = !hits.length;
+      sugg.querySelectorAll(".sg").forEach((el) => el.addEventListener("mousedown", (e) => { e.preventDefault(); tk.value = el.dataset.t; sugg.hidden = true; }));
+    });
+    tk.addEventListener("blur", () => setTimeout(() => (sugg.hidden = true), 100));
+    document.getElementById("pf-add").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const raw = tk.value.trim().toUpperCase(); if (!raw) return;
+      const list = await searchList();
+      let hit = list.find(([t]) => t === raw.replace(/[./]/g, "-")) || list.find(([, n]) => n.toUpperCase().startsWith(raw));
+      if (!hit) { tk.value = ""; tk.placeholder = `${raw} isn't an NYSE or Nasdaq ticker we know`; return; }
+      if (P.rows.length >= 12) { tk.value = ""; tk.placeholder = "Up to 12 stocks"; return; }
+      if (!P.rows.find((r) => r.t === hit[0])) { P.rows.push({ t: hit[0], n: hit[1], amt: 0 }); even(); }
+      tk.value = ""; tk.focus();
+    });
+    document.getElementById("pf-b").addEventListener("change", (e) => { const old = P.budget; P.budget = Math.max(100, Number(e.target.value) || 10000); P.rows.forEach((r) => (r.amt = r.amt * P.budget / old)); save(); drawRows(); });
+    document.getElementById("pf-eq").addEventListener("click", even);
+    document.getElementById("pf-clear").addEventListener("click", () => { P.rows = []; save(); drawRows(); document.getElementById("pf-out").innerHTML = ""; });
+    document.getElementById("pf-go").addEventListener("click", () => analyzePortfolio(P));
+    drawRows();
+    if (P.rows.length) analyzePortfolio(P);
+  }
+  async function analyzePortfolio(P) {
+    const out = document.getElementById("pf-out");
+    const rows = P.rows.filter((r) => r.amt > 0);
+    if (!rows.length) { out.innerHTML = `<div class="warn">Add some stocks and amounts first.</div>`; return; }
+    out.innerHTML = `<p class="muted loading">Getting prices…</p>`;
+    const base = await apiBase();
+    let d;
+    try { const r = await fetch(`${base}/api/quotes?t=${rows.map((r) => encodeURIComponent(r.t)).join(",")}`); d = await r.json(); if (!r.ok) throw new Error(d.error || r.status); }
+    catch (e) { out.innerHTML = `<div class="warn">Couldn't get prices (${esc(String(e.message || e))}).</div>`; return; }
+    const Q = Object.fromEntries(d.quotes.map((q) => [q.ticker, q]));
+    const total = rows.reduce((a, r) => a + r.amt, 0);
+    const H = rows.map((r) => { const q = Q[r.t] || {}; const w = r.amt / total;
+      const c = q.closes || []; const ret = c.length > 1 ? c.at(-1)[1] / c[0][1] - 1 : null;
+      return { ...r, q, w, shares: q.price ? r.amt / q.price : null, ret }; });
+    const wsum = (f) => { let s = 0, ww = 0; H.forEach((h) => { const v = f(h); if (nz(v)) { s += h.w * v; ww += h.w; } }); return ww ? s / ww : null; };
+    const posPE = H.filter((h) => nz(h.q.pe) && h.q.pe > 0);
+    const pe = posPE.length ? posPE.reduce((a, h) => a + h.w, 0) / posPE.reduce((a, h) => a + h.w / h.q.pe, 0) : null;
+    const lossMakers = H.filter((h) => !(nz(h.q.pe) && h.q.pe > 0));
+    const beta = wsum((h) => h.q.beta), yld = wsum((h) => h.q.div_yield);
+    const eff = 1 / H.reduce((a, h) => a + h.w * h.w, 0);
+    const top = H.reduce((a, h) => (h.w > a.w ? h : a), H[0]);
+    const sectors = {}; H.forEach((h) => (sectors[h.q.sector || "Other"] = (sectors[h.q.sector || "Other"] || 0) + h.w));
+    const secList = Object.entries(sectors).sort((a, b) => b[1] - a[1]);
+    // the same mix bought a year ago, held, vs the S&P 500
+    const dates = (d.spy || []).map((p) => p[0]);
+    const at = (c, day) => { let v = null; for (const [dd, cc] of c) { if (dd <= day) v = cc; else break; } return v; };
+    let series = [];
+    if (dates.length > 4) {
+      const start = dates[0];
+      const sh = H.map((h) => { const p0 = at(h.q.closes || [], start) ?? (h.q.closes || [])[0]?.[1]; return p0 ? h.amt / p0 : 0; });
+      const pts = dates.map((dd) => [dd, H.reduce((a, h, i) => a + sh[i] * (at(h.q.closes || [], dd) ?? (h.q.closes || [])[0]?.[1] ?? 0), 0)]);
+      const s0 = d.spy[0][1];
+      series = [{ name: "Your mix", c: "var(--s1)", pts }, { name: "S&P 500 (SPY)", c: "var(--s2)", pts: d.spy.map(([dd, c]) => [dd, total * c / s0]) }];
+    }
+    const yr = series.length ? series[0].pts.at(-1)[1] / total - 1 : null, spyr = series.length ? series[1].pts.at(-1)[1] / total - 1 : null;
+    let peak = -Infinity, mdd = 0; (series[0]?.pts || []).forEach(([, v]) => { peak = Math.max(peak, v); mdd = Math.min(mdd, v / peak - 1); });
+    const checks = [];
+    const ok = (good, text) => checks.push(`<li class="${good ? "chk-ok" : "chk-warn"}">${text}</li>`);
+    ok(H.length >= 5, H.length >= 5 ? `${H.length} stocks: enough that one bad result won't sink the portfolio.` : `Only ${H.length} stock${H.length > 1 ? "s" : ""}. With fewer than five, one company's bad news can dominate.`);
+    ok(top.w <= 0.25, top.w <= 0.25 ? `Largest position is ${esc(top.t)} at ${pct(top.w, 0)}.` : `${esc(top.t)} is ${pct(top.w, 0)} of the money. Above about 25% in one stock, your result mostly depends on that company.`);
+    ok(secList[0][1] <= 0.4, secList[0][1] <= 0.4 ? `Spread across ${secList.length} sectors; the biggest is ${esc(secList[0][0])} at ${pct(secList[0][1], 0)}.` : `${pct(secList[0][1], 0)} is in ${esc(secList[0][0])}. Companies in one sector tend to fall together, so this is less diversified than the number of stocks suggests.`);
+    ok(eff >= 4, `Behaves like about ${eff.toFixed(1)} equally sized stocks ("effective number of holdings").`);
+    if (nz(beta)) ok(beta <= 1.3, beta <= 1.3 ? `Beta ${beta.toFixed(2)}: moves about ${beta < 0.9 ? "less than" : "in line with"} the market.` : `Beta ${beta.toFixed(2)}: expect swings about ${beta.toFixed(1)}× the market's, both ways.`);
+    if (lossMakers.length) ok(false, `${lossMakers.map((h) => esc(h.t)).join(", ")} ${lossMakers.length > 1 ? "have no positive earnings right now, so their prices rest" : "has no positive earnings right now, so its price rests"} on future profits.`);
+    out.innerHTML = `
+      <div class="kpis section">
+        <div class="kpi hero-n"><div class="k">Portfolio</div><div class="v">${usd(total, 0)}</div><div class="n">${H.length} stocks · ${secList.length} sectors</div></div>
+        <div class="kpi"><div class="k">Portfolio P/E</div><div class="v">${mult(pe)}</div><div class="n">what you pay per $1 of earnings</div></div>
+        <div class="kpi"><div class="k">Dividend yield</div><div class="v">${pct(yld)}</div><div class="n">about ${usd(total * (yld || 0), 0)} a year</div></div>
+        <div class="kpi"><div class="k">Beta</div><div class="v">${nz(beta) ? beta.toFixed(2) : "—"}</div><div class="n">1.00 = moves with the market</div></div>
+        <div class="kpi"><div class="k">Past year, same mix</div><div class="v">${signed(yr)}</div><div class="n">S&amp;P 500 ${nz(spyr) ? signed(spyr) : "—"}${mdd < 0 ? ` · worst drop ${pct(-mdd, 0)}` : ""}</div></div>
+      </div>
+      <section class="section card"><div class="card-h"><h2>What this portfolio tells you</h2></div><ul class="checks">${checks.join("")}</ul></section>
+      <div class="grid2 section">
+        <section class="card"><div class="card-h"><h2>Sector mix</h2></div><div class="bars">${secList.map(([s, w]) => `<div class="bar-r"><span>${esc(s)}</span><div class="bar"><i style="width:${(w * 100).toFixed(1)}%"></i></div><b>${pct(w, 0)}</b></div>`).join("")}</div></section>
+        <section class="card"><div class="card-h"><h2>If you'd bought this mix a year ago</h2><span class="note">buy and hold, weekly closes</span></div><div class="chart-wrap" id="pf-chart"></div></section>
+      </div>
+      <section class="section card"><div class="card-h"><h2>Holdings</h2><span class="note">prices from Yahoo Finance · ${esc(d.as_of.slice(0, 10))}</span></div>
+        <div class="scroll"><table><thead><tr><th>Stock</th><th class="hide-sm">Sector</th><th class="r">Amount</th><th class="r">Weight</th><th class="r">Shares</th><th class="r">Price</th><th class="r">P/E</th><th class="r">Yield</th><th class="r hide-sm">Beta</th><th class="r">1 year</th><th class="r">Model</th></tr></thead><tbody>
+        ${H.map((h) => `<tr><td><span class="tk">${esc(h.t)}</span><span class="co">${esc(h.q.name || h.n || "")}</span></td><td class="hide-sm note">${esc(h.q.sector || "")}</td><td class="r num">${usd(h.amt, 0)}</td><td class="r num">${pct(h.w, 0)}</td>
+          <td class="r num">${nz(h.shares) ? h.shares.toFixed(2) : "—"}</td><td class="r num">${usd(h.q.price)}</td><td class="r num">${nz(h.q.pe) && h.q.pe > 0 ? mult(h.q.pe) : "n/m"}</td><td class="r num">${pct(h.q.div_yield)}</td>
+          <td class="r num hide-sm">${nz(h.q.beta) ? h.q.beta.toFixed(2) : "—"}</td><td class="r num">${signed(h.ret)}</td><td class="r"><a class="btn sm" href="#/m/${esc(h.t)}">Model</a></td></tr>`).join("")}
+        </tbody></table></div>
+        <p class="note" style="padding:10px 18px 14px">Portfolio P/E is the weighted harmonic mean of positive P/Es (loss-makers excluded); yield and beta are weighted averages. The one-year line assumes you bought these amounts 52 weeks ago and held; it's history, not a forecast. Practice only, not investment advice.</p></section>`;
+    if (series.length) portfolioChart(document.getElementById("pf-chart"), series);
   }
 
   const ratingOf = (u) => (u >= 0.15 ? "Buy" : u <= -0.1 ? "Sell" : "Hold");
@@ -520,7 +812,7 @@
         <div><div class="note">${esc(m.exchange || "NYSE")}: ${esc(m.ticker)} · ${esc(m.sector)} · ${esc(m.industry || "")}</div>
           <h1 class="dname">${esc(m.name)}</h1>
           <div class="note">Version ${m.version} · generated ${ago(m.generated_at)} · 10-K filed ${esc(d.dates?.tenk_filed || "n/a")} · priced ${esc(m.price_date)} ${qualityPill(m.quality)}</div></div>
-        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a></div>
+        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <button class="btn sm primary-o" id="explain">Explain this model</button> <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a></div>
       </div>
       <div class="kpis">
         <div class="kpi hero-n"><div class="k">12-month price target</div><div class="v">${usd(m.target)}</div><div class="n">${pill(m.rating)} &nbsp;${signed(m.upside)} vs ${usd(m.price)}</div></div>
@@ -542,7 +834,7 @@
       <section class="section card"><div class="card-h"><h2>Share price and model target over time</h2><span class="note">blue: price · orange: target at each build</span></div><div class="chart-wrap" id="hist"></div>
         ${(m.history || []).length > 1 ? `<div class="scroll"><table><thead><tr><th>Build</th><th>Date</th><th class="r">Price</th><th class="r">Target</th><th>Rating</th></tr></thead><tbody>${[...m.history].reverse().map((h) => `<tr><td>v${h.version}</td><td>${esc(h.date)}</td><td class="r num">${usd(h.price)}</td><td class="r num">${usd(h.target)}</td><td>${pill(h.rating)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="note" style="padding:0 18px 14px">Each rebuild adds a point, so this chart shows how the call has moved against the price.</p>`}</section>
 
-      <section class="section card"><div class="card-h"><h2>Bull, base and bear cases</h2><span class="note">switch them in the Excel file on the Scenarios tab (cell D4)</span></div>
+      <section class="section card" id="sec-cases"><div class="card-h"><h2>Bull, base and bear cases</h2><span class="note">switch them in the Excel file on the Scenarios tab (cell D4)</span></div>
         <div class="scroll"><table><thead><tr><th>Assumption</th><th class="r">Bear</th><th class="r">Base</th><th class="r">Bull</th></tr></thead><tbody>
           <tr><td>Revenue growth, first projected year</td>${["bear", "base", "bull"].map((c) => `<td class="r num">${pct(cs[c]?.growth?.[0])}</td>`).join("")}</tr>
           <tr><td>Revenue growth, final projected year</td>${["bear", "base", "bull"].map((c) => `<td class="r num">${pct(cs[c]?.growth?.[4])}</td>`).join("")}</tr>
@@ -570,7 +862,7 @@
 
       ${quarterPanel(m)}
       ${guidancePanel(m)}
-      <section class="section card"><div class="card-h"><h2>Financial summary</h2><span class="note">$mm except per share · shaded columns are projections (base case)</span></div>
+      <section class="section card" id="sec-fin"><div class="card-h"><h2>Financial summary</h2><span class="note">$mm except per share · shaded columns are projections (base case)</span></div>
         <div class="scroll"><table class="fin"><thead><tr><th></th>${years.map((y, i) => `<th class="r${i >= hn ? " proj" : ""}">${esc(y)}</th>`).join("")}</tr></thead><tbody>
           ${row("Revenue", d.is?.revenue, mm)}${row("Revenue growth", d.is?.growth, pct, 1)}${row("Gross margin", d.is?.gm, pct)}
           ${row("EBITDA margin", d.is?.ebitda_m, pct)}${row("EBIT margin", d.is?.ebit_m, pct)}${row("Net income to common", d.is?.ni, mm)}
@@ -598,6 +890,7 @@
       try { await navigator.clipboard.writeText(shareUrl); e.target.textContent = "Link copied"; } catch { prompt("Copy this link", shareUrl); }
     });
     document.getElementById("rebuild").addEventListener("click", () => sessionStorage.setItem("mb_prefill", m.ticker));
+    document.getElementById("explain").addEventListener("click", () => openExplain(m));
 
     if (x) {
       const bounded = Math.min(30, Math.max(4, nz(x.ev_ebitda_now) ? x.ev_ebitda_now : 4));
@@ -707,7 +1000,9 @@
       <p>Every build is saved. Each weekday the site marks every model to market; once a call is 30 days old it is scored (a Buy is working if the stock is up, a Sell if it's down, a Hold if it's within 10%) and compared with the S&amp;P 500. When a company files a new 10-K or 10-Q, its model rebuilds automatically.</p>
       <h2>7. Peers</h2>
       <p>Up to five NYSE or Nasdaq companies, chosen in tiers: first the same Yahoo Finance industry, then the same 4-digit SEC industry code and sector, then the same code, then a related (3-digit) code in the same sector. Candidates come from the SEC code hierarchy plus Yahoo's similar-companies list. A broad 2-digit code group only contributes companies that also share the Yahoo industry, so an appliance maker isn't benchmarked against chip makers. Affiliates (a parent and its listed partnership), blank-check shells and the company's own share classes are excluded. Within a tier the closest in revenue wins: 0.1–10× for same-industry matches, 0.2–5× otherwise. Each model page says why every peer was picked.</p>
-      <h2>8. Limits</h2>
+      <h2>8. Learning tools</h2>
+      <p>Every model page has an <b>Explain this model</b> button that walks through the valuation step by step using that company's own numbers. The <b>Quiz</b> mixes investing basics with questions computed from a real model on the site, and the <b>Practice portfolio</b> shows how a mix of stocks behaves: sector concentration, what you pay for earnings, dividend income, and how the same mix did over the past year against the S&amp;P 500. All educational, none of it advice.</p>
+      <h2>9. Limits</h2>
       <ul>
         <li>Revenue is modelled at the consolidated level: segment detail isn't in standardized XBRL.</li>
         <li>No management guidance, backlog, pricing or one-offs. A company in transition can be badly mispriced.</li>
@@ -755,7 +1050,7 @@
     const h = location.hash.replace(/^#\/?/, "");
     navLib();
     if (!window.__mbChrome) { window.__mbChrome = true; initChrome(); }
-    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "library", "built", "update"].includes(h) ? h : h.startsWith("m/") ? "__" : "")));
+    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + (["method", "library", "built", "update", "portfolio", "quiz"].includes(h) ? h : h.startsWith("m/") ? "__" : "")));
     window.scrollTo(0, 0);
     if (!h || h === "coverage" || h === "fund") { if (h) history.replaceState(null, "", "#/"); generateView(); }
     else if (h === "library") libraryView();
@@ -763,6 +1058,8 @@
     else if (h === "method") method();
     else if (h === "built") built();
     else if (h === "update") updateView();
+    else if (h === "portfolio") portfolioView();
+    else if (h === "quiz") quizView();
     else if (h === "compare" || h.startsWith("compare/")) comparePage(decodeURIComponent(h.slice(8)));
     else if (h.startsWith("m/")) modelPage(decodeURIComponent(h.slice(2)));
     else modelPage(decodeURIComponent(h));

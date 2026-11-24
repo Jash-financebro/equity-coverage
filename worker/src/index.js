@@ -6,6 +6,7 @@
 // GET  /api/library                full library index - owner only (X-Owner-Key header)
 // GET  /m/T                        share page with Open Graph tags, redirects to the model page
 // GET  /api/insights               track record, sector snapshot, totals (aggregates only, no tickers)
+// GET  /api/quotes?t=A,B           practice-portfolio data: price, market cap, P/E, yield, beta, 1y weekly closes (+SPY)
 // POST /api/update?ticker=T        upload an existing model (.xlsx) to be refreshed; returns {id, token}
 // GET  /api/update/status|file/ID  poll / download (token required). Runner endpoints use the GH token.
 // Uploads live in KV (binding UPLOADS) for 6 hours and never touch the public repo.
@@ -28,6 +29,7 @@ export default {
         if (!(await isOwner(req, env))) return json({ error: "The library is private." }, 403, cors);
         return json(await indexFresh(env), 200, cors);
       }
+      if (url.pathname === "/api/quotes" && req.method === "GET") return json(await quotes(url, env, ctx), 200, cors, 300);
       if (url.pathname === "/api/insights" && req.method === "GET") return json(await insights(env, ctx), 200, cors, 300);
       if (url.pathname.startsWith("/api/update")) return await updateRoutes(req, url, env, ctx, cors);
       if (url.pathname === "/api/recent" && req.method === "GET") return json(await recent(env, ctx), 200, cors, 30);
@@ -150,6 +152,54 @@ async function insights(env, ctx) {
       median_wacc: median(xs.map((m) => m.wacc)), median_growth: median(xs.map((m) => m.growth_next)) }))
       .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)),
   };
+}
+
+// ------------------------------------------------------------------ quotes for the practice portfolio (Yahoo Finance)
+const YUA = { "User-Agent": "Mozilla/5.0 (ModelBuilder)" };
+async function yahooAuth(ctx) {
+  return cached(ctx, "yahoo-crumb-v1", 6 * 3600, async () => {
+    const r = await fetch("https://fc.yahoo.com", { headers: YUA, redirect: "manual" });
+    const cookie = (r.headers.get("set-cookie") || "").split(";")[0];
+    const c = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", { headers: { ...YUA, cookie } });
+    const crumb = c.ok ? (await c.text()).trim() : "";
+    return { cookie, crumb };
+  });
+}
+async function quoteOne(t, sector, ctx) {
+  return cached(ctx, `quote-v1-${t}`, 1800, async () => {
+    const out = { ticker: t, sector };
+    try {
+      const ch = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?range=1y&interval=1wk`, { headers: YUA }).then((r) => r.json());
+      const res = ch.chart?.result?.[0] || {};
+      const ts = res.timestamp || [], cl = res.indicators?.quote?.[0]?.close || [];
+      out.closes = ts.map((x, i) => [new Date(x * 1000).toISOString().slice(0, 10), cl[i]]).filter((p) => p[1] != null).map(([d, c]) => [d, Math.round(c * 100) / 100]);
+      out.price = res.meta?.regularMarketPrice ?? out.closes.at(-1)?.[1] ?? null;
+      out.name = res.meta?.longName || res.meta?.shortName || null;
+    } catch (_) { /* leave blank */ }
+    try {
+      const { cookie, crumb } = await yahooAuth(ctx);
+      const q = await fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(t)}?modules=price,summaryDetail,defaultKeyStatistics&crumb=${encodeURIComponent(crumb)}`,
+        { headers: { ...YUA, cookie } }).then((r) => r.json());
+      const r0 = q.quoteSummary?.result?.[0] || {}, sd = r0.summaryDetail || {}, ks = r0.defaultKeyStatistics || {}, pr = r0.price || {};
+      const raw = (o) => (o && typeof o === "object" ? o.raw ?? null : o ?? null);
+      Object.assign(out, { name: pr.longName || pr.shortName || out.name, market_cap: raw(pr.marketCap) ?? raw(sd.marketCap),
+        pe: raw(sd.trailingPE), forward_pe: raw(sd.forwardPE), div_yield: raw(sd.dividendYield) ?? raw(sd.trailingAnnualDividendYield) ?? 0,
+        beta: raw(sd.beta) ?? raw(ks.beta), high_52w: raw(sd.fiftyTwoWeekHigh), low_52w: raw(sd.fiftyTwoWeekLow) });
+      if (!out.price) out.price = raw(pr.regularMarketPrice);
+    } catch (_) { /* summary optional */ }
+    return out;
+  });
+}
+async function quotes(url, env, ctx) {
+  const want = [...new Set(String(url.searchParams.get("t") || "").toUpperCase().split(/[,\s]+/).map((x) => x.replace(/[./]/g, "-")).filter(Boolean))];
+  if (!want.length) fail("Add at least one ticker.");
+  if (want.length > 12) fail("Up to 12 tickers at a time.");
+  const list = await listed(env, ctx);
+  const bad = want.filter((t) => !list[t]);
+  if (bad.length) fail(`Not NYSE or Nasdaq tickers we know: ${bad.join(", ")}`, 404);
+  const [qs, spy] = await Promise.all([Promise.all(want.map((t) => quoteOne(t, list[t].sector, ctx))), quoteOne("SPY", "Index", ctx)]);
+  qs.forEach((q) => { q.name = q.name || list[q.ticker].name; });
+  return { as_of: new Date().toISOString(), quotes: qs, spy: spy.closes || [] };
 }
 
 // ------------------------------------------------------------------ model updates (upload an existing workbook)
