@@ -14,6 +14,7 @@ permissions:
   pages: write
   id-token: write
   issues: write
+  packages: read
 
 concurrency:
   group: refresh
@@ -23,6 +24,11 @@ jobs:
   refresh:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    container:
+      image: ghcr.io/jash-financebro/equity-coverage-runner:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     environment:
       name: github-pages
       url: ${{ steps.deploy_try.outputs.page_url || steps.deploy.outputs.page_url }}
@@ -32,45 +38,43 @@ jobs:
           ref: main                 # always start from the latest data commit, not the triggering SHA
           fetch-depth: 0            # model "last updated" dates come from git history
 
-      - name: Install LibreOffice (headless) + Python deps
-        run: |
-          sudo rm -f /var/lib/man-db/auto-update          # skip the slow man-db trigger
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-            libreoffice-calc-nogui python3-uno fonts-liberation
-          /usr/bin/python3 -m pip install --break-system-packages -q requests pyyaml openpyxl reportlab matplotlib
+      - name: Trust the workspace (git inside the container)
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Self-test (offline fixtures)
         run: |
-          /usr/bin/python3 tests/test_builder.py
-          /usr/bin/python3 tests/test_offline.py
-          /usr/bin/python3 tests/test_generate.py
+          python3 tests/test_builder.py
+          python3 tests/test_offline.py
+          python3 tests/test_generate.py
 
       - name: NYSE universe for the Generate tab (rebuilt weekly from SEC bulk data)
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
-        run: /usr/bin/python3 pipeline/universe.py --if-stale 7
+        run: python3 pipeline/universe.py --if-stale 7
 
       - name: Refresh every model from SEC EDGAR + market data
         env:
           # SEC asks every automated client to identify itself: "Name email@domain.com".
           # Set it under Settings → Secrets and variables → Actions → Variables.
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
-        run: /usr/bin/python3 pipeline/run.py
+        run: python3 pipeline/run.py
 
       - name: Open an issue for each new SEC filing (GitHub emails you)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          /usr/bin/python3 - <<'PY'
-          import json, subprocess
+          python3 - <<'PY'
+          import json, os, requests
           for a in json.load(open("site/data/alerts.json")):
               title = f"{a['ticker']}: new {a['form']} filed {a['filed']} — review the model"
               body = (f"SEC EDGAR shows a new **{a['form']}** for **{a['ticker']}** (period {a['period']}), "
                       f"filed {a['filed']}.\n\n- Filing: {a['url']}\n- Model last updated: {a['model_date']}\n\n"
                       "Roll the historicals and assumptions, commit the updated model, and close this issue. "
                       "The site shows a *Review* flag until the model is newer than the filing.")
-              subprocess.run(["gh", "issue", "create", "--title", title, "--body", body], check=False)
+              requests.post(f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues",
+                            headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                                     "Accept": "application/vnd.github+json"},
+                            json={"title": title, "body": body}, timeout=30)
           PY
 
       - name: Save refreshed data to the repo (keeps target-price history)
