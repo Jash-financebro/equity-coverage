@@ -26,7 +26,12 @@ SIC_SECTORS = [
     ((4900, 4991), "Utilities"),
     ((1300, 1389), "Energy"), ((2900, 2999), "Energy"), ((4610, 4619), "Energy"), ((5171, 5172), "Energy"),
     ((1200, 1299), "Energy"),
-    ((3570, 3579), "Information Technology"), ((3600, 3699), "Information Technology"),
+    ((3570, 3579), "Information Technology"), ((3660, 3679), "Information Technology"),
+    ((3630, 3639), "Consumer Discretionary"), ((3600, 3699), "Industrials"),
+    ((7830, 7839), "Communication Services"), ((7200, 7299), "Consumer Discretionary"),
+    ((7500, 7699), "Industrials"), ((8300, 8399), "Consumer Discretionary"),
+    ((3900, 3999), "Consumer Discretionary"), ((3100, 3199), "Consumer Discretionary"),
+    ((2200, 2299), "Consumer Discretionary"), ((3020, 3029), "Consumer Discretionary"),
     ((3810, 3839), "Information Technology"), ((7370, 7379), "Information Technology"),
     ((4800, 4899), "Communication Services"), ((2700, 2799), "Communication Services"),
     ((7810, 7829), "Communication Services"), ((7900, 7999), "Consumer Discretionary"),
@@ -43,6 +48,7 @@ SIC_SECTORS = [
     ((4000, 4799), "Industrials"), ((7300, 7399), "Industrials"), ((8700, 8799), "Industrials"),
     ((100, 999), "Consumer Staples"),
 ]
+MAPPING_VERSION = 2  # bump when SIC_SECTORS changes so the universe rebuilds
 SECTORS = sorted({s for _, s in SIC_SECTORS} | {"Other"})
 
 
@@ -110,7 +116,7 @@ def build() -> dict:
     companies.sort(key=lambda c: c["ticker"])
     import datetime as dt
     return {"generated_from": "SEC EDGAR company_tickers_exchange.json + bulk submissions", "count": len(companies),
-            "built_at": dt.date.today().isoformat(),
+            "built_at": dt.date.today().isoformat(), "mapping_version": MAPPING_VERSION,
             "sectors": SECTORS, "companies": companies}
 
 
@@ -121,6 +127,8 @@ def load() -> dict:
 def stale(days: int) -> bool:
     import datetime as dt
     try:
+        if load().get("mapping_version") != MAPPING_VERSION:
+            return True
         built = dt.date.fromisoformat(load().get("built_at", "2000-01-01"))
     except Exception:  # noqa: BLE001
         return True
@@ -135,6 +143,8 @@ if __name__ == "__main__":
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(u, separators=(",", ":")))
     # compact search index for the browser: ticker, name, sector
+    # funds / trusts without an SIC code have no operating financials to model: keep them out of search
     (OUT.parent / "search.json").write_text(json.dumps(
-        [[c["ticker"], c["name"], c["sector"]] for c in u["companies"]], separators=(",", ":")))
+        [[c["ticker"], c["name"], c["sector"]] for c in u["companies"] if c.get("sic") and c["sic"] != "0000"],
+        separators=(",", ":")))
     print(f"NYSE universe: {u['count']} companies → {OUT}")
