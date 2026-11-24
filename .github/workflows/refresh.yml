@@ -23,7 +23,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 60
     container:
       image: ghcr.io/jash-financebro/equity-coverage-runner:latest
       credentials:
@@ -50,6 +50,7 @@ jobs:
           python3 tests/test_quarter.py
           python3 tests/test_guidance.py
           python3 tests/test_update.py
+          python3 tests/test_funds.py
 
       - name: NYSE + Nasdaq universe for the Generate tab (rebuilt weekly from SEC bulk data)
         env:
@@ -60,6 +61,16 @@ jobs:
         env:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
         run: python3 pipeline/universe_stats.py || echo "::warning::universe stats failed"
+
+      - name: Screener dataset (SEC frames + prices for every company)
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: python3 pipeline/screener_data.py || echo "::warning::screener data failed"
+
+      - name: 13F holdings of tracked funds
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: python3 pipeline/funds.py --if-stale 1 || echo "::warning::funds failed"
 
       - name: Refresh every model from SEC EDGAR + market data
         env:
@@ -90,7 +101,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data site/downloads site/universe models
+          git add site/data site/downloads site/universe site/funds data/cusip_map.json models
           git diff --cached --quiet || git commit -m "Data refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
           # a newer refresh always wins over older generated data
           git push || (git pull --rebase -X theirs origin main && git push)
