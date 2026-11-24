@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-24 00:52 UTC",
+ "generated_at": "2026-11-24 01:16 UTC",
  "site": {
   "title": "JJ Rajgandhi \u2014 Equity Coverage",
   "tagline": "Live valuation models, refreshed from SEC 10-K filings and market prices.",
@@ -25,7 +25,7 @@
    "target": 339.97,
    "upside": 0.1506,
    "rating": "Buy",
-   "refreshed_at": "2026-11-24 00:52 UTC",
+   "refreshed_at": "2026-11-24 01:16 UTC",
    "status": "ok",
    "target_stale": false,
    "error": null,
@@ -37,6 +37,7 @@
    "street_median": 347.0,
    "street_mean": 340.8,
    "spark": [
+    282.33,
     291.69,
     294.13,
     295.86,
@@ -95,8 +96,7 @@
     301.97,
     296.49,
     295.37,
-    294.84,
-    295.46
+    294.84
    ],
    "has_report": true
   }
