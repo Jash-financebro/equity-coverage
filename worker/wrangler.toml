@@ -6,4 +6,7 @@ workers_dev = true
 [vars]
 GH_REPO = "Jash-financebro/equity-coverage"
 ALLOWED_ORIGINS = "https://jash-financebro.github.io"
+SITE_URL = "https://jash-financebro.github.io/equity-coverage/"
+# SHA-256 of the owner key that unlocks the Library (the key itself is never stored in the repo)
+OWNER_KEY_SHA256 = "213b1312e3e518f700de19172f38842d00b9479e5e1614026f82e6eaa5a8d223"
 # GH_TOKEN is a secret: set by .github/workflows/deploy-worker.yml from the GH_DISPATCH_TOKEN repo secret

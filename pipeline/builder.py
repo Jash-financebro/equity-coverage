@@ -930,6 +930,17 @@ def _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF):
 
     CV.put("C43", "Sources: SEC EDGAR (10-K XBRL) for financials; Yahoo Finance for prices, beta and consensus. "
                   "Automated model for educational use, not investment advice.")
+    kind = ctx.get("sector_kind")
+    if kind:
+        what = {"bank": "a bank", "insurer": "an insurer", "reit": "a REIT", "financial": "a financial company"}[kind]
+        metric = "P/FFO" if kind == "reit" else "P/B, P/TBV and ROE"
+        CV.put("C45", f"Note: this is {what}. EV/EBITDA and unlevered free cash flow fit it poorly, so treat the DCF "
+                      f"as a rough cross-check and lean on {metric} (shown on the model's web page).")
+        ws.merge_cells("C45:J45")
+        ws["C45"].fill = PatternFill("solid", fgColor=HILITE)
+        ws["C45"].alignment = Alignment(wrap_text=True, vertical="top")
+        ws.row_dimensions[45].height = 32
+        ws.print_area = "B2:K46"
     ws.merge_cells("C43:J43")
     ws["C43"].alignment = Alignment(wrap_text=True, vertical="top")
     ws.row_dimensions[43].height = 32

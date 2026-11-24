@@ -1,0 +1,62 @@
+name: Rebuild library
+run-name: Rebuild every library model on the current code
+
+# Re-runs every model in the library through the current pipeline (new tabs, data, page details).
+# Started by hand, or by committing a change to .github/rebuild-library.txt
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths: [".github/rebuild-library.txt"]
+
+permissions:
+  contents: write
+  packages: read
+
+concurrency:
+  group: rebuild-library
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    container:
+      image: ghcr.io/jash-financebro/equity-coverage-runner:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - name: Rebuild each model
+        env:
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: |
+          python3 -c "import json; print('\n'.join(m['ticker'] for m in json.load(open('library/index.json'))['models']))" > /tmp/tickers
+          echo "Rebuilding $(wc -l < /tmp/tickers) models"
+          while read -r T; do
+            echo "::group::$T"
+            timeout 900 python3 pipeline/generate.py "$T" --rebuild || echo "::warning::$T failed to rebuild"
+            echo "::endgroup::"
+          done < /tmp/tickers
+      - name: Save
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A library ':!library/index.json'
+          git commit -q -m "Library: rebuild every model on the current pipeline" || exit 0
+          for i in 1 2 3 4 5 6 7 8; do
+            git fetch -q origin main
+            git checkout -q -- library/index.json 2>/dev/null || rm -f library/index.json
+            git rebase -q -X ours origin/main || { git rebase --abort; git pull -q --rebase -X theirs origin main; }
+            python3 -c "import sys; sys.path.insert(0, 'pipeline'); import generate; generate.update_index()"
+            git add library/index.json
+            made=0; git commit -q -m "Library index: rebuild" && made=1
+            git push -q origin HEAD:main && exit 0
+            [ "$made" = 1 ] && git reset -q --hard HEAD~1
+            sleep $((RANDOM % 6 + 2))
+          done
+          exit 1

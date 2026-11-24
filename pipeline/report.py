@@ -399,6 +399,17 @@ def make(dest, rec, m, fin, rt, mkt, filings, recent, qs, peers, subs):
     risks = [("Automated assumptions.", "Every driver comes from the company's own history and simple rules (growth "
               "fading to 3%, margins at the three-year average). Management guidance, backlog, pricing and one-offs are not "
               "in the model, so a company in transition can be badly mispriced by it.")]
+    sc_ = rec.get("sector_check") or {}
+    if sc_.get("kind"):
+        extra = ""
+        if sc_.get("metric") == "P/B" and nz(sc_.get("pb")):
+            extra = (f" The stock trades at {mult(sc_['pb'])} book value"
+                     + (f" against a peer median of {mult(sc_['peer_multiple'])}" if nz(sc_.get("peer_multiple")) else "")
+                     + (f", with ROE of {pct(sc_['roe'])}" if nz(sc_.get("roe")) else "") + ".")
+        elif sc_.get("metric") == "P/FFO" and nz(sc_.get("pffo")):
+            extra = (f" It trades at {mult(sc_['pffo'])} approximate FFO"
+                     + (f" against a peer median of {mult(sc_['peer_multiple'])}" if nz(sc_.get("peer_multiple")) else "") + ".")
+        risks.append(("Model fit for this sector.", sc_["note"] + extra))
     if nz(dcf["tv_pct"]) and dcf["tv_pct"] > 0.75:
         risks.append(("Terminal value concentration.", f"{pct(dcf['tv_pct'], 0)} of enterprise value sits in the "
                       "terminal value, so small changes in WACC or long-run growth move the target a lot (see the "

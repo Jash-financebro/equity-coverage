@@ -118,7 +118,7 @@ def _annual_values(rows: list[dict], kind: str) -> dict[str, tuple[float, str]]:
                 continue
         prev = out.get(r["end"])
         if prev is None or r.get("filed", "") >= prev[1]:
-            out[r["end"]] = (float(r["val"]), r.get("filed", ""))
+            out[r["end"]] = (float(r["val"]), r.get("filed", ""), r.get("accn", ""), r.get("form", ""))
     return out
 
 
@@ -130,6 +130,7 @@ def build(facts: dict, years: int = 5) -> dict:
         raise NonUSD(cur)
     series: dict[str, dict[str, float]] = {}
     used: dict[str, str] = {}
+    src: dict[str, dict[str, tuple]] = {}  # key -> end -> (concept, accn, filed, form)
     for key, _label, kind, concepts in LINE_ITEMS:
         unit = "USD/shares" if key in PER_SHARE else ("shares" if key in SHARE_COUNTS else "USD")
         # pick the concept with the most recent data as primary, fill older gaps from the rest
@@ -142,8 +143,10 @@ def build(facts: dict, years: int = 5) -> dict:
         merged: dict[str, float] = {}
         for _, c, vals in ranked:
             used.setdefault(key, c)
-            for end, (v, _f) in vals.items():
-                merged.setdefault(end, v)
+            for end, (v, f_, accn, form) in vals.items():
+                if end not in merged:
+                    merged[end] = v
+                    src.setdefault(key, {})[end] = (c, accn, f_, form)
         series[key] = merged
 
     # fiscal year ends = flow periods reported for revenue / net income
@@ -189,7 +192,8 @@ def build(facts: dict, years: int = 5) -> dict:
             used[key] = used.get(key, "not tagged") + " (untagged years = 0)"
 
     labels = [f"FY{_d(e).year}" for e in ends]
-    return {"periods": ends, "labels": labels, "items": items, "concepts": used,
+    sources_ = {key: [src.get(key, {}).get(e) for e in ends] for key, *_ in LINE_ITEMS}
+    return {"periods": ends, "labels": labels, "items": items, "concepts": used, "sources": sources_,
             "meta": {key: {"label": label, "kind": kind} for key, label, kind, _ in LINE_ITEMS}}
 
 
@@ -206,3 +210,12 @@ def shares_outstanding(facts: dict) -> float | None:
     latest_filed = max(r.get("filed", "") for r in rows if r["end"] == latest)
     total = sum(r["val"] for r in rows if r["end"] == latest and r.get("filed", "") == latest_filed)
     return round(total / 1e6, 3)
+
+
+def latest_annual(facts: dict, concepts: list[str], kind: str = "stock") -> float | None:
+    """Latest 10-K value ($mm) of the first concept that has data (used for one-off checks like goodwill)."""
+    for c in concepts:
+        vals = _annual_values(_facts(facts, c, "USD"), kind)
+        if vals:
+            return round(vals[max(vals)][0] / 1e6, 3)
+    return None

@@ -1,7 +1,10 @@
-// Equity Coverage API - Cloudflare Worker.
+// Model Builder API - Cloudflare Worker.
 // POST /api/generate {ticker}      validate NYSE / Nasdaq ticker, dedupe, rate-limit, dispatch the GitHub build
 // GET  /api/status?ticker=T&since= queued / running / ready / failed (+ model when ready)
-// GET  /api/library                shared library index (every model anyone generated, by sector)
+// GET  /api/recent                 models generated in the past 24 hours + most-generated this week (public, light)
+// GET  /api/model?ticker=T         one model's full meta (summary page, sliders, sources)
+// GET  /api/library                full library index - owner only (X-Owner-Key header)
+// GET  /m/T                        share page with Open Graph tags, redirects to the model page
 // GET  /api/health
 // Secrets/vars: GH_TOKEN (fine-grained PAT: Actions RW, Contents R), GH_REPO, ALLOWED_ORIGINS (comma list)
 
@@ -17,7 +20,13 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
     try {
       if (url.pathname === "/api/health") return json({ ok: true, repo: env.GH_REPO }, 200, cors);
-      if (url.pathname === "/api/library" && req.method === "GET") return json(await library(env, ctx), 200, cors, 30);
+      if (url.pathname === "/api/library" && req.method === "GET") {
+        if (!(await isOwner(req, env))) return json({ error: "The library is private." }, 403, cors);
+        return json(await indexFresh(env), 200, cors);
+      }
+      if (url.pathname === "/api/recent" && req.method === "GET") return json(await recent(env, ctx), 200, cors, 30);
+      if (url.pathname === "/api/model" && req.method === "GET") return json(await model(url, env, ctx), 200, cors, 60);
+      if (url.pathname.startsWith("/m/") && req.method === "GET") return sharePage(url, env, ctx);
       if (url.pathname === "/api/status" && req.method === "GET") return json(await status(url, env, ctx), 200, cors);
       if (url.pathname === "/api/generate" && req.method === "POST") return json(await generate(req, env, ctx), 200, cors);
       return json({ error: "not found" }, 404, cors);
@@ -34,7 +43,7 @@ function corsHeaders(req, env) {
   const allowed = (env.ALLOWED_ORIGINS || "*").split(",").map((s) => s.trim());
   const ok = allowed.includes("*") || allowed.includes(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin);
   return { "Access-Control-Allow-Origin": ok ? origin || "*" : allowed[0], "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-           "Access-Control-Allow-Headers": "Content-Type", Vary: "Origin" };
+           "Access-Control-Allow-Headers": "Content-Type, X-Owner-Key", Vary: "Origin" };
 }
 function json(obj, status, headers, maxAge = 0) {
   return new Response(JSON.stringify(obj), { status, headers: { ...headers, "Content-Type": "application/json",
@@ -90,7 +99,70 @@ async function rateLimit(req, ctx) {
   ctx.waitUntil(cache.put(key, new Response(String(n + 1), { headers: { "Cache-Control": "max-age=3600" } })));
 }
 
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+async function isOwner(req, env) {
+  const k = req.headers.get("X-Owner-Key") || "";
+  return !!(k && env.OWNER_KEY_SHA256 && (await sha256(k)) === env.OWNER_KEY_SHA256);
+}
+const slim = (m) => ({ ticker: m.ticker, name: m.name, sector: m.sector, industry: m.industry, exchange: m.exchange,
+  price: m.price, target: m.target, upside: m.upside, rating: m.rating, scenarios: m.scenarios,
+  generated_at: m.generated_at, version: m.version, times_generated: m.times_generated, files: m.files, wacc: m.wacc,
+  peers: m.peers, dcf_value: m.dcf_value, comps_value: m.comps_value });
+const metaPath = (m) => {
+  const u = (m.files && m.files.xlsx) || "";
+  const i = u.indexOf("/main/");
+  return i < 0 ? null : u.slice(i + 6, u.lastIndexOf("/") + 1) + "meta.json";
+};
+
 // ------------------------------------------------------------------ routes
+async function recent(env, ctx) {
+  const idx = await library(env, ctx);
+  const now = Date.now();
+  const age = (m) => now - Date.parse(m.generated_at || 0);
+  const day = idx.models.filter((m) => age(m) < 24 * 3600e3).map(slim);
+  const trending = idx.models.filter((m) => age(m) < 7 * 24 * 3600e3)
+    .sort((a, b) => (b.times_generated || 1) - (a.times_generated || 1) || age(a) - age(b)).slice(0, 8).map(slim);
+  return { updated_at: idx.updated_at, models: day, trending };
+}
+
+async function model(url, env, ctx) {
+  const t = String(url.searchParams.get("ticker") || "").toUpperCase().replace(/[./]/g, "-");
+  if (!t) fail("ticker required");
+  const idx = await library(env, ctx);
+  const m = idx.models.find((x) => x.ticker === t);
+  if (!m) fail(`No model for ${t} yet. Generate one first.`, 404);
+  const p = metaPath(m);
+  const meta = p ? await cached(ctx, `meta-${t}-${m.version}`, 3600, () => rawFile(env, p)) : null;
+  return meta || m;
+}
+
+async function sharePage(url, env, ctx) {
+  const t = decodeURIComponent(url.pathname.slice(3)).toUpperCase().replace(/[^A-Z0-9-]/g, "");
+  const site = env.SITE_URL || "https://jash-financebro.github.io/equity-coverage/";
+  const dest = `${site}#/m/${t}`;
+  let m = null;
+  try { m = (await library(env, ctx)).models.find((x) => x.ticker === t); } catch (_) { /* fall through */ }
+  const e = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const f = (v) => (v == null ? "n/a" : "$" + Number(v).toFixed(2));
+  const title = m ? `${m.ticker} · ${f(m.target)} target · ${m.rating}` : `${t} · Model Builder`;
+  const desc = m ? `${m.name}: ${m.rating} with a ${f(m.target)} 12-month target (${m.upside >= 0 ? "+" : ""}${(m.upside * 100).toFixed(1)}% vs ${f(m.price)}). Bear / base / bull ${f(m.scenarios?.bear)} / ${f(m.scenarios?.base)} / ${f(m.scenarios?.bull)}. Full Excel model built from SEC 10-K data.`
+    : "Full three-statement Excel model, DCF and scenarios for any NYSE or Nasdaq company, built from SEC 10-K data.";
+  const img = m?.files?.card || "";
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${e(title)}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Model Builder">
+<meta property="og:title" content="${e(title)}"><meta property="og:description" content="${e(desc)}">
+<meta property="og:url" content="${e(url.href)}">${img ? `<meta property="og:image" content="${e(img)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">` : ""}
+<meta name="twitter:card" content="${img ? "summary_large_image" : "summary"}"><meta name="twitter:title" content="${e(title)}"><meta name="twitter:description" content="${e(desc)}">${img ? `<meta name="twitter:image" content="${e(img)}">` : ""}
+<meta http-equiv="refresh" content="0;url=${e(dest)}"><link rel="canonical" href="${e(dest)}"></head>
+<body style="font-family:system-ui;background:#0f1720;color:#e6edf3;padding:40px"><p>Opening <a style="color:#58a6ff" href="${e(dest)}">${e(title)}</a>…</p>
+<script>location.replace(${JSON.stringify(dest)})</script></body></html>`;
+  return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" } });
+}
+
 async function generate(req, env, ctx) {
   const body = await req.json().catch(() => ({}));
   const ticker = String(body.ticker || "").toUpperCase().trim().replace(/[./]/g, "-");

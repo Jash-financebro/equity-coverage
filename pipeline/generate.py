@@ -97,7 +97,8 @@ def pick_peers(me: dict, uni: list[dict], my_rev: float | None, n: int = 5) -> l
                       "street_median": q.get("target_median"), "street_mean": q.get("target_mean"),
                       "net_debt": last("short_term_debt") + last("long_term_debt") - last("cash"),
                       "ebitda": last("operating_income") + last("d_and_a"), "eps": last("eps_diluted"),
-                      "revenue": p["rev"]})
+                      "revenue": p["rev"], "equity": last("equity"), "ni": last("net_income"),
+                      "da": last("d_and_a")})
     return peers
 
 
@@ -138,6 +139,16 @@ def read_model(path: Path, T: str) -> dict:
                 "upside": vs(15), "cases": {n: {"g1": vs(19, c), "g5": vs(20, c), "cogs": vs(21, c), "tg": vs(22, c),
                                                 "model": vs(23, c), "target": vs(24, c), "upside": vs(25, c)}
                                             for n, c in (("bear", "D"), ("base", "E"), ("bull", "F"))}}
+    m["dcf"]["tax_rate"] = [g("DCF", f"{c}6") for c in "GHIJK"]
+    m["val"]["anchored_base"], m["val"]["base_model"] = vs(45), vs(29)
+    rbx = wb[f"{T} Revenue Build"]
+    m["rb_cases"] = {
+        "growth": {n: [rbx[f"{c}{r}"].value for c in "GHIJK"] for n, r in (("bull", 9), ("base", 10), ("bear", 11))},
+        "cogs": {n: rbx[f"G{r}"].value for n, r in (("bull", 19), ("base", 20), ("bear", 21))},
+        "tg": {n: rbx[f"D{r}"].value for n, r in (("bull", 40), ("base", 41), ("bear", 42))},
+        "exit_factor": {n: rbx[f"{c}44"].value for n, c in (("bull", "D"), ("base", "E"), ("bear", "F"))},
+    }
+    m["tenk_filed"] = wb["Live_Data"]["B11"].value
     rb = wb[f"{T} Revenue Build"]
     m["assumptions"] = {"stance": rb["D6"].value, "opex": rb["G23"].value, "capex": rb["G25"].value,
                         "tax": rb["G28"].value, "base_growth": [rb[f"{c}10"].value for c in "GHIJK"]}
@@ -157,11 +168,168 @@ def read_model(path: Path, T: str) -> dict:
     return m
 
 
+SEC_ARCHIVE = "https://www.sec.gov/Archives/edgar/data"
+
+
+def sector_kind(sic) -> str | None:
+    """Businesses where EV/EBITDA and free cash flow don't describe value well."""
+    try:
+        n = int(sic)
+    except (TypeError, ValueError):
+        return None
+    if 6020 <= n <= 6036:
+        return "bank"
+    if 6311 <= n <= 6411:
+        return "insurer"
+    if n == 6798:
+        return "reit"
+    if 6100 <= n <= 6299:
+        return "financial"
+    return None
+
+
+def _med(xs):
+    xs = sorted(x for x in xs if x is not None and x > 0)
+    if not xs:
+        return None
+    k = len(xs) // 2
+    return xs[k] if len(xs) % 2 else (xs[k - 1] + xs[k]) / 2
+
+
+def sector_check(me, fin, facts, price, shares, peers) -> dict | None:
+    kind = sector_kind(me.get("sic"))
+    if not kind or not shares:
+        return None
+    it = fin["items"]
+    last = lambda k, i=-1: (it.get(k) or [None])[i] if len(it.get(k) or []) >= -i else None  # noqa: E731
+    eq, ni = last("equity"), last("net_income")
+    out = {"kind": kind}
+    if kind in ("bank", "insurer", "financial"):
+        gw = fundamentals.latest_annual(facts, ["Goodwill"]) or 0
+        intang = fundamentals.latest_annual(facts, ["IntangibleAssetsNetExcludingGoodwill",
+                                                    "FiniteLivedIntangibleAssetsNet"]) or 0
+        bvps = eq / shares if eq else None
+        tbvps = (eq - gw - intang) / shares if eq else None
+        eq_prev = last("equity", -2)
+        roe = ni / ((eq + eq_prev) / 2) if ni and eq and eq_prev else None
+        peer_pb = _med([p["price"] * p["shares"] / p["equity"] for p in peers if p.get("equity")])
+        out.update({"metric": "P/B", "bvps": bvps, "tbvps": tbvps, "pb": price / bvps if bvps else None,
+                    "ptbv": price / tbvps if tbvps and tbvps > 0 else None, "roe": roe, "peer_multiple": peer_pb,
+                    "implied_value": peer_pb * bvps if peer_pb and bvps else None,
+                    "note": ("Banks, insurers and other financials are valued on book value and returns on equity: "
+                             "debt is their raw material, so EV/EBITDA and unlevered free cash flow don't apply. "
+                             "Read the DCF here as a rough cross-check and lean on P/B, P/TBV and ROE.")})
+    else:
+        da = last("d_and_a") or 0
+        ffo = (ni or 0) + da
+        peer_pffo = _med([p["price"] * p["shares"] / (p["ni"] + p["da"]) for p in peers
+                          if p.get("ni") is not None and p.get("da") is not None and (p["ni"] + p["da"]) > 0])
+        ffops = ffo / shares
+        out.update({"metric": "P/FFO", "ffo": ffo, "ffo_ps": ffops, "pffo": price / ffops if ffops > 0 else None,
+                    "peer_multiple": peer_pffo, "implied_value": peer_pffo * ffops if peer_pffo and ffops > 0 else None,
+                    "note": ("REITs are valued on funds from operations (net income plus real-estate depreciation, "
+                             "approximated here without gains on sales). Depreciation understates what the "
+                             "buildings are worth, so lean on P/FFO against peers.")})
+    return {k: (round(v, 4) if isinstance(v, float) else v) for k, v in out.items()}
+
+
+def detail_block(model, fin, me, mkt, rec) -> dict:
+    """Everything the model page and the in-browser sliders need, read from the finished workbook."""
+    m, years = model, model["years"]
+    hist_n = 3
+    pick = lambda d, ks: {k: d.get(k) for k in ks}  # noqa: E731
+    rbc = m["rb_cases"]
+    base_g = rbc["growth"]["base"]
+    cases = {}
+    for k in ("bull", "base", "bear"):
+        c = m["val"]["cases"][k]
+        cases[k] = {"growth": rbc["growth"][k], "growth_delta": [a - b for a, b in zip(rbc["growth"][k], base_g)],
+                    "cogs": rbc["cogs"][k], "margin_delta": -(rbc["cogs"][k] - rbc["cogs"]["base"]),
+                    "tg": rbc["tg"][k], "exit_factor": rbc["exit_factor"][k],
+                    "model": c["model"], "target": c["target"], "upside": c["upside"]}
+    d = m["dcf"]
+    dcf_inputs = {
+        "rev0": m["is"]["revenue"][hist_n - 1], "rev": m["is"]["revenue"][hist_n:], "ebit": d["ebit"], "da": d["da"],
+        "capex": d["capex"], "nwc": d["nwc"], "tax": d["tax_rate"], "wacc": m["wacc"]["wacc"], "g": d["g"],
+        "ev_ebitda_now": d["ev_ebitda_now"], "debt": d["debt"], "cash": d["cash"],
+        "nci_ratio": (d["nci"] / d["eq"]) if d.get("eq") else 0, "shares": d["shares"],
+        "comps_value": m["val"]["comps"], "w_dcf": m["val"]["w_dcf"], "w_exit": m["val"]["w_exit"],
+        "w_comps": m["val"]["w_comps"], "anchored_base": m["val"]["anchored_base"],
+        "base_model": m["val"]["base_model"], "price": rec["price"],
+        "check": {"dcf": m["val"]["dcf"], "exit": m["val"]["exit"], "model": m["val"]["model_value"],
+                  "target": m["val"]["target"]},
+    }
+    src = []
+    labels = fin["labels"][-hist_n:]
+    for key, label, _kind, _c in fundamentals.LINE_ITEMS:
+        vals = (fin["items"].get(key) or [])[-hist_n:]
+        refs = (fin.get("sources", {}).get(key) or [])[-hist_n:]
+        if not any(v not in (None, 0) for v in vals):
+            continue
+        links = []
+        for r in refs:
+            if r and r[1]:
+                links.append({"form": r[3] or "10-K", "filed": r[2], "accn": r[1],
+                              "url": f"{SEC_ARCHIVE}/{me['cik']}/{r[1].replace('-', '')}/"})
+            else:
+                links.append(None)
+        concept = next((r[0] for r in refs if r), fin["concepts"].get(key))
+        src.append({"key": key, "label": label, "concept": concept, "values": vals, "filings": links,
+                    "concept_url": (f"https://data.sec.gov/api/xbrl/companyconcept/CIK{int(me['cik']):010d}/us-gaap/"
+                                    f"{concept}.json") if concept and " " not in concept else None})
+    hist = mkt.get("history") or []
+    return {
+        "years": years, "hist_n": hist_n,
+        "is": pick(m["is"], ("revenue", "growth", "gm", "ebit", "ebit_m", "ebitda", "ebitda_m", "ni", "eps")),
+        "fcf": d["ufcf"], "cases": cases, "dcf_inputs": dcf_inputs,
+        "valuation": {"dcf": m["val"]["dcf"], "exit": m["val"]["exit"], "comps": m["val"]["comps"],
+                      "w_dcf": m["val"]["w_dcf"], "w_exit": m["val"]["w_exit"], "w_comps": m["val"]["w_comps"],
+                      "model_value": m["val"]["model_value"], "anchor": m["val"]["anchor"], "target": m["val"]["target"]},
+        "comps": m["comps"], "comps_median": m.get("comps_median"), "comps_self": m.get("comps_self"),
+        "wacc": pick(m["wacc"], ("rf", "beta", "erp", "ke", "kd_at", "we", "wd", "wacc")),
+        "sens": m["sens"], "sources": src, "sources_years": labels,
+        "price_history": hist[::5] + ([hist[-1]] if hist and (len(hist) - 1) % 5 else []),
+        "dates": {"tenk_filed": m.get("tenk_filed"), "price_date": rec["price_date"],
+                  "generated_at": rec["generated_at"]},
+        "filings_index": f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={me['cik']}&type=10-K",
+    }
+
+
+def share_card(path: Path, rec: dict):
+    """1200x630 PNG used as the link-preview image when a model page is shared."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    fig = plt.figure(figsize=(12, 6.3), dpi=100)
+    fig.patch.set_facecolor("#0f1720")
+    ax = fig.add_axes([0, 0, 1, 1]); ax.axis("off")
+    W = "#e6edf3"; MUTED = "#8b98a5"
+    col = {"Buy": "#3fb950", "Sell": "#f85149"}.get(rec.get("rating"), "#d29922")
+    ax.text(0.06, 0.86, "MODEL BUILDER", color=MUTED, fontsize=20, family="DejaVu Sans", weight="bold")
+    ax.text(0.06, 0.70, f"{rec['ticker']}  ·  {rec['name'][:38]}", color=W, fontsize=34, weight="bold")
+    ax.text(0.06, 0.62, f"{rec.get('exchange', 'NYSE')}  ·  {rec['sector']}", color=MUTED, fontsize=20)
+    ax.text(0.06, 0.40, f"${rec['target']:,.2f}" if rec.get("target") else "n/a", color=W, fontsize=72, weight="bold")
+    ax.text(0.06, 0.31, "12-month price target", color=MUTED, fontsize=20)
+    up = rec.get("upside")
+    ax.text(0.58, 0.44, (rec.get("rating") or "").upper(), color=col, fontsize=54, weight="bold")
+    ax.text(0.58, 0.33, f"{up:+.1%} vs ${rec['price']:,.2f}" if up is not None else "", color=W, fontsize=24)
+    sc = rec.get("scenarios") or {}
+    if sc:
+        ax.text(0.06, 0.14, "Bear / Base / Bull  " + "  /  ".join(f"${sc[k]:,.0f}" for k in ("bear", "base", "bull") if k in sc),
+                color=MUTED, fontsize=20)
+    ax.text(0.94, 0.06, f"Generated {rec['generated_at'][:10]} from SEC 10-K data", color=MUTED, fontsize=14, ha="right")
+    fig.savefig(path, facecolor=fig.get_facecolor())
+    plt.close(fig)
+
+
 def update_index():
     entries = []
     for meta in LIB.glob("*/*/meta.json"):
         try:
-            entries.append(json.loads(meta.read_text()))
+            e = json.loads(meta.read_text())
+            for k in ("detail", "history"):
+                e.pop(k, None)
+            entries.append(e)
         except Exception:  # noqa: BLE001
             continue
     entries.sort(key=lambda e: e.get("generated_at", ""), reverse=True)
@@ -248,7 +416,8 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
     built = work / f"{label}.xlsx"
     builder.build(T, built, {"live": live, "fin": fin, "peers": peers, "anchor": anchor,
                                   "sector": me.get("sector"),
-                                  "exchange": me.get("exchange", "NYSE")}, stance="Balanced")
+                                  "exchange": me.get("exchange", "NYSE"),
+                                  "sector_kind": sector_kind(me.get("sic"))}, stance="Balanced")
     live["model_label"] = label
     vs = f"'{T} Target Price'"
     calc = excel.Calc(port=int(os.environ.get("LO_PORT", "2002")))
@@ -278,12 +447,24 @@ def generate(ticker: str, allow_any: bool = False) -> dict:
         "consensus": {k: qs.get(k) for k in ("target_mean", "target_median", "analysts")},
         "beta_source": beta_src, "fiscal_year": fin["labels"][-1],
     }
+    rec["sector_check"] = sector_check(me, fin, facts, price, shares, peers)
+    rec["detail"] = detail_block(model, fin, me, mkt, rec)
+    prev_meta = json.loads((folder / "meta.json").read_text()) if (folder / "meta.json").exists() else {}
+    rec["history"] = ((prev_meta.get("history") or [])
+                      + [{"date": rec["generated_at"][:10], "version": n, "price": rec["price"], "target": rec["target"],
+                          "rating": rec["rating"]}])[-40:]
     pdf = folder / f"{T}_report_v{n}.pdf"
     report.make(pdf, rec, model, fin, rt, mkt, filings, sources.recent_filings(subs, me["cik"]), qs, peers, subs)
-    rec["files"] = {"xlsx": f"{REPO_RAW}/library/{slug(me['sector'])}/{T}/{label}.xlsx",
+    try:
+        share_card(folder / "card.png", rec)
+    except Exception as e:  # noqa: BLE001
+        print("  share card skipped:", e)
+    rec["files"] = {"card": f"{REPO_RAW}/library/{slug(me['sector'])}/{T}/card.png",
+                    "xlsx": f"{REPO_RAW}/library/{slug(me['sector'])}/{T}/{label}.xlsx",
                     "pdf": f"{REPO_RAW}/library/{slug(me['sector'])}/{T}/{pdf.name}"}
     prev = json.loads((folder / "meta.json").read_text()) if (folder / "meta.json").exists() else {}
-    rec["times_generated"] = (prev.get("times_generated") or 0) + 1
+    # a maintenance rebuild (--rebuild) refreshes the model without counting as a visitor generation
+    rec["times_generated"] = (prev.get("times_generated") or 0) + (0 if "--rebuild" in sys.argv else 1) or 1
     rec["first_generated_at"] = prev.get("first_generated_at") or rec["generated_at"]
     (folder / "meta.json").write_text(json.dumps(rec, indent=1, default=str))
     # keep only the 3 newest versions per ticker to keep the repo light

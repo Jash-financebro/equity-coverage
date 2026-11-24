@@ -1,8 +1,8 @@
 # Site-wide settings. Per-model settings live next to each model as <TICKER>.yml
 owner: "Jash (JJ) Rajgandhi"
 site:
-  title: "JJ Rajgandhi — Equity Coverage"
-  tagline: "Live valuation models, refreshed from SEC 10-K filings and market prices."
+  title: "Model Builder — JJ Rajgandhi"
+  tagline: "Full Excel models for any NYSE or Nasdaq company, built from SEC 10-K data."
   linkedin: ""        # e.g. https://www.linkedin.com/in/your-handle
   portfolio: ""       # link to your Bloomberg-terminal-style portfolio site
   email: ""
