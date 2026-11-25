@@ -12,5 +12,12 @@
 "target": 340.65,
 "rating": "Buy",
 "spy": 718.78
+},
+{
+"date": "2026-11-25",
+"price": 296.07,
+"target": 343.56,
+"rating": "Buy",
+"spy": 697.78
 }
 ]
