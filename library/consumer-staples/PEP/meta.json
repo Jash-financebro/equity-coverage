@@ -9,35 +9,35 @@
  "city": "Purchase",
  "state": "NY",
  "website": "https://www.pepsico.com",
- "generated_at": "2026-11-25T02:58:10Z",
- "version": 2,
- "price": 142.68,
- "price_date": "2026-11-24",
- "target": 150.47,
- "upside": 0.0546,
+ "generated_at": "2026-11-25T15:01:00Z",
+ "version": 3,
+ "price": 144.1,
+ "price_date": "2026-11-25",
+ "target": 152.1,
+ "upside": 0.0555,
  "rating": "Hold",
  "scenarios": {
-  "bear": 114.04,
-  "base": 150.47,
-  "bull": 200.17
+  "bear": 115.05,
+  "base": 152.1,
+  "bull": 202.84
  },
  "model_scenarios": {
-  "base": 149.13,
-  "bull": 198.39,
-  "bear": 113.02
+  "base": 151.33,
+  "bull": 201.82,
+  "bear": 114.47
  },
- "dcf_value": 149.588612105589,
- "comps_value": 137.468103127419,
- "exit_value": 154.505673953682,
- "model_value": 149.131335049192,
- "peer_avg_upside": 0.14331875767239383,
+ "dcf_value": 153.526286717037,
+ "comps_value": 136.768883356439,
+ "exit_value": 156.419476037647,
+ "model_value": 151.332081773161,
+ "peer_avg_upside": 0.14665088487232786,
  "anchor_peers": [
   "KO",
   "KDP",
   "MNST",
   "PRMB"
  ],
- "wacc": 0.0612,
+ "wacc": 0.0605,
  "peers": [
   "KO",
   "KDP",
@@ -103,7 +103,7 @@
   "is_10q": true,
   "label": "Quarter ended Sep 05, 2026"
  },
- "pe_ttm": 17.95,
+ "pe_ttm": 18.13,
  "guidance": {
   "filed": "2026-10-08",
   "url": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000050/q320268-kxexhibit991.htm",
@@ -120,7 +120,7 @@
   "period": "2026-09-05",
   "url": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000048/pep-20260905.htm"
  },
- "ev_ebitda": 15.6839177122216,
+ "ev_ebitda": 15.8133639775236,
  "ebitda_margin": 0.159158903380357,
  "growth_next": 0.0133,
  "quality": {
@@ -227,21 +227,21 @@
     9074,
     9578,
     8240,
-    9440.41234793775,
-    9509.27270101099,
-    9636.19442791468,
-    9838.56978037935,
-    10089.5707927325
+    9434.07664501585,
+    9504.78915596014,
+    9633.00812796715,
+    9835.37804729896,
+    10086.3736172549
    ],
    "eps": [
     6.56109906001446,
     6.95065312046444,
     6.00145666423889,
-    6.90059768548987,
-    6.97604586136926,
-    7.09469712926319,
-    7.26986853794545,
-    7.48227317904504
+    6.89596651734726,
+    6.97275671225349,
+    7.09235119973055,
+    7.26751011792906,
+    7.47990220204154
    ]
   },
   "bs": {
@@ -342,9 +342,9 @@
     "margin_delta": 0.009999999999999953,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 198.39071198352,
-    "target": 200.174447719918,
-    "upside": 0.402960805438167
+    "model": 201.817078513451,
+    "target": 202.842388805794,
+    "upside": 0.407650165203286
    },
    "base": {
     "growth": [
@@ -365,9 +365,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 149.131335049192,
-    "target": 150.472178524596,
-    "upside": 0.0546129697546671
+    "model": 151.332081773161,
+    "target": 152.100908386581,
+    "upside": 0.0555233059443492
    },
    "bear": {
     "growth": [
@@ -388,9 +388,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 113.023112318352,
-    "target": 114.039305881375,
-    "upside": -0.20073376870357
+    "model": 114.466531519911,
+    "target": 115.048066609808,
+    "upside": -0.201609530813266
    }
   },
   "dcf_inputs": {
@@ -437,49 +437,49 @@
     0.1903,
     0.1903
    ],
-   "wacc": 0.0612471734589464,
+   "wacc": 0.060462877227693,
    "g": 0.025,
-   "ev_ebitda_now": 15.6839177122216,
+   "ev_ebitda_now": 15.8133639775236,
    "debt": -49182,
    "cash": 11197,
-   "nci_ratio": -0.00659999999999999,
+   "nci_ratio": -0.006600000000000005,
    "shares": 1362.741,
-   "comps_value": 137.468103127419,
+   "comps_value": 136.768883356439,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 150.472178524596,
-   "base_model": 149.131335049192,
-   "price": 142.68,
+   "anchored_base": 152.100908386581,
+   "base_model": 151.332081773161,
+   "price": 144.1,
    "check": {
-    "dcf": 149.588612105589,
-    "exit": 154.505673953682,
-    "model": 149.131335049192,
-    "target": 150.472178524596
+    "dcf": 153.526286717037,
+    "exit": 156.419476037647,
+    "model": 151.332081773161,
+    "target": 152.100908386581
    }
   },
   "valuation": {
-   "dcf": 149.588612105589,
-   "exit": 154.505673953682,
-   "comps": 137.468103127419,
+   "dcf": 153.526286717037,
+   "exit": 156.419476037647,
+   "comps": 136.768883356439,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 149.131335049192,
+   "model_value": 151.332081773161,
    "anchor": {
     "street": 140.5,
-    "peer_up": 0.1433,
-    "peer_value": 163.126044,
+    "peer_up": 0.1467,
+    "peer_value": 165.23947,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 150.472178524596,
+    "anchored": 152.100908386581,
     "band": 0.15,
-    "lo": 141.724044,
-    "hi": 184.528044,
-    "upside": 0.0546129697546671
+    "lo": 143.62447,
+    "hi": 186.85447,
+    "upside": 0.0555233059443492
    },
-   "target": 150.472178524596
+   "target": 152.100908386581
   },
   "comps": [
    {
@@ -495,61 +495,61 @@
    {
     "name": "Keurig Dr Pepper Inc.",
     "ticker": "KDP",
-    "price": 35.8,
-    "mcap": 48722.01,
-    "ev": 61627.01,
+    "price": 35.61,
+    "mcap": 48463.4295,
+    "ev": 61368.4295,
     "ebitda": 4030,
-    "ev_ebitda": 15.2920620347395,
-    "pe": 23.3986928104575
+    "ev_ebitda": 15.2278981389578,
+    "pe": 23.2745098039216
    },
    {
     "name": "Monster Beverage Corp",
     "ticker": "MNST",
-    "price": 42.17,
-    "mcap": 82548.1967,
-    "ev": 80460.0967,
+    "price": 42.27,
+    "mcap": 82743.9477,
+    "ev": 80655.8477,
     "ebitda": 2533.8,
-    "ev_ebitda": 31.7547149340911,
+    "ev_ebitda": 31.83197083432,
     "pe": null
    },
    {
     "name": "Coca-Cola Consolidated, Inc.",
     "ticker": "COKE",
-    "price": 208.77,
-    "mcap": 1490.6178,
-    "ev": 3994.7178,
+    "price": 215.94,
+    "mcap": 1541.8116,
+    "ev": 4045.9116,
     "ebitda": 1145.7,
-    "ev_ebitda": 3.48670489656978,
+    "ev_ebitda": 3.53138832155014,
     "pe": null
    },
    {
     "name": "Primo Brands Corp",
     "ticker": "PRMB",
-    "price": 23.5,
-    "mcap": 8496.425,
-    "ev": 13277.625,
+    "price": 23.31,
+    "mcap": 8427.7305,
+    "ev": 13208.9305,
     "ebitda": 1040.6,
-    "ev_ebitda": 12.7595858158755,
-    "pe": 146.875
+    "ev_ebitda": 12.6935714972131,
+    "pe": 145.6875
    }
   ],
   "comps_median": {
-   "ev_ebitda": 15.2920620347395,
+   "ev_ebitda": 15.2278981389578,
    "pe": 32.1118421052632
   },
   "comps_self": {
-   "ev_ebitda": 15.6839177122216,
-   "pe": 23.7742281553398
+   "ev_ebitda": 15.8133639775236,
+   "pe": 24.0108373786408
   },
   "wacc": {
-   "rf": 0.04904,
+   "rf": 0.04818,
    "beta": 0.321,
    "erp": 0.055,
-   "ke": 0.066695,
-   "kd_at": 0.0397097618117923,
-   "we": 0.798118271068875,
-   "wd": 0.201881728931125,
-   "wacc": 0.0612471734589464
+   "ke": 0.065835,
+   "kd_at": 0.0390133834439672,
+   "we": 0.79970920987987,
+   "wd": 0.20029079012013,
+   "wacc": 0.060462877227693
   },
   "sens": {
    "g": [
@@ -560,47 +560,47 @@
     0.035
    ],
    "wacc": [
-    0.0512471734589464,
-    0.0562471734589464,
-    0.0612471734589464,
-    0.0662471734589464,
-    0.0712471734589464
+    0.050462877227693,
+    0.055462877227693,
+    0.060462877227693,
+    0.065462877227693,
+    0.070462877227693
    ],
    "grid": [
     [
-     156.100223514084,
-     181.857583042134,
-     217.428326692606,
-     269.740470661197,
-     354.250303723692
+     160.194516436032,
+     187.280079165174,
+     225.002916891535,
+     281.160521785102,
+     373.635821029233
     ],
     [
-     133.660659697063,
-     152.806525498802,
-     178.07962256096,
-     212.981602939521,
-     264.310229641651
+     136.813586060236,
+     156.821555132086,
+     183.397508220119,
+     220.410598026988,
+     275.511608410724
     ],
     [
-     116.075862819283,
-     130.801022564786,
-     149.588612105589,
-     174.388774132503,
-     208.637634346178
+     118.578247225682,
+     133.893001374978,
+     153.526286717037,
+     179.604559246391,
+     215.924515107977
     ],
     [
-     101.924788168773,
-     113.555837714398,
-     128.006728856491,
-     146.444383589533,
-     170.782621540851
+     103.958921904632,
+     116.009929816147,
+     131.039225169679,
+     150.306556612904,
+     175.898744142182
     ],
     [
-     90.2916783592296,
-     99.6775846248709,
-     111.093000061267,
-     125.27597857632,
-     143.37180798749
+     91.9776019156319,
+     101.672533319923,
+     113.499958749115,
+     128.250415420658,
+     147.160279851712
     ]
    ]
   },
@@ -808,17 +808,23 @@
    [
     "2026-11-24",
     142.68
+   ],
+   [
+    "2026-11-25",
+    144.1
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-03",
-   "price_date": "2026-11-24",
-   "generated_at": "2026-11-25T02:58:10Z"
+   "price_date": "2026-11-25",
+   "generated_at": "2026-11-25T15:01:00Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=77476&type=10-K"
  },
  "changes": [
-  "Target unchanged at $150.47 since v1 on 2026-11-25."
+  "Target rose from $150.47 to $152.10 (+1.1%) since v2 on 2026-11-25.",
+  "Share price moved +1.0% ($142.68 to $144.10), which moves the peer-relative value and the anchoring band with it.",
+  "Model value (DCF, exit multiple and comps) moved +1.5% to $151.33."
  ],
  "backtest": [
   {
@@ -851,7 +857,7 @@
   {
    "base_fy": "FY2025",
    "made": "2026-11-25",
-   "version": 2,
+   "version": 3,
    "years": [
     "FY2026",
     "FY2027",
@@ -881,11 +887,11 @@
     0.131
    ],
    "eps": [
-    6.9006,
-    6.976,
-    7.0947,
-    7.2699,
-    7.4823
+    6.896,
+    6.9728,
+    7.0924,
+    7.2675,
+    7.4799
    ]
   }
  ],
@@ -903,26 +909,21 @@
    "price": 142.68,
    "target": 150.47,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-25",
+   "version": 3,
+   "price": 144.1,
+   "target": 152.1,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_v2.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_tearsheet_v2.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_report_v2.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_v3.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_tearsheet_v3.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_report_v3.pdf"
  },
  "times_generated": 1,
- "first_generated_at": "2026-11-25T01:52:47Z",
- "mark": {
-  "price": 142.68,
-  "date": "2026-11-24"
- },
- "track": null,
- "latest_filing_seen": {
-  "form": "10-Q",
-  "filed": "2026-10-08",
-  "accession": "0000077476-26-000048",
-  "period": "2026-09-05",
-  "url": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000048/pep-20260905.htm"
- }
+ "first_generated_at": "2026-11-25T01:52:47Z"
 }

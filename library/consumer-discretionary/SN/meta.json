@@ -9,35 +9,35 @@
  "city": "Needham",
  "state": "MA",
  "website": "https://www.sharkninja.com",
- "generated_at": "2026-11-25T02:58:35Z",
- "version": 10,
- "price": 228.93,
- "price_date": "2026-11-24",
- "target": 248.71,
- "upside": 0.0864,
+ "generated_at": "2026-11-25T15:00:36Z",
+ "version": 11,
+ "price": 222.0,
+ "price_date": "2026-11-25",
+ "target": 252.57,
+ "upside": 0.1377,
  "rating": "Hold",
  "scenarios": {
-  "bear": 195.94,
-  "base": 248.71,
-  "bull": 315.6
+  "bear": 199.06,
+  "base": 252.57,
+  "bull": 320.39
  },
  "model_scenarios": {
-  "base": 104.2,
-  "bull": 132.23,
-  "bear": 82.09
+  "base": 103.53,
+  "bull": 131.34,
+  "bear": 81.6
  },
- "dcf_value": 55.9729290172437,
- "comps_value": 46.2719475696801,
- "exit_value": 181.399709070402,
- "model_value": 104.203444748994,
- "peer_avg_upside": 0.2364053081543574,
+ "dcf_value": 56.6039507708368,
+ "comps_value": 45.9827818099044,
+ "exit_value": 179.237932506363,
+ "model_value": 103.533309672861,
+ "peer_avg_upside": 0.28769651567610666,
  "anchor_peers": [
   "WHR",
   "AOS",
   "COOK",
   "VIOT"
  ],
- "wacc": 0.1118,
+ "wacc": 0.1108,
  "peers": [
   "WHR",
   "AOS",
@@ -103,7 +103,7 @@
   "is_10q": true,
   "label": "Quarter ended Sep 30, 2026"
  },
- "pe_ttm": 38.41,
+ "pe_ttm": 37.25,
  "guidance": null,
  "last_filing": {
   "form": "10-Q",
@@ -112,7 +112,7 @@
   "period": "2026-09-30",
   "url": "https://www.sec.gov/Archives/edgar/data/1957132/000195713226000056/sharkninja-20260930.htm"
  },
- "ev_ebitda": 30.3967066699877,
+ "ev_ebitda": 29.4753847489226,
  "ebitda_margin": 0.16563226459357,
  "growth_next": 0.12,
  "quality": {
@@ -219,21 +219,21 @@
     167.078,
     438.705,
     701.374,
-    692.760147511253,
-    769.783905914323,
-    841.165058312983,
-    903.634982128131,
-    954.473943283658
+    692.227231954541,
+    769.039740735281,
+    840.118578019424,
+    902.187629244599,
+    952.52006208817
    ],
    "eps": [
     1.19837899870894,
     3.10953049247257,
     4.93612499120276,
-    4.82962108063517,
-    5.31609417775208,
-    5.75438267655438,
-    6.12356353045914,
-    6.40720981871979
+    4.82590582620528,
+    5.31095500538801,
+    5.74722373906274,
+    6.11375541378748,
+    6.3940937699597
    ]
   },
   "bs": {
@@ -334,9 +334,9 @@
     "margin_delta": 0.010000000000000009,
     "tg": 0.03,
     "exit_factor": 1.1,
-    "model": 132.229663904612,
-    "target": 315.601663170008,
-    "upside": 0.378594606080495
+    "model": 131.33625395662,
+    "target": 320.394653323504,
+    "upside": 0.443219159114884
    },
    "base": {
     "growth": [
@@ -357,9 +357,9 @@
     "margin_delta": -0.0,
     "tg": 0.025,
     "exit_factor": 1,
-    "model": 104.203444748994,
-    "target": 248.709552,
-    "upside": 0.0864
+    "model": 103.533309672861,
+    "target": 252.5694,
+    "upside": 0.1377
    },
    "bear": {
     "growth": [
@@ -380,9 +380,9 @@
     "margin_delta": -0.010000000000000009,
     "tg": 0.02,
     "exit_factor": 0.9,
-    "model": 82.092406706725,
-    "target": 195.935611762282,
-    "upside": -0.144124353460524
+    "model": 81.5991127922093,
+    "target": 199.060949790761,
+    "upside": -0.103329054996573
    }
   },
   "dcf_inputs": {
@@ -429,87 +429,87 @@
     0.2209,
     0.2209
    ],
-   "wacc": 0.111766361447289,
+   "wacc": 0.110839635442243,
    "g": 0.025,
-   "ev_ebitda_now": 30.3967066699877,
+   "ev_ebitda_now": 29.4753847489226,
    "debt": -736.139,
    "cash": 777.289,
    "nci_ratio": 0.0,
    "shares": 140.912,
-   "comps_value": 46.2719475696801,
+   "comps_value": 45.9827818099044,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "anchored_base": 248.709552,
-   "base_model": 104.203444748994,
-   "price": 228.93,
+   "anchored_base": 252.5694,
+   "base_model": 103.533309672861,
+   "price": 222.0,
    "check": {
-    "dcf": 55.9729290172437,
-    "exit": 181.399709070402,
-    "model": 104.203444748994,
-    "target": 248.709552
+    "dcf": 56.6039507708368,
+    "exit": 179.237932506363,
+    "model": 103.533309672861,
+    "target": 252.5694
    }
   },
   "valuation": {
-   "dcf": 55.9729290172437,
-   "exit": 181.399709070402,
-   "comps": 46.2719475696801,
+   "dcf": 56.6039507708368,
+   "exit": 179.237932506363,
+   "comps": 45.9827818099044,
    "w_dcf": 0.4,
    "w_exit": 0.4,
    "w_comps": 0.2,
-   "model_value": 104.203444748994,
+   "model_value": 103.533309672861,
    "anchor": {
     "street": 250,
-    "peer_up": 0.2364,
-    "peer_value": 283.049052,
+    "peer_up": 0.2877,
+    "peer_value": 285.8694,
     "w_model": 0.5,
     "w_street": 0.25,
     "w_peer": 0.25,
-    "anchored": 185.363985374497,
+    "anchored": 185.73400483643,
     "band": 0.15,
-    "lo": 248.709552,
-    "hi": 317.388552,
-    "upside": 0.0864
+    "lo": 252.5694,
+    "hi": 319.1694,
+    "upside": 0.1377
    },
-   "target": 248.709552
+   "target": 252.5694
   },
   "comps": [
    {
     "name": "Whirlpool Corp",
     "ticker": "WHR",
-    "price": 25.67,
-    "mcap": 1687.5458,
-    "ev": 7187.5458,
+    "price": 25.46,
+    "mcap": 1673.7404,
+    "ev": 7173.7404,
     "ebitda": 1176,
-    "ev_ebitda": 6.11185867346939,
-    "pe": 4.53533568904594
+    "ev_ebitda": 6.1001193877551,
+    "pe": 4.4982332155477
    },
    {
     "name": "Smith A O Corp",
     "ticker": "AOS",
-    "price": 65.95,
-    "mcap": 4994.3935,
-    "ev": 4974.8935,
+    "price": 65.25,
+    "mcap": 4941.3825,
+    "ev": 4921.8825,
     "ebitda": 813.7,
-    "ev_ebitda": 6.11391606243087,
-    "pe": 17.1298701298701
+    "ev_ebitda": 6.04876797345459,
+    "pe": 16.9480519480519
    },
    {
     "name": "Hamilton Beach Brands Holding Co",
     "ticker": "HBB",
-    "price": 29.43,
-    "mcap": 399.3651,
-    "ev": 402.0651,
+    "price": 29.38,
+    "mcap": 398.6866,
+    "ev": 401.3866,
     "ebitda": 42.5,
-    "ev_ebitda": 9.46035529411765,
-    "pe": 15.0923076923077
+    "ev_ebitda": 9.44439058823529,
+    "pe": 15.0666666666667
    },
    {
     "name": "Traeger, Inc.",
     "ticker": "COOK",
-    "price": 56.2,
-    "mcap": 157.36,
-    "ev": 537.56,
+    "price": 54.7,
+    "mcap": 153.16,
+    "ev": 533.36,
     "ebitda": -62.5,
     "ev_ebitda": null,
     "pe": null
@@ -517,31 +517,31 @@
    {
     "name": "Viomi Technology Co., Ltd",
     "ticker": "VIOT",
-    "price": 1.14,
-    "mcap": 240.4488,
-    "ev": 136.0488,
+    "price": 1.05,
+    "mcap": 221.466,
+    "ev": 117.066,
     "ebitda": 24.4,
-    "ev_ebitda": 5.57577049180328,
-    "pe": 11.4
+    "ev_ebitda": 4.7977868852459,
+    "pe": 10.5
    }
   ],
   "comps_median": {
-   "ev_ebitda": 6.11288736795013,
-   "pe": 13.2461538461538
+   "ev_ebitda": 6.07444368060485,
+   "pe": 12.7833333333333
   },
   "comps_self": {
-   "ev_ebitda": 30.3967066699877,
-   "pe": 46.3784852304192
+   "ev_ebitda": 29.4753847489226,
+   "pe": 44.974549954803
   },
   "wacc": {
-   "rf": 0.04904,
+   "rf": 0.04816,
    "beta": 1.171,
    "erp": 0.055,
-   "ke": 0.113445,
-   "kd_at": 0.0382052887663588,
-   "we": 0.977689460456616,
-   "wd": 0.0223105395433838,
-   "wacc": 0.111766361447289
+   "ke": 0.112565,
+   "kd_at": 0.0375197126221012,
+   "we": 0.977009021911418,
+   "wd": 0.0229909780885818,
+   "wacc": 0.110839635442243
   },
   "sens": {
    "g": [
@@ -552,47 +552,47 @@
     0.035
    ],
    "wacc": [
-    0.101766361447289,
-    0.106766361447289,
-    0.111766361447289,
-    0.116766361447289,
-    0.121766361447289
+    0.100839635442243,
+    0.105839635442243,
+    0.110839635442243,
+    0.115839635442243,
+    0.120839635442243
    ],
    "grid": [
     [
-     57.8447013083368,
-     60.5428073836942,
-     63.592383298769,
-     67.0668903171596,
-     71.0617951740835
+     58.5003103058816,
+     61.2681100830265,
+     64.4008641167426,
+     67.9758499623757,
+     72.0938196537757
     ],
     [
-     54.5376427661993,
-     56.8985798330266,
-     59.5482587522536,
-     62.5430991288263,
-     65.9552437014285
+     55.1228856010773,
+     57.541748524644,
+     60.2598288940011,
+     63.3363076593298,
+     66.8470741995918
     ],
     [
-     51.5750508623256,
-     53.6541781131644,
-     55.9729290172437,
-     58.5752624194355,
-     61.5165897967396
+     52.1006119730256,
+     54.2283448662449,
+     56.6039507708368,
+     59.2734231546127,
+     62.2948846227517
     ],
     [
-     48.9060948236655,
-     50.747566987002,
-     52.7897087785436,
-     55.0672115737597,
-     57.623252236493
+     49.3806018854128,
+     51.2632083991149,
+     53.3530599666457,
+     55.6863715112331,
+     58.3083176509449
     ],
     [
-     46.489467258173,
-     48.1289044089676,
-     49.9377637769743,
-     51.943738878838,
-     54.1809066996775
+     46.9199632349994,
+     48.5944803441057,
+     50.443718183459,
+     52.496527715978,
+     54.7884819654966
     ]
    ]
   },
@@ -800,17 +800,24 @@
    [
     "2026-11-24",
     228.93
+   ],
+   [
+    "2026-11-25",
+    222.0
    ]
   ],
   "dates": {
    "tenk_filed": "2026-03-02",
-   "price_date": "2026-11-24",
-   "generated_at": "2026-11-25T02:58:35Z"
+   "price_date": "2026-11-25",
+   "generated_at": "2026-11-25T15:00:36Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1957132&type=10-K"
  },
  "changes": [
-  "Target fell from $250.32 to $248.71 (-0.6%) since v9 on 2026-11-24."
+  "Target rose from $248.71 to $252.57 (+1.6%) since v10 on 2026-11-25.",
+  "Share price moved -3.0% ($228.93 to $222.00), which moves the peer-relative value and the anchoring band with it.",
+  "Peers' average analyst upside went from 23.6% to 28.8%.",
+  "WACC moved from 11.18% to 11.08%."
  ],
  "backtest": [
   {
@@ -843,7 +850,7 @@
   {
    "base_fy": "FY2025",
    "made": "2026-11-25",
-   "version": 10,
+   "version": 11,
    "years": [
     "FY2026",
     "FY2027",
@@ -873,11 +880,11 @@
     0.1208
    ],
    "eps": [
-    4.8296,
-    5.3161,
-    5.7544,
-    6.1236,
-    6.4072
+    4.8259,
+    5.311,
+    5.7472,
+    6.1138,
+    6.3941
    ]
   }
  ],
@@ -944,26 +951,21 @@
    "price": 228.93,
    "target": 248.71,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-25",
+   "version": 11,
+   "price": 222.0,
+   "target": 252.57,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v10.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_tearsheet_v10.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v10.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v11.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_tearsheet_v11.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v11.pdf"
  },
  "times_generated": 1,
- "first_generated_at": "2026-11-24T16:42:38Z",
- "mark": {
-  "price": 228.93,
-  "date": "2026-11-24"
- },
- "track": null,
- "latest_filing_seen": {
-  "form": "10-Q",
-  "filed": "2026-11-04",
-  "accession": "0001957132-26-000056",
-  "period": "2026-09-30",
-  "url": "https://www.sec.gov/Archives/edgar/data/1957132/000195713226000056/sharkninja-20260930.htm"
- }
+ "first_generated_at": "2026-11-24T16:42:38Z"
 }
