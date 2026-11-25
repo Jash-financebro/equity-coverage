@@ -16,6 +16,8 @@
 // GET  /api/filing?t=T             newest 10-K / 10-Q on SEC EDGAR for a model's company (stale-model banner)
 // GET  /api/sector?name=S          models in one sector (sector pages)
 // POST /api/error                  browser error report; GET / DELETE are owner only
+// GET  /api/earnings?t=T           earnings notes (from the company's 8-K) if built; POST starts a build
+// PUT  /api/earnings/result?t=T    runner stores the notes (Bearer GH_TOKEN)
 // GET  /api/health
 // Secrets/vars: GH_TOKEN (fine-grained PAT: Actions RW, Contents R), GH_REPO, ALLOWED_ORIGINS (comma list)
 
@@ -42,6 +44,7 @@ export default {
       if (url.pathname === "/api/models" && req.method === "GET") return json(await modelsFor(url, env, ctx), 200, cors, 60);
       if (url.pathname === "/api/feedback") return await feedbackRoutes(req, url, env, ctx, cors);
       if (url.pathname === "/api/error") return await errorRoutes(req, url, env, ctx, cors);
+      if (url.pathname.startsWith("/api/earnings")) return await earningsRoutes(req, url, env, ctx, cors);
       if (url.pathname === "/api/filing" && req.method === "GET") return json(await latestFiling(url, env, ctx), 200, cors, 3600);
       if (url.pathname === "/api/sector" && req.method === "GET") return json(await sectorModels(url, env, ctx), 200, cors, 120);
       if (url.pathname === "/api/recent" && req.method === "GET") return json(await recent(env, ctx), 200, cors, 30);
@@ -105,7 +108,7 @@ async function runsFor(env, ticker, sinceIso, workflow = WORKFLOW) {
   const r = await gh(env, `/repos/${env.GH_REPO}/actions/workflows/${workflow}/runs?per_page=30&event=workflow_dispatch`);
   if (!r.ok) fail(`GitHub ${r.status} listing runs`, 502);
   const { workflow_runs = [] } = await r.json();
-  const title = ticker.startsWith("Update ") ? ticker : `Generate ${ticker}`;
+  const title = /^(Update|Earnings) /.test(ticker) ? ticker : `Generate ${ticker}`;
   return workflow_runs.filter((w) => w.display_title === title && (!sinceIso || w.created_at >= sinceIso));
 }
 
@@ -398,6 +401,49 @@ async function errorRoutes(req, url, env, ctx, cors) {
     return json({ ok: true, deleted: ids.length }, 200, cors);
   }
   fail("method not allowed", 405);
+}
+
+const EARN_WORKFLOW = "earnings.yml";
+const EARN_TTL = 10 * 86400, EARN_FRESH_H = 8;
+async function earningsRoutes(req, url, env, ctx, cors) {
+  if (!env.UPLOADS) fail("Earnings notes aren't set up yet.", 503);
+  const t = String(url.searchParams.get("t") || "").toUpperCase().trim().replace(/[./]/g, "-");
+  if (!/^[A-Z][A-Z0-9-]{0,6}$/.test(t)) fail("Enter a ticker, e.g. KO");
+  if (url.pathname === "/api/earnings/result") {
+    if (req.method !== "PUT" || !isRunner(req, env)) return json({ error: "forbidden" }, 403, cors);
+    const body = await req.text();
+    let d; try { d = JSON.parse(body); } catch { fail("bad json"); }
+    if (d.status === "ok") await env.UPLOADS.put(`earn:${t}`, body, { expirationTtl: EARN_TTL });
+    else await env.UPLOADS.put(`earnfail:${t}`, body, { expirationTtl: 3600 });
+    return json({ ok: true }, 200, cors);
+  }
+  const notes = await env.UPLOADS.get(`earn:${t}`, "json");
+  const ageH = notes ? (Date.now() - Date.parse(notes.built_at)) / 36e5 : Infinity;
+  const since = new Date(Date.now() - 10 * 60e3).toISOString();
+  if (req.method === "GET") {
+    if (notes) return json({ status: "ready", notes, age_hours: ageH }, 200, cors);
+    const failed = await env.UPLOADS.get(`earnfail:${t}`, "json");
+    const w = (await runsFor(env, `Earnings ${t}`, since, EARN_WORKFLOW))[0];
+    if (w && w.status !== "completed") return json({ status: w.status === "in_progress" ? "running" : "queued", step: null }, 200, cors);
+    if (failed) return json({ status: "failed", error: failed.error || "Couldn't read the filings." }, 200, cors);
+    return json({ status: "missing" }, 200, cors);
+  }
+  if (req.method !== "POST") fail("method not allowed", 405);
+  const list = await listed(env, ctx);
+  if (!list[t]) fail(`${t} isn't an NYSE- or Nasdaq-listed SEC filer in our universe.`, 404);
+  if (notes && ageH < EARN_FRESH_H) return json({ status: "ready", notes, age_hours: ageH }, 200, cors);
+  const live = (await runsFor(env, `Earnings ${t}`, since, EARN_WORKFLOW)).find((w) => w.status !== "completed");
+  if (live) return json({ status: live.status === "in_progress" ? "running" : "queued", stale: notes || null }, 200, cors);
+  const ip = req.headers.get("CF-Connecting-IP") || "anon", hour = new Date().toISOString().slice(0, 13);
+  const key = new Request(`https://earn.local/${encodeURIComponent(ip)}/${hour}`), cache = caches.default;
+  const hit = await cache.match(key), n = hit ? Number(await hit.text()) : 0;
+  if (n >= 20) fail("You've looked up 20 new companies this hour. Try again later.", 429);
+  ctx.waitUntil(cache.put(key, new Response(String(n + 1), { headers: { "Cache-Control": "max-age=3600" } })));
+  await env.UPLOADS.delete(`earnfail:${t}`);
+  const d = await gh(env, `/repos/${env.GH_REPO}/actions/workflows/${EARN_WORKFLOW}/dispatches`, {
+    method: "POST", body: JSON.stringify({ ref: "main", inputs: { ticker: t } }), headers: { "Content-Type": "application/json" } });
+  if (d.status !== 204) { let msg = ""; try { msg = (await d.json()).message || ""; } catch (_) {} fail(`Could not start (GitHub ${d.status}${msg ? ": " + msg : ""})`, 502); }
+  return json({ status: "queued", name: list[t].name, stale: notes || null }, 200, cors);
 }
 
 const FEEDBACK_KINDS = ["number", "peer", "target", "other"];

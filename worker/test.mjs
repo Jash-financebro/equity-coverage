@@ -15,7 +15,7 @@ globalThis.fetch = async (url, init = {}) => {
   if (url.includes("/contents/site/universe/search.json")) return new Response(JSON.stringify([["XOM", "Exxon Mobil Corp", "Energy"], ["KO", "Coca-Cola Co", "Consumer Staples"]]));
   if (url.includes("/contents/library/index.json")) return new Response(JSON.stringify(index));
   if (url.includes("/contents/library/energy/XOM/meta.json")) return new Response(JSON.stringify({ ticker: "XOM", detail: { ok: 1 } }));
-  if (url.includes("/dispatches")) { dispatched.push(JSON.parse(init.body)); runs.unshift({ display_title: `Generate ${JSON.parse(init.body).inputs.ticker}`, status: "queued", created_at: new Date().toISOString(), html_url: "https://gh/run/1" }); return new Response(null, { status: 204 }); }
+  if (url.includes("/dispatches")) { dispatched.push(JSON.parse(init.body)); runs.unshift({ display_title: `${url.includes("earnings.yml") ? "Earnings" : "Generate"} ${JSON.parse(init.body).inputs.ticker}`, status: "queued", created_at: new Date().toISOString(), html_url: "https://gh/run/1" }); return new Response(null, { status: 204 }); }
   if (url.includes("/runs?created")) return new Response(JSON.stringify({ total_count: 3 }));
   if (url.includes("/runs?")) return new Response(JSON.stringify({ workflow_runs: runs }));
   return new Response("nope", { status: 404 });
@@ -90,4 +90,15 @@ ok(Math.abs(b.quotes[1].pe - 110 / 8) < 1e-9 && b.quotes[1].market_cap === 110 *
   ok(!(([...kv.keys()]).some((k) => k.startsWith("err:"))), "owner clears errors"); }
 [s, b] = await call("/api/sector?name=Energy"); ok(s === 200 && Array.isArray(b.models), "sector models");
 [s, b] = await call("/api/track"); ok(b.forecast && "median_abs_rev_err" in b.forecast, "forecast accuracy block");
-console.log("OK  worker: errors, sector, feedback, track, watchlist models, quotes, insights, model updates, private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");
+{ const E = (method, t, body, auth) => worker.fetch(new Request(`https://w.dev/api/earnings${method === "PUT" ? "/result" : ""}?t=${t}`, { method, body,
+    headers: { "CF-Connecting-IP": "9.9.9.9", ...(auth ? { Authorization: "Bearer x" } : {}) } }), env, ctx).then(async (r) => [r.status, await r.json()]);
+  let [st, b] = await E("GET", "KO"); ok(st === 200 && b.status === "missing", "earnings: nothing yet " + JSON.stringify(b));
+  [st, b] = await E("POST", "ZZZZ"); ok(st === 404, "earnings: unknown ticker rejected");
+  const before = dispatched.length;
+  [st, b] = await E("POST", "KO"); ok(st === 200 && b.status === "queued" && dispatched.length === before + 1, "earnings: build dispatched " + JSON.stringify(b));
+  [st, b] = await E("POST", "KO"); ok(b.status === "queued" && dispatched.length === before + 1, "earnings: in-flight build not repeated");
+  [st, b] = await E("PUT", "KO", JSON.stringify({ status: "ok", ticker: "KO", built_at: new Date().toISOString(), events: [] })); ok(st === 403, "earnings: only the runner can store notes");
+  [st, b] = await E("PUT", "KO", JSON.stringify({ status: "ok", ticker: "KO", built_at: new Date().toISOString(), events: [{ filed: "2026-10-21" }] }), true); ok(st === 200, "earnings: runner stores notes");
+  [st, b] = await E("GET", "KO"); ok(b.status === "ready" && b.notes.events[0].filed === "2026-10-21", "earnings: notes served");
+  [st, b] = await E("POST", "KO"); ok(b.status === "ready" && dispatched.length === before + 1, "earnings: fresh notes not rebuilt"); }
+console.log("OK  worker: earnings, errors, sector, feedback, track, watchlist models, quotes, insights, model updates, private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");

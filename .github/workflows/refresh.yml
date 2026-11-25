@@ -80,6 +80,12 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
         run: python3 pipeline/run.py
 
+      - name: Earnings notes for library models and the largest companies
+        env:
+          TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: timeout 900 python3 pipeline/earnings.py --prewarm || echo "::warning::earnings prewarm failed"
+
       - name: RSS feed (new models, graded calls, fund filings)
         run: python3 pipeline/feed.py || echo "::warning::feed failed"
 

@@ -44,9 +44,12 @@ def _text(raw: str) -> str:
 
 def _sentences(text: str) -> list[str]:
     text = re.sub(r"\s*[•▪●◦■]\s*", " . ", text)
+    text = re.sub(r"(^|[.!?:]\s+)[nlqüØ§v]\s+(?=[A-Z$])", r"\1", text)   # Wingdings bullets render as a lone letter
     out = []
     for s in re.split(r"(?<=[.!?])\s+(?=[A-Z(\"“$])|\s\.\s", text):
         s = re.sub(r"\s+", " ", s).strip(" .")
+        s = re.sub(r"^(?:[nlqüØ§v]|\d{1,2})\s+(?=[A-Z$])", "", s)     # Wingdings bullets ("n Revenue ...") and stray footnote marks
+        s = re.sub(r"\s+Document$", "", s)
         if s:
             out.append(s + ("" if s.endswith(("!", "?", "”", '"')) else "."))
     return out
@@ -112,13 +115,15 @@ def _quotes(text: str) -> list[dict]:
 def _outlook(text: str, sents: list[str]) -> list[str]:
     """Guidance sentences, plus the lines under an "Outlook" / "Guidance" heading (often bullets with no verb)."""
     found = list(guidance._sentences(text))
-    for m in re.finditer(r"(?:^|[.\s])((?:full[- ]year |fiscal |20\d\d |\bQ[1-4] )*(?:outlook|guidance))\b", text, re.I):
+    for m in re.finditer(r"\.\s+((?:[A-Z][\w&/-]* ){0,5}(?:Outlook|Guidance|OUTLOOK|GUIDANCE))(?=\s*[.:])", text):
         if m.start() < 300:
             continue
         chunk = text[m.end(): m.end() + 2200]
         for s in _sentences(chunk)[:10]:
             if re.search(r"forward-looking|conference call|webcast|non-gaap financial measures", s, re.I):
                 break
+            if guidance.PAST_ONLY.search(s) and not guidance.KEYWORDS.search(s):
+                continue   # a result, not a forecast
             if 20 <= len(s) <= 300 and METRIC.search(s) and re.search(r"\d", s) and not TABLE_ROW.search(s) and not NOISE.search(s):
                 found.append(s)
         if len(found) >= 3:
@@ -129,7 +134,7 @@ def _outlook(text: str, sents: list[str]) -> list[str]:
 def _call_info(sents: list[str], raw: str) -> dict:
     info = {}
     for s in sents:
-        if re.search(r"\b(conference call|webcast|earnings call|call to discuss)\b", s, re.I) and 40 <= len(s) <= 400:
+        if re.search(r"\b(conference call|webcast|earnings call|call to discuss)\b", s, re.I) and 40 <= len(s) <= 400 and re.search(r"\d|will|available|today", s):
             info["sentence"] = s
             break
     for m in re.finditer(r'href="(https?://[^"]+)"[^>]*>([^<]{0,120})', raw, re.I):
@@ -284,7 +289,47 @@ def summarize(o: dict) -> list[str]:
     return lines
 
 
+def prewarm(top_n: int = 30):
+    """Nightly: keep notes ready for library models and the largest companies. Rebuilds only when a new earnings
+    8-K has been filed or the stored notes are a week old. Stores them through the Worker (needs TOKEN)."""
+    import os
+    import requests
+    root = Path(__file__).resolve().parents[1]
+    api = json.loads((root / "site" / "api.json").read_text())["api"].rstrip("/")
+    token = os.environ.get("TOKEN", "")
+    lib = root / "library" / "index.json"
+    tickers = [m["ticker"] for m in json.loads(lib.read_text()).get("models", [])] if lib.exists() else []
+    scr = json.loads((root / "site" / "universe" / "screener.json").read_text())
+    F = scr["fields"]
+    rows = [dict(zip(F, r)) for r in scr["rows"]]
+    rows = [r for r in rows if r.get("mcap") and (r.get("country") or "United States") == "United States"]
+    tickers += [r["ticker"] for r in sorted(rows, key=lambda r: -r["mcap"])[:top_n]]
+    done = 0
+    for T in dict.fromkeys(tickers):
+        try:
+            have = requests.get(f"{api}/api/earnings", params={"t": T}, timeout=20).json()
+            if have.get("status") == "ready" and have.get("age_hours", 999) < 7 * 24:
+                cik, _ = sources.cik_for(T)
+                rec = sources.submissions(cik).get("filings", {}).get("recent", {})
+                latest = next((rec["accessionNumber"][i] for i, f in enumerate(rec.get("form", []))
+                               if f in ("8-K", "8-K/A") and "2.02" in (rec.get("items", [""] * (i + 1))[i] or "")), None)
+                if latest and latest == ((have["notes"].get("events") or [{}])[0]).get("accession"):
+                    continue
+            data = notes(T)
+            data["status"] = "ok"
+            r = requests.put(f"{api}/api/earnings/result", params={"t": T}, data=json.dumps(data),
+                             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"}, timeout=30)
+            done += r.ok
+            print(f"  {T}: {'stored' if r.ok else r.status_code}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ! {T}: {str(exc)[:100]}")
+    print(f"earnings prewarm: {done} updated")
+
+
 def main():
+    if sys.argv[1:2] == ["--prewarm"]:
+        prewarm()
+        return
     T, dest = sys.argv[1], Path(sys.argv[2])
     try:
         data = notes(T)

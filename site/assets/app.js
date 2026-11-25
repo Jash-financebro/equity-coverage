@@ -405,7 +405,8 @@
     const W = 640, H = 170, pad = 28, bw = (W - pad * 2) / B, top = Math.max(...bins), X = (v) => pad + ((v - lo) / (hi - lo)) * (W - pad * 2);
     const bars = bins.map((c, i) => { const from = lo + i * wdt, h = (c / top) * (H - 40);
       return `<rect x="${(pad + i * bw + 1).toFixed(1)}" y="${(H - 20 - h).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="var(${from + wdt / 2 >= price ? "--up" : "--down"})" opacity="0.75"><title>${usd(from)}–${usd(from + wdt)}: ${c.toLocaleString()} trials</title></rect>`; }).join("");
-    const mark = (v, lab, dash) => (v >= lo && v <= hi ? `<line x1="${X(v)}" x2="${X(v)}" y1="12" y2="${H - 20}" stroke="var(--ink)" stroke-width="1.5"${dash ? ' stroke-dasharray="4 3"' : ""}/><text x="${X(v)}" y="10" text-anchor="middle" font-size="11" fill="var(--ink-2)">${lab}</text>` : "");
+    const near = Math.abs(X(price) - X(m.target)) < 120, left = X(m.target) < X(price);
+    const mark = (v, lab, dash, side) => (v >= lo && v <= hi ? `<line x1="${X(v)}" x2="${X(v)}" y1="14" y2="${H - 20}" stroke="var(--ink)" stroke-width="1.5"${dash ? ' stroke-dasharray="4 3"' : ""}/><text x="${X(v) + (near ? side * 4 : 0)}" y="11" text-anchor="${near ? (side < 0 ? "end" : "start") : "middle"}" font-size="11" fill="var(--ink-2)">${lab}</text>` : "");
     el.innerHTML = `<div class="kpis" style="padding:12px 18px 0">
         <div class="kpi hero-n"><div class="k">Chance the target beats today's price</div><div class="v">${pct(above, 0)}</div><div class="n">price ${usd(price)}</div></div>
         <div class="kpi"><div class="k">Middle outcome</div><div class="v">${usd(q(0.5))}</div><div class="n">model target ${usd(m.target)}</div></div>
@@ -414,7 +415,7 @@
         <div class="kpi"><div class="k">15%+ upside / 15%+ downside</div><div class="v">${pct(buy, 0)} / ${pct(sell, 0)}</div></div></div>
       <div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" class="mc-svg" role="img" aria-label="Histogram of ${n.toLocaleString()} simulated targets from ${usd(lo)} to ${usd(hi)}. ${pct(above, 0)} are above today's price of ${usd(price)}.">
         ${bars}<line x1="${pad}" x2="${W - pad}" y1="${H - 20}" y2="${H - 20}" stroke="var(--line)"/>
-        ${mark(price, "Price " + usd(price), false)}${mark(m.target, "Target " + usd(m.target), true)}
+        ${mark(price, "Price " + usd(price), false, left ? 1 : -1)}${mark(m.target, "Target " + usd(m.target), true, left ? -1 : 1)}
         <text x="${pad}" y="${H - 5}" font-size="11" fill="var(--ink-3)">${usd(lo)}</text><text x="${W - pad}" y="${H - 5}" font-size="11" text-anchor="end" fill="var(--ink-3)">${usd(hi)}</text></svg></div>
       <div class="scroll"><table><thead><tr><th>Input</th><th class="r">Base</th><th class="r">Moves by (1 st. dev.)</th><th>Where the spread comes from</th></tr></thead><tbody>
         <tr><td>Revenue growth, every year</td><td class="r num">${pct(cs.base?.growth?.[0])} (yr 1)</td><td class="r num">± ${(sd.g * 100).toFixed(1)} pts</td><td class="note">bull vs. bear case</td></tr>
@@ -698,7 +699,7 @@
     }
     document.addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
-      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds", r: "#/track", w: "#/watch", a: "#/about", x: "#/sectors" }[e.key];
+      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds", r: "#/track", w: "#/watch", a: "#/about", x: "#/sectors", e: "#/earnings" }[e.key];
       if (e.key === "/") { e.preventDefault(); if (location.hash.replace(/^#\/?/, "")) { location.hash = "#/"; setTimeout(() => document.getElementById("tk")?.focus(), 300); } else document.getElementById("tk")?.focus(); }
       else if (e.key === "t") toggleTheme();
       else if (go) location.hash = go;
@@ -1292,7 +1293,7 @@
         <div><div class="note">${esc(m.exchange || "NYSE")}: ${esc(m.ticker)} · <a href="#/sector/${secSlug(m.sector)}">${esc(m.sector)}</a> · ${esc(m.industry || "")}</div>
           <h1 class="dname">${esc(m.name)} ${starBtn(m.ticker)}</h1>
           <div class="note">Version ${m.version} · generated ${ago(m.generated_at)} · 10-K filed ${esc(d.dates?.tenk_filed || "n/a")} · priced ${esc(m.price_date)} ${qualityPill(m.quality)}</div></div>
-        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <button class="btn sm primary-o" id="explain">Explain this model</button> <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a> <button class="btn sm" id="fb-open" aria-expanded="false" aria-controls="fb">Something look off?</button></div>
+        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <button class="btn sm primary-o" id="explain">Explain this model</button> <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a> <a class="btn sm" href="#/earnings/${esc(m.ticker)}">Earnings notes</a> <button class="btn sm" id="fb-open" aria-expanded="false" aria-controls="fb">Something look off?</button></div>
       </div>
       <form class="card section fb" id="fb" hidden>
         <div class="card-h"><h2>Report a problem with this model</h2><span class="note">goes privately to the site owner · no sign-in, no email needed</span></div>
@@ -1536,6 +1537,94 @@
       btn.disabled = sel.length !== 2; document.getElementById("wl-n").textContent = sel.length === 2 ? sel.join(" vs ") : "Select two"; btn.dataset.sel = sel.join(","); };
     el.addEventListener("change", sync);
     document.getElementById("wl-cmp").addEventListener("click", (e) => { location.hash = "#/compare/" + e.target.dataset.sel; });
+  }
+
+  // ------------------------------------------------------------- earnings notes
+  function attachSuggest(input, box, onPick) {
+    let list = null; const load = async () => (list = list || await searchList());
+    input.addEventListener("focus", load, { once: true });
+    input.addEventListener("input", async () => {
+      const q = input.value.trim().toUpperCase().replace(/[./]/g, "-"), qn = input.value.trim().toUpperCase();
+      if (!q) { box.hidden = true; return; }
+      const hits = (await load()).filter(([t, n]) => t.startsWith(q) || n.toUpperCase().includes(qn)).sort((a, b) => (a[0] === q ? -1 : b[0] === q ? 1 : a[0].length - b[0].length)).slice(0, 8);
+      box.innerHTML = hits.map(([t, n, sct, x]) => `<div class="sg" data-t="${esc(t)}"><b>${esc(t)}</b> ${esc(n)} <span class="note">${esc(x || "NYSE")} · ${esc(sct)}</span></div>`).join("");
+      box.hidden = !hits.length;
+      box.querySelectorAll(".sg").forEach((el) => el.addEventListener("mousedown", (e) => { e.preventDefault(); input.value = el.dataset.t; box.hidden = true; onPick?.(el.dataset.t); }));
+    });
+    input.addEventListener("blur", () => setTimeout(() => (box.hidden = true), 100));
+  }
+  async function earningsView(tk) {
+    document.title = (tk ? tk + " earnings · " : "Earnings · ") + SITE;
+    app.innerHTML = `<section class="hero"><h1>Earnings, in plain English</h1>
+        <p>Look up any NYSE or Nasdaq company. We read the earnings release it filed with the SEC and pull out what matters: the numbers, what management said and what they expect next. Lines in quotation marks are word for word from the filing, each with a link to the original.</p></section>
+      <div class="card gen-box"><form id="er-f" autocomplete="off" class="gen-row"><div class="gen-input"><input id="er-t" placeholder="Ticker or company name, e.g. NVDA or Coca-Cola" aria-label="Company" spellcheck="false" autocapitalize="characters" value="${esc(tk || "")}"><div id="er-sugg" class="sugg" hidden></div></div>
+        <button class="btn primary big" type="submit">Get the notes</button></form>
+        <p class="note">Try: ${["NVDA", "AAPL", "JPM", "KO", "PG", "CVX"].map((t) => `<a href="#/earnings/${t}">${t}</a>`).join(" · ")}</p></div>
+      <div id="er-out" aria-live="polite"></div>`;
+    const inp = document.getElementById("er-t");
+    const go = (t) => { t = String(t || "").trim().toUpperCase().replace(/[./]/g, "-"); if (t) location.hash = "#/earnings/" + t; };
+    attachSuggest(inp, document.getElementById("er-sugg"), go);
+    document.getElementById("er-f").addEventListener("submit", (e) => { e.preventDefault(); go(inp.value); });
+    if (tk) loadEarnings(tk);
+  }
+  async function loadEarnings(t) {
+    const out = document.getElementById("er-out"), base = await apiBase();
+    if (!out) return;
+    const msg = (h) => { if (location.hash.split("/")[2] === t) out.innerHTML = h; };
+    msg(`<p class="muted loading">Looking up ${esc(t)}…</p>`);
+    let s;
+    try {
+      s = await fetch(`${base}/api/earnings?t=${encodeURIComponent(t)}`).then((r) => r.json());
+      if (s.status === "ready" && s.age_hours < 8) { msg(earningsHTML(s.notes)); return; }
+      if (s.status === "ready") msg(earningsHTML(s.notes, "Checking for a newer earnings release…"));
+      if (s.status !== "running" && s.status !== "queued") {
+        const r = await fetch(`${base}/api/earnings?t=${encodeURIComponent(t)}`, { method: "POST" });
+        const j = await r.json();
+        if (!r.ok) { if (s.status !== "ready") msg(`<div class="warn">${esc(j.error || "Couldn't start.")}</div>`); return; }
+        if (j.status === "ready") { msg(earningsHTML(j.notes)); return; }
+      }
+      const t0 = Date.now(), had = s.status === "ready";
+      for (let i = 0; i < 60; i++) {
+        if (!had) msg(`<div class="card" style="padding:16px 18px"><p class="loading" style="margin:0">Reading ${esc(t)}'s latest earnings filings on SEC EDGAR… ${Math.round((Date.now() - t0) / 1000)}s</p><p class="note" style="margin:6px 0 0">The first lookup for a company takes about 30–45 seconds. After that it's instant for everyone.</p></div>`);
+        await new Promise((res) => setTimeout(res, 3000));
+        const g = await fetch(`${base}/api/earnings?t=${encodeURIComponent(t)}`).then((r) => r.json());
+        if (g.status === "ready" && (!had || g.age_hours < 1)) { msg(earningsHTML(g.notes)); return; }
+        if (g.status === "failed") { if (!had) msg(`<div class="warn">${esc(g.error)}</div>`); return; }
+        if (g.status === "missing" && i > 3 && !had) { msg(`<div class="warn">The lookup didn't finish. Try again in a minute.</div>`); return; }
+      }
+    } catch (err) { msg(`<div class="warn">Earnings notes aren't available right now.</div>`); }
+  }
+  function earningsHTML(n, banner) {
+    const ev = (n.events || [])[0];
+    if (!ev) return `<div class="card empty">${esc(n.name || n.ticker)} hasn't filed an earnings release with the SEC recently.${n.edgar ? ` <a href="${esc(n.edgar)}" target="_blank" rel="noopener">Its filings on EDGAR ↗</a>` : ""}</div>`;
+    const src = (u, lab) => `<a class="src" href="${esc(u)}" target="_blank" rel="noopener">${esc(lab || "source")} ↗</a>`;
+    const q = (txt, u, lab) => `<li><q>${esc(txt.replace(/^[“"]|[”"]$/g, ""))}</q> ${src(u, lab)}</li>`;
+    const N = n.numbers || {}, Q = N.quarter || {};
+    const row = (lab, k, f) => Q[k] && nz(Q[k].cur) ? `<tr><td>${lab}</td><td class="r num">${f(Q[k].cur)}</td><td class="r num">${nz(Q[k].prior) ? f(Q[k].prior) : "—"}</td><td class="r num">${nz(Q[k].chg) ? signed(Q[k].chg) : "—"}</td><td class="r num hide-sm">${nz(N.ttm?.[k]) ? f(N.ttm[k]) : "—"}</td></tr>` : "";
+    const docs = (ev.docs || []).map((d) => `<a class="chip" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)} ↗</a>`).join(" ");
+    const srcLab = ev.source_label || "Press release";
+    return `${banner ? `<p class="note loading">${esc(banner)}</p>` : ""}
+      <section class="card section er">
+        <div class="card-h"><h2>${starBtn(n.ticker)} ${esc(n.name)} (${esc(n.ticker)})</h2><span class="note">${esc(ev.period || "")} · filed ${esc(ev.filed)}</span></div>
+        ${ev.headline ? `<p class="er-head">${esc(ev.headline)}</p>` : ""}
+        <div class="er-links"><a class="btn sm primary" href="${esc(ev.source_url || ev.filing_url)}" target="_blank" rel="noopener">Read the ${esc(srcLab.toLowerCase())} ↗</a>
+          <a class="btn sm" href="${esc(ev.filing_url)}" target="_blank" rel="noopener">8-K filing on SEC EDGAR ↗</a>
+          ${ev.call?.url ? `<a class="btn sm" href="${esc(ev.call.url)}" target="_blank" rel="noopener">Webcast / investor site ↗</a>` : ""}
+          <a class="btn sm" href="#/m/${esc(n.ticker)}">Full model</a></div>
+        ${(n.summary || []).length ? `<h3>In short</h3><ul class="er-sum">${n.summary.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
+          <p class="note">Written from the figures the company tagged in its ${esc(N.form || "10-Q")} for ${esc((N.label || "the latest period").replace(/^Quarter/, "the quarter").replace(/^Year/, "the year"))}.${N.as_of && ev.filed && Date.parse(ev.filed) - Date.parse(N.as_of) > 70 * 864e5 ? " The 10-Q for the newest quarter isn't filed yet, so these figures are one quarter behind the release." : ""}</p>` : ""}
+        ${Q.revenue || Q.eps_diluted ? `<h3>The numbers</h3><div class="scroll"><table><thead><tr><th>$ millions except per share</th><th class="r">This quarter</th><th class="r">Year ago</th><th class="r">Change</th><th class="r hide-sm">Last 12 months</th></tr></thead><tbody>
+          ${row("Revenue", "revenue", mm)}${row("Operating income", "operating_income", mm)}${row("Net income", "net_income", mm)}${row("Diluted EPS", "eps_diluted", usd)}${row("Capital spending", "capex", mm)}</tbody></table></div>` : ""}
+        ${(ev.results || []).length ? `<h3>What they reported</h3><ul class="er-q">${ev.results.map((x) => q(x, ev.source_url, srcLab)).join("")}</ul>` : ""}
+        ${(ev.quotes || []).length ? `<h3>What management said</h3><ul class="er-q">${ev.quotes.map((x) => `<li><q>${esc(x.text)}</q><span class="er-who">— ${esc(x.who)}</span> ${src(x.url || ev.source_url, x.url ? "remarks" : srcLab)}</li>`).join("")}</ul>` : ""}
+        <h3>What they expect next</h3>${(ev.outlook || []).length ? `<ul class="er-q">${ev.outlook.map((x) => q(x, ev.source_url, srcLab)).join("")}</ul>` : `<p class="note">No outlook or guidance in this release. Some companies only give it on the call.</p>`}
+        ${(ev.capital || []).length ? `<h3>Dividends and buybacks</h3><ul class="er-q">${ev.capital.map((x) => q(x, ev.source_url, srcLab)).join("")}</ul>` : ""}
+        <h3>The call</h3><p>${ev.call?.sentence ? `<q>${esc(ev.call.sentence)}</q> ` : ""}${ev.call?.url ? `<a href="${esc(ev.call.url)}" target="_blank" rel="noopener">Replay and webcast ↗</a>` : "Replays are on the company's investor relations site."} <span class="note">Most companies don't file call transcripts with the SEC, so the call itself isn't quoted here${(ev.docs || []).some((d) => /transcript|remarks/i.test(d.label)) ? ", but this company filed its remarks (below)" : ""}.</span></p>
+        ${docs ? `<h3>Everything filed with this release</h3><p class="er-docs">${docs}</p>` : ""}
+      </section>
+      ${(n.events || []).length > 1 ? `<section class="card section"><div class="card-h"><h2>Earlier earnings releases</h2></div><div class="scroll"><table><thead><tr><th>Filed</th><th>Documents</th></tr></thead><tbody>
+        ${n.events.slice(1).map((e) => `<tr><td class="num">${esc(e.filed)}</td><td>${(e.docs || []).map((d) => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)} ↗</a>`).join(" · ") || `<a href="${esc(e.filing_url)}" target="_blank" rel="noopener">8-K ↗</a>`}</td></tr>`).join("")}</tbody></table></div></section>` : ""}
+      <p class="note section">Pulled automatically from ${esc(n.name)}'s SEC filings on ${esc((n.built_at || "").slice(0, 10))}. Quoted lines are word for word from the linked documents; the “In short” lines are our summary of the tagged figures. Check the original before relying on any number. Not investment advice.</p>`;
   }
 
   // ------------------------------------------------------------- about JJ
@@ -1828,9 +1917,9 @@ ${esc(g.ex.ua || "")}</pre></details></td><td class="r num">${g.n}</td><td class
     if (h === "built" || h === "about") await bootIndex();
     navLib();
     if (!window.__mbChrome) { window.__mbChrome = true; initChrome(); }
-    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds", "track", "watch", "about", "sectors"];
+    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds", "track", "watch", "about", "sectors", "earnings"];
     const hb = h.split("?")[0];
-    const tab = TABS.includes(hb) ? hb : h.startsWith("funds/") ? "funds" : h.startsWith("sector/") ? "sectors" : h ? "__" : "";
+    const tab = TABS.includes(hb) ? hb : h.startsWith("funds/") ? "funds" : h.startsWith("sector/") ? "sectors" : h.startsWith("earnings/") ? "earnings" : h ? "__" : "";
     document.querySelectorAll("nav a").forEach((a) => { const on = a.getAttribute("href") === "#/" + tab; a.classList.toggle("on", on);
       if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
     window.scrollTo(0, 0);
@@ -1845,6 +1934,7 @@ ${esc(g.ex.ua || "")}</pre></details></td><td class="r num">${g.n}</td><td class
     else if (h === "portfolio") portfolioView();
     else if (hb === "screener") screenerView(h.split("?")[1] || "");
     else if (h === "about") aboutView();
+    else if (h === "earnings" || h.startsWith("earnings/")) earningsView(decodeURIComponent(h.split("/")[1] || ""));
     else if (h === "sectors") sectorsView();
     else if (h.startsWith("sector/")) sectorPage(decodeURIComponent(h.slice(7)));
     else if (h === "funds") fundsView();

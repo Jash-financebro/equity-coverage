@@ -1,0 +1,43 @@
+name: Earnings notes
+run-name: Earnings ${{ inputs.ticker }}
+
+# Started by the website's API when a visitor looks up a company on the Earnings tab and there are no fresh notes.
+# Reads the company's latest earnings 8-K from SEC EDGAR and stores the notes in the Worker's private storage.
+on:
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: "Ticker"
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  notes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    container:
+      image: ghcr.io/jash-financebro/equity-coverage-runner:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          sparse-checkout: |
+            pipeline
+            site/api.json
+            data
+      - name: Read the filing and store the notes
+        env:
+          T: ${{ inputs.ticker }}
+          TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: |
+          echo "$T" | grep -Eq '^[A-Z][A-Z0-9-]{0,6}$' || { echo "bad ticker"; exit 1; }
+          API=$(python3 -c "import json; print(json.load(open('site/api.json'))['api'])")
+          python3 pipeline/earnings.py "$T" /tmp/notes.json || echo '{"status": "failed", "error": "The notes job crashed."}' > /tmp/notes.json
+          curl -sf -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data-binary @/tmp/notes.json "$API/api/earnings/result?t=$T"
