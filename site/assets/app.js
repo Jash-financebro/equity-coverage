@@ -1690,9 +1690,8 @@ ${esc(g.ex.ua || "")}</pre></details></td><td class="r num">${g.n}</td><td class
       .then((x) => { INDEX = x; if (x.generated_at) DATA_V = String(x.generated_at).replace(/\D/g, "").slice(0, 12); })
       .catch(() => { INDEX = { coverage: [], site: {}, generated_at: "— first refresh pending" }; })
       .then(() => {
-        const site = INDEX.site || {}, fl = document.querySelector(".foot-links");
-        if (fl && site.linkedin) fl.insertAdjacentHTML("beforeend", ` · <a href="${esc(site.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>`);
-        if (fl && site.portfolio) fl.insertAdjacentHTML("beforeend", ` · <a href="${esc(site.portfolio)}" target="_blank" rel="noopener">Portfolio ↗</a>`);
+        const site = INDEX.site || {}, fb = document.getElementById("foot-btns");
+        if (fb && site.portfolio) fb.insertAdjacentHTML("beforeend", `<a class="btn sm" href="${esc(site.portfolio)}" target="_blank" rel="noopener">Portfolio ↗</a>`);
         document.getElementById("foot-right").textContent = INDEX.owner ? "© " + new Date().getFullYear() + " " + INDEX.owner : "";
         beacon();
         return INDEX;
