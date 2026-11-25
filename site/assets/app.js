@@ -1444,6 +1444,10 @@
         "Fundamental equity research on 8+ public companies across healthcare and consumer sectors for a $500K student-managed portfolio, with buy/sell recommendations built on Bloomberg Terminal work and financial statement analysis.",
         "DCF models, trading comparables and scenario analysis to assess intrinsic value and risk; investment theses presented to faculty advisors and the investment committee.",
         "Review junior analysts' three-statement models, applying margin decomposition to meet institutional standards."])}
+      ${job("Graduate Assistant", "Speech-Language-Hearing Sciences Department, Hofstra University", "Hempstead, New York", "Jun 2025 – present", [
+        "Lead cross-functional student initiatives and marketing campaigns (Adobe Creative Suite, Canva, Photoshop) that drove a 50% increase in program visibility and participation.",
+        "Revamped records and orientation logistics with advanced Excel (pivot tables, VLOOKUP, conditional formatting), improving cross-department collaboration through weekly data sharing.",
+        "Manage departmental budget allocations in Excel, keeping spending cost-efficient and program reporting accurate."])}
       ${job("Financial Planning &amp; Analysis Associate", "MedMart Pharma", "Mumbai, India", "Jan – Dec 2024", [
         "Built integrated three-statement forecast models with revenue drivers, R&amp;D spending and product launch timelines, improving cash-runway forecast accuracy by 30%.",
         "Margin analysis and revenue forecasting for pharma and surgical product lines; reporting packages and variance analysis for management and investor updates."])}
