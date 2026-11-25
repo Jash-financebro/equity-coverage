@@ -425,6 +425,8 @@ async function earningsRoutes(req, url, env, ctx, cors) {
     const failed = await env.UPLOADS.get(`earnfail:${t}`, "json");
     const w = (await runsFor(env, `Earnings ${t}`, since, EARN_WORKFLOW))[0];
     if (w && w.status !== "completed") return json({ status: w.status === "in_progress" ? "running" : "queued", step: null }, 200, cors);
+    // finished a moment ago: storage can take up to a minute to show the new notes everywhere
+    if (w && w.conclusion === "success" && Date.now() - Date.parse(w.updated_at) < 90e3) return json({ status: "finishing" }, 200, cors);
     if (failed) return json({ status: "failed", error: failed.error || "Couldn't read the filings." }, 200, cors);
     return json({ status: "missing" }, 200, cors);
   }

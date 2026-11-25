@@ -1577,20 +1577,20 @@
       s = await fetch(`${base}/api/earnings?t=${encodeURIComponent(t)}`).then((r) => r.json());
       if (s.status === "ready" && s.age_hours < 8) { msg(earningsHTML(s.notes)); return; }
       if (s.status === "ready") msg(earningsHTML(s.notes, "Checking for a newer earnings release…"));
-      if (s.status !== "running" && s.status !== "queued") {
+      if (!["running", "queued", "finishing"].includes(s.status)) {
         const r = await fetch(`${base}/api/earnings?t=${encodeURIComponent(t)}`, { method: "POST" });
         const j = await r.json();
         if (!r.ok) { if (s.status !== "ready") msg(`<div class="warn">${esc(j.error || "Couldn't start.")}</div>`); return; }
         if (j.status === "ready") { msg(earningsHTML(j.notes)); return; }
       }
       const t0 = Date.now(), had = s.status === "ready";
-      for (let i = 0; i < 60; i++) {
+      for (let i = 0; i < 70; i++) {
         if (!had) msg(`<div class="card" style="padding:16px 18px"><p class="loading" style="margin:0">Reading ${esc(t)}'s latest earnings filings on SEC EDGAR… ${Math.round((Date.now() - t0) / 1000)}s</p><p class="note" style="margin:6px 0 0">The first lookup for a company takes about 30–45 seconds. After that it's instant for everyone.</p></div>`);
         await new Promise((res) => setTimeout(res, 3000));
         const g = await fetch(`${base}/api/earnings?t=${encodeURIComponent(t)}`).then((r) => r.json());
         if (g.status === "ready" && (!had || g.age_hours < 1)) { msg(earningsHTML(g.notes)); return; }
         if (g.status === "failed") { if (!had) msg(`<div class="warn">${esc(g.error)}</div>`); return; }
-        if (g.status === "missing" && i > 3 && !had) { msg(`<div class="warn">The lookup didn't finish. Try again in a minute.</div>`); return; }
+        if (g.status === "missing" && Date.now() - t0 > 150e3 && !had) { msg(`<div class="warn">The lookup didn't finish. Try again in a minute.</div>`); return; }
       }
     } catch (err) { msg(`<div class="warn">Earnings notes aren't available right now.</div>`); }
   }
@@ -1602,7 +1602,7 @@
     const N = n.numbers || {}, Q = N.quarter || {};
     const row = (lab, k, f) => Q[k] && nz(Q[k].cur) ? `<tr><td>${lab}</td><td class="r num">${f(Q[k].cur)}</td><td class="r num">${nz(Q[k].prior) ? f(Q[k].prior) : "—"}</td><td class="r num">${nz(Q[k].chg) ? signed(Q[k].chg) : "—"}</td><td class="r num hide-sm">${nz(N.ttm?.[k]) ? f(N.ttm[k]) : "—"}</td></tr>` : "";
     const docs = (ev.docs || []).map((d) => `<a class="chip" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)} ↗</a>`).join(" ");
-    const srcLab = ev.source_label || "Press release";
+    const srcLab = !ev.source_label || /^Exhibit/.test(ev.source_label) ? "Press release" : ev.source_label;
     return `${banner ? `<p class="note loading">${esc(banner)}</p>` : ""}
       <section class="card section er">
         <div class="card-h"><h2>${starBtn(n.ticker)} ${esc(n.name)} (${esc(n.ticker)})</h2><span class="note">${esc(ev.period || "")} · filed ${esc(ev.filed)}</span></div>
