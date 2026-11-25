@@ -309,7 +309,7 @@
       if (s.status === "finishing") return 5;
       const st = s.step || "";
       if (/Add to the shared library|Post |Stop containers|Complete job/.test(st)) return 5;
-      if (/Build model/.test(st)) { const run = s.step_started ? (Date.now() - Date.parse(s.step_started)) / 1000 : 0; return run > 30 ? 4 : run > 10 ? 3 : 2; }
+      if (/Build model/.test(st)) { const run = s.step_started ? (Date.now() - Date.parse(s.step_started)) / 1000 : 0; return run > 14 ? 4 : run > 5 ? 3 : 2; }
       return 1;
     };
     draw(0);
@@ -320,7 +320,7 @@
       if (j.status === "ready") { stat.innerHTML = ""; out.innerHTML = resultCard(j.model, `Built ${ago(j.model.generated_at)} — reused <a href="#" id="regen">rebuild now</a>`); hookRegen(t); return; }
       const since = j.since || new Date(Date.now() - 5000).toISOString();
       for (let i = 0; i < 160; i++) {
-        await new Promise((res) => setTimeout(res, i < 4 ? 3000 : 4000));
+        await new Promise((res) => setTimeout(res, 3000));
         const s = await fetch(`${base}/api/status?ticker=${encodeURIComponent(t)}&since=${encodeURIComponent(since)}`).then((x) => x.json());
         if (s.status === "ready") { draw(6); RECENT = null; announce(`${t} model is ready`); out.innerHTML = resultCard(s.model, "Fresh build"); stat.innerHTML = ""; return; }
         if (s.status === "failed") throw new Error(`We couldn't build ${esc(t)}. The usual reasons: no annual US-GAAP XBRL financials on file yet (new registrants, recent reorganizations), a foreign filer reporting in another currency, or a fund or trust. <a href="${esc(s.run_url)}" target="_blank" rel="noopener">Build log</a>.`);
