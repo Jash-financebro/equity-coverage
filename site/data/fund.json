@@ -1259,8 +1259,8 @@
 ],
 [
 "2026-11-25",
-145.166,
-103.787
+147.255,
+106.311
 ]
 ],
 "holdings": [
@@ -1278,23 +1278,23 @@
 ],
 "value": null,
 "stats": {
-"return_1y": 0.4516617051388414,
-"spy_return_1y": 0.0378655447246008,
-"ann_return": 0.4538188730320145,
-"ann_vol": 0.3172294903409379,
-"sharpe": 1.299844073729868,
-"beta": -0.3577999217953996,
-"alpha": 0.41111418981330683,
+"return_1y": 0.47254892391781755,
+"spy_return_1y": 0.06310775977008087,
+"ann_return": 0.4748210689675063,
+"ann_vol": 0.31770760455720776,
+"sharpe": 1.3637415748085744,
+"beta": -0.36611813807135674,
+"alpha": 0.4412586641168855,
 "max_drawdown": -0.2426661277828298,
-"risk_free": 0.04147
+"risk_free": 0.04155
 },
 "name": "Model portfolio (equal-weight coverage)",
 "custom": false,
 "coverage_targets": [
 {
 "ticker": "LNG",
-"upside": 0.1549,
-"rating": "Buy"
+"upside": 0.1439,
+"rating": "Hold"
 }
 ]
 }
