@@ -1,12 +1,12 @@
 {
- "generated_at": "2026-11-24 23:07 UTC",
+ "generated_at": "2026-11-25 01:12 UTC",
  "site": {
   "title": "Model Builder \u2014 JJ Rajgandhi",
   "tagline": "Full Excel models for any NYSE or Nasdaq company, built from SEC 10-K data.",
   "linkedin": "",
   "portfolio": "",
   "email": "",
-  "analytics_token": ""
+  "analytics_token": "e13e5274515c46c787775d6a5451300a"
  },
  "owner": "Jash (JJ) Rajgandhi",
  "ratings": {
@@ -26,7 +26,7 @@
    "target": 340.65,
    "upside": 0.1508,
    "rating": "Buy",
-   "refreshed_at": "2026-11-24 23:07 UTC",
+   "refreshed_at": "2026-11-25 01:12 UTC",
    "status": "ok",
    "target_stale": false,
    "error": null,
@@ -38,6 +38,7 @@
    "street_median": 347.0,
    "street_mean": 340.8,
    "spark": [
+    291.69,
     294.13,
     295.86,
     290.85,
@@ -96,8 +97,7 @@
     296.49,
     295.37,
     294.84,
-    295.46,
-    296.01
+    295.46
    ],
    "has_report": true
   }
