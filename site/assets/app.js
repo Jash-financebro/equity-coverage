@@ -1451,12 +1451,16 @@
         "Financial analysis on 10+ public companies supporting M&amp;A and capital-raising mandates: DCF models, trading comps and precedent transactions for internal deal materials.",
         "Helped prepare equity research reports, pitch decks and client presentations."])}
       <h2>Projects</h2>
+      ${job("Automated Financial Modeling &amp; Forecasting Platform", "Model Builder, this site", "", "Nov 2026", [
+        "Built a financial modeling platform from scratch with forecasting, statement generation, analysis, equity reporting and sandbox simulation features.",
+        "Automated financial projections by pulling data from 10-K and 10-Q filings, updating linked assumptions, applying formulas and checking model outputs. Built with Python, Excel/LibreOffice, GitHub Actions and Cloudflare Workers. <a href=\"#/built\">How I built it</a>."])}
+      ${job("Cheniere Energy (LNG): equity research and valuation", "Independent project", "", "Oct 2026", [
+        "Wrote an equity research report with a Buy rating and a price target 17.6% above the price at the time, from a blended FCFF DCF, exit EV/EBITDA multiple and trading comps.",
+        "Projected a 6.7% revenue CAGR and 35–36% EBITDA margins through FY2029, and stress-tested the assumptions with bear, base and bull cases and a 50,000-trial Monte Carlo simulation."])}
       ${job("AMCOR valuation, team lead", "Hofstra course project", "", "Apr 2026", [
         "Five-year three-statement forecast with bear, base and bull cases, stress-testing operating leverage and working capital (DSO, DIO, DPO) to derive an implied per-share equity value."])}
       ${job("Pacira BioSciences (PCRX) equity research report", "Independent project", "", "Nov 2025", [
         "Full-length report with an FCFE-based DCF at a 10% cost of equity and scenario analysis across margin, market share and terminal growth, ending in a price target and recommendation."])}
-      ${job("Model Builder", "This site", "", "2026", [
-        "Type any NYSE or Nasdaq ticker and get a linked Excel model, PDF report and model page in about a minute, plus a screener, 13F fund tracker, practice portfolio and public track record. Built with Python, Excel/LibreOffice, GitHub Actions and Cloudflare Workers. <a href=\"#/built\">How I built it</a>."])}
       <h2>Education</h2>
       <div class="cv-job"><div class="cv-h"><b>MS in Finance</b> · Frank G. Zarb School of Business, Hofstra University<span class="note">Jan 2025 – Dec 2026</span></div>
         <div class="note">GPA 3.95 / 4.0 · Financial Modeling, Corporate Finance, Investments, Derivatives, Econometrics</div></div>
