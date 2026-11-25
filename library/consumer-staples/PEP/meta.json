@@ -9,8 +9,8 @@
  "city": "Purchase",
  "state": "NY",
  "website": "https://www.pepsico.com",
- "generated_at": "2026-11-25T01:52:47Z",
- "version": 1,
+ "generated_at": "2026-11-25T02:58:10Z",
+ "version": 2,
  "price": 142.68,
  "price_date": "2026-11-24",
  "target": 150.47,
@@ -806,18 +806,89 @@
     142.02
    ],
    [
-    "2026-11-23",
-    140.21
+    "2026-11-24",
+    142.68
    ]
   ],
   "dates": {
    "tenk_filed": "2026-02-03",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-25T01:52:47Z"
+   "generated_at": "2026-11-25T02:58:10Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=77476&type=10-K"
  },
- "changes": [],
+ "changes": [
+  "Target unchanged at $150.47 since v1 on 2026-11-25."
+ ],
+ "backtest": [
+  {
+   "year": "FY2024",
+   "from": "FY2023",
+   "growth_fc": 0.0728,
+   "growth_act": 0.0042,
+   "rev_fc": 98132.4,
+   "rev_act": 91854.0,
+   "rev_err": 0.0684,
+   "gm_fc": 0.5335,
+   "gm_act": 0.5455,
+   "gm_err_pts": -0.012
+  },
+  {
+   "year": "FY2025",
+   "from": "FY2024",
+   "growth_fc": 0.0311,
+   "growth_act": 0.0225,
+   "rev_fc": 94713.2,
+   "rev_act": 93925.0,
+   "rev_err": 0.0084,
+   "gm_fc": 0.5421,
+   "gm_act": 0.5415,
+   "gm_err_pts": 0.0007
+  }
+ ],
+ "forecast_check": [],
+ "forecasts": [
+  {
+   "base_fy": "FY2025",
+   "made": "2026-11-25",
+   "version": 2,
+   "years": [
+    "FY2026",
+    "FY2027",
+    "FY2028",
+    "FY2029",
+    "FY2030"
+   ],
+   "revenue": [
+    95174.2025,
+    96839.751,
+    98941.1736,
+    101493.8559,
+    104538.6716
+   ],
+   "gm": [
+    0.5421,
+    0.5421,
+    0.5421,
+    0.5421,
+    0.5421
+   ],
+   "ebit_m": [
+    0.131,
+    0.131,
+    0.131,
+    0.131,
+    0.131
+   ],
+   "eps": [
+    6.9006,
+    6.976,
+    7.0947,
+    7.2699,
+    7.4823
+   ]
+  }
+ ],
  "history": [
   {
    "date": "2026-11-25",
@@ -825,13 +896,20 @@
    "price": 142.68,
    "target": 150.47,
    "rating": "Hold"
+  },
+  {
+   "date": "2026-11-25",
+   "version": 2,
+   "price": 142.68,
+   "target": 150.47,
+   "rating": "Hold"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_v1.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_tearsheet_v1.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_report_v1.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_v2.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_tearsheet_v2.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_report_v2.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-25T01:52:47Z"

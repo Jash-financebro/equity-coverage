@@ -9,8 +9,8 @@
  "city": "Mountain View",
  "state": "CA",
  "website": "https://abc.xyz",
- "generated_at": "2026-11-24T22:03:48Z",
- "version": 1,
+ "generated_at": "2026-11-25T02:58:22Z",
+ "version": 2,
  "price": 279.05,
  "price_date": "2026-11-24",
  "target": 324.59,
@@ -793,11 +793,82 @@
   "dates": {
    "tenk_filed": "2026-02-05",
    "price_date": "2026-11-24",
-   "generated_at": "2026-11-24T22:03:48Z"
+   "generated_at": "2026-11-25T02:58:22Z"
   },
   "filings_index": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1652044&type=10-K"
  },
- "changes": [],
+ "changes": [
+  "Target unchanged at $324.59 since v1 on 2026-11-24."
+ ],
+ "backtest": [
+  {
+   "year": "FY2024",
+   "from": "FY2023",
+   "growth_fc": 0.0923,
+   "growth_act": 0.1387,
+   "rev_fc": 335767.7,
+   "rev_act": 350018.0,
+   "rev_err": -0.0407,
+   "gm_fc": 0.5663,
+   "gm_act": 0.582,
+   "gm_err_pts": -0.0158
+  },
+  {
+   "year": "FY2025",
+   "from": "FY2024",
+   "growth_fc": 0.1124,
+   "growth_act": 0.1509,
+   "rev_fc": 389375.1,
+   "rev_act": 402836.0,
+   "rev_err": -0.0334,
+   "gm_fc": 0.5663,
+   "gm_act": 0.5965,
+   "gm_err_pts": -0.0303
+  }
+ ],
+ "forecast_check": [],
+ "forecasts": [
+  {
+   "base_fy": "FY2025",
+   "made": "2026-11-25",
+   "version": 2,
+   "years": [
+    "FY2026",
+    "FY2027",
+    "FY2028",
+    "FY2029",
+    "FY2030"
+   ],
+   "revenue": [
+    451176.32,
+    495166.0112,
+    532303.462,
+    560249.3938,
+    577056.8756
+   ],
+   "gm": [
+    0.582,
+    0.582,
+    0.582,
+    0.582,
+    0.582
+   ],
+   "ebit_m": [
+    0.3058,
+    0.3058,
+    0.3058,
+    0.3058,
+    0.3058
+   ],
+   "eps": [
+    9.5973,
+    10.731,
+    11.7923,
+    12.7279,
+    13.4882
+   ]
+  }
+ ],
  "history": [
   {
    "date": "2026-11-24",
@@ -805,13 +876,20 @@
    "price": 279.05,
    "target": 324.59,
    "rating": "Buy"
+  },
+  {
+   "date": "2026-11-25",
+   "version": 2,
+   "price": 279.05,
+   "target": 324.59,
+   "rating": "Buy"
   }
  ],
  "files": {
   "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/card.png",
-  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_v1.xlsx",
-  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_tearsheet_v1.pdf",
-  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_report_v1.pdf"
+  "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_v2.xlsx",
+  "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_tearsheet_v2.pdf",
+  "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_report_v2.pdf"
  },
  "times_generated": 1,
  "first_generated_at": "2026-11-24T22:03:48Z"
