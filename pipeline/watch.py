@@ -67,6 +67,8 @@ def main():
         try:
             subs = sources.submissions(meta["cik"])
             latest = sources.recent_filings(subs, meta["cik"], forms=("10-K", "10-K/A", "10-Q", "10-Q/A"), limit=1)
+            if latest:
+                meta["latest_filing_seen"] = latest[0]
             have = (meta.get("last_filing") or {}).get("accession")
             if latest and have and latest[0]["accession"] != have and latest[0]["filed"] >= meta["generated_at"][:10]:
                 rebuild.append((T, f"Rebuilt automatically after a new {latest[0]['form']} filed {latest[0]['filed']}."))

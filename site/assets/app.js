@@ -95,6 +95,20 @@
   const ownerKey = () => store.get("mb_owner") || "";
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // ------------------------------------------------------------- private error reporting (shows in the owner's Library)
+  let ERR_N = 0;
+  function reportError(msg, src, line, stack) {
+    msg = String(msg || ""); src = String(src || "");
+    if (ERR_N >= 3 || !msg || /ResizeObserver loop|Script error\.?$|extension:\/\/|chrome-extension/.test(msg + src)) return;
+    if (src && !src.startsWith(location.origin)) return;                // only errors from the site's own code
+    ERR_N++;
+    apiBase().then((base) => base && fetch(base + "/api/error", { method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+      body: JSON.stringify({ msg, src: src.replace(location.origin, ""), line, stack: String(stack || "").slice(0, 1200), route: location.hash.slice(0, 80), build: document.querySelector("script[src*='app.js']")?.src.split("?")[1] || "" }) })).catch(() => {});
+  }
+  window.addEventListener("error", (e) => reportError(e.message, e.filename, e.lineno, e.error?.stack));
+  window.addEventListener("unhandledrejection", (e) => { const r = e.reason || {}; if (r.name === "AbortError" || /Failed to fetch|NetworkError|Load failed/.test(String(r.message || r))) return;
+    reportError("Unhandled: " + String(r.message || r), (String(r.stack || "").match(/https?:[^\s)]+app\.js/) || [location.origin + "/assets/app.js"])[0], null, r.stack); });
+
   // ------------------------------------------------------------- watchlist (kept in this browser only)
   const WL = {
     get: () => { try { return JSON.parse(store.get("mb_watch") || "[]"); } catch { return []; } },
@@ -393,6 +407,32 @@
   }
   const baseCagr = (x) => (x.rev[4] / x.rev0) ** (1 / 5) - 1;
 
+  const secSlug = (s) => String(s || "").toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  // "Newer filing available" when SEC EDGAR has a 10-K/10-Q the model didn't use; "priced N days ago" when the build is old
+  function staleBanner(m, live) {
+    const used = m.last_filing || {}, seen = live || m.latest_filing_seen;
+    const days = Math.floor((Date.now() - Date.parse(m.generated_at)) / 864e5);
+    const btn = `<a class="btn sm primary" href="#/" id="stale-rebuild">Rebuild with the latest data</a>`;
+    if (seen && used.accession && seen.accession !== used.accession && seen.filed >= (used.filed || "")) {
+      return `<div class="warn section stale"><div><b>Newer filing available.</b> ${esc(m.name)} filed a ${esc(seen.form)} on ${esc(seen.filed)}${seen.period ? ` (period ending ${esc(seen.period)})` : ""}, after this model was built from the ${esc(used.form || "10-K")} filed ${esc(used.filed || "earlier")}. <a href="${esc(seen.url)}" target="_blank" rel="noopener">Open the filing ↗</a></div>${btn}</div>`;
+    }
+    if (days >= 30) return `<div class="warn section stale"><div><b>Priced ${days} days ago.</b> The share price, rates and street targets in this model are from ${esc(m.price_date)}. No newer 10-K or 10-Q has been filed, so the financials are current.</div>${btn}</div>`;
+    return "";
+  }
+  function forecastPanel(m) {
+    const bt = m.backtest || [], fc = m.forecast_check || [];
+    if (!bt.length && !fc.length) return "";
+    const errCell = (e) => (nz(e) ? `<span class="${Math.abs(e) <= 0.05 ? "ok" : Math.abs(e) <= 0.1 ? "" : "bad"}">${signed(e)}</span>` : "—");
+    return `<section class="section card" id="sec-fva"><div class="card-h"><h2>Forecast vs. actual</h2><span class="note">how well the model's forecasting rules have done for this company</span></div>
+      ${fc.length ? `<p class="note" style="padding:12px 18px 0"><b>Earlier builds of this model, graded.</b></p><div class="scroll"><table><thead><tr><th>Year</th><th>Forecast made</th><th class="r">Revenue forecast</th><th class="r">Actual</th><th class="r">Miss</th><th class="r">Gross margin forecast → actual</th><th class="r hide-sm">EPS forecast → actual</th></tr></thead><tbody>
+        ${fc.map((r) => `<tr><td>${esc(r.year)}</td><td class="note">${esc(r.made)} (v${r.version}, from ${esc(r.from)} 10-K)</td><td class="r num">${mm(r.revenue[0])}</td><td class="r num">${mm(r.revenue[1])}</td><td class="r num">${errCell(r.rev_err)}</td>
+          <td class="r num">${pct(r.gm[0])} → ${pct(r.gm[1])}</td><td class="r num hide-sm">${usd(r.eps[0])} → ${usd(r.eps[1])}</td></tr>`).join("")}</tbody></table></div>` : ""}
+      ${bt.length ? `<p class="note" style="padding:12px 18px 0"><b>Backtest.</b> The same rules this model uses, applied to the data available a year earlier, against what ${esc(m.name)} then reported.</p>
+        <div class="scroll"><table><thead><tr><th>Year</th><th class="r">Growth forecast</th><th class="r">Actual growth</th><th class="r">Revenue forecast</th><th class="r">Actual</th><th class="r">Miss</th><th class="r hide-sm">Gross margin forecast → actual</th></tr></thead><tbody>
+        ${bt.map((b) => `<tr><td>${esc(b.year)} <span class="note">from ${esc(b.from)}</span></td><td class="r num">${pct(b.growth_fc)}</td><td class="r num">${pct(b.growth_act)}</td><td class="r num">${mm(b.rev_fc)}</td><td class="r num">${mm(b.rev_act)}</td><td class="r num">${errCell(b.rev_err)}</td>
+          <td class="r num hide-sm">${pct(b.gm_fc)} → ${pct(b.gm_act)}</td></tr>`).join("")}</tbody></table></div>` : ""}
+      <p class="note" style="padding:10px 18px 14px">Miss = forecast ÷ actual − 1, so +5% means the forecast was 5% too high. Green is within 5%, red is more than 10% off. Next-year revenue is forecast from the median of the past three years' growth, kept between −5% and +12%. The <a href="#/track">Track record</a> page sums this up across every model.</p></section>`;
+  }
   function quarterPanel(m) {
     const q = m.latest_quarter;
     if (!q || !q.quarter || !Object.keys(q.quarter).length) return "";
@@ -530,7 +570,7 @@
           : `<p class="note" style="padding:14px 18px">Each call is checked against the share price 30 days after it's made, and against the S&amp;P 500. The first results appear once calls are a month old.</p>`}</div>
         <div class="card"><div class="card-h"><h2>Sector snapshot</h2><span class="note">medians across models</span></div>
           <div class="scroll"><table><thead><tr><th>Sector</th><th class="r">Models</th><th class="r">Upside</th><th class="r">Buy</th><th class="r hide-sm">EV/EBITDA</th></tr></thead><tbody>
-            ${sec.map((s) => `<tr><td>${esc(s.name)}</td><td class="r num">${s.n}</td><td class="r num">${signed(s.median_upside)}</td><td class="r num">${pct(s.buy_share, 0)}</td><td class="r num hide-sm">${mult(s.median_ev_ebitda)}</td></tr>`).join("")}
+            ${sec.map((s) => `<tr><td><a class="plain-l" href="#/sector/${secSlug(s.name)}">${esc(s.name)}</a></td><td class="r num">${s.n}</td><td class="r num">${signed(s.median_upside)}</td><td class="r num">${pct(s.buy_share, 0)}</td><td class="r num hide-sm">${mult(s.median_ev_ebitda)}</td></tr>`).join("")}
           </tbody></table></div></div>
       </div>`;
   }
@@ -546,7 +586,7 @@
     }
     document.addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
-      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds", r: "#/track", w: "#/watch" }[e.key];
+      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds", r: "#/track", w: "#/watch", a: "#/about", x: "#/sectors" }[e.key];
       if (e.key === "/") { e.preventDefault(); if (location.hash.replace(/^#\/?/, "")) { location.hash = "#/"; setTimeout(() => document.getElementById("tk")?.focus(), 300); } else document.getElementById("tk")?.focus(); }
       else if (e.key === "t") toggleTheme();
       else if (go) location.hash = go;
@@ -844,6 +884,7 @@
         <div class="kpi"><div class="k">Past year, same mix</div><div class="v">${signed(yr)}</div><div class="n">S&amp;P 500 ${nz(spyr) ? signed(spyr) : "—"}${mdd < 0 ? ` · worst drop ${pct(-mdd, 0)}` : ""}</div></div>
       </div>
       <section class="section card"><div class="card-h"><h2>What this portfolio tells you</h2></div><ul class="checks">${checks.join("")}</ul></section>
+      <section class="section card" id="pf-funds"><div class="card-h"><h2>How it compares to the famous funds</h2><span class="note">overlap with each fund's latest 13F</span></div><p class="muted loading" style="padding:12px 18px">Comparing…</p></section>
       <div class="grid2 section">
         <section class="card"><div class="card-h"><h2>Sector mix</h2></div><div class="bars">${secList.map(([s, w]) => `<div class="bar-r"><span>${esc(s)}</span><div class="bar"><i style="width:${(w * 100).toFixed(1)}%"></i></div><b>${pct(w, 0)}</b></div>`).join("")}</div></section>
         <section class="card"><div class="card-h"><h2>If you'd bought this mix a year ago</h2><span class="note">buy and hold, weekly closes</span></div><div class="chart-wrap" id="pf-chart"></div></section>
@@ -856,6 +897,23 @@
         </tbody></table></div>
         <p class="note" style="padding:10px 18px 14px">Portfolio P/E is the weighted harmonic mean of positive P/Es (loss-makers excluded); yield and beta are weighted averages. The one-year line assumes you bought these amounts 52 weeks ago and held; it's history, not a forecast. Practice only, not investment advice.</p></section>`;
     if (series.length) portfolioChart(document.getElementById("pf-chart"), series);
+    fundOverlap(H);
+  }
+  // overlap = the share of your money that sits in the same stocks at no more than the fund's weight: sum of min(your weight, fund weight)
+  async function fundOverlap(H) {
+    const el = document.getElementById("pf-funds"); if (!el) return;
+    let owners, funds; try { [owners, funds] = await Promise.all([loadOwners(), loadFunds()]); } catch { el.remove(); return; }
+    const byFund = {};
+    H.forEach((h) => (owners[h.t] || []).forEach(([slug, w]) => { const f = (byFund[slug] ||= { overlap: 0, shared: [] }); f.overlap += Math.min(h.w, w); f.shared.push([h.t, h.w, w]); }));
+    const name = Object.fromEntries((funds.funds || []).map((f) => [f.slug, f]));
+    const rows = Object.entries(byFund).map(([slug, f]) => ({ slug, ...f, f: name[slug] })).filter((r) => r.f).sort((a, b) => b.overlap - a.overlap);
+    const head = el.querySelector(".card-h").outerHTML;
+    if (!rows.length) { el.innerHTML = `${head}<p class="note" style="padding:12px 18px">None of the ${(funds.funds || []).length} tracked funds own any of these stocks. Your portfolio is its own thing.</p>`; return; }
+    const best = rows[0];
+    el.innerHTML = `${head}<p style="padding:12px 18px 0;margin:0">Your portfolio looks most like <b>${esc(best.f.name)}</b>${best.f.person ? ` (${esc(best.f.person)})` : ""}: <b>${pct(best.overlap, 0)}</b> overlap.</p>
+      <div class="bars">${rows.slice(0, 8).map((r) => `<div class="bar-r"><span><a href="#/funds/${esc(r.slug)}">${esc(r.f.name)}</a></span><div class="bar"><i style="width:${Math.max(1, r.overlap * 100).toFixed(1)}%"></i></div><b>${pct(r.overlap, 0)}</b></div>`).join("")}</div>
+      <div class="scroll"><table><thead><tr><th>Fund</th><th>Stocks you share</th></tr></thead><tbody>${rows.slice(0, 8).map((r) => `<tr><td>${esc(r.f.name)}</td><td class="note">${r.shared.sort((a, b) => b[2] - a[2]).map(([t, mine, theirs]) => `${esc(t)} (you ${pct(mine, 0)}, fund ${pct(theirs, 1)})`).join(" · ")}</td></tr>`).join("")}</tbody></table></div>
+      <p class="note" style="padding:10px 18px 14px">Overlap adds up, stock by stock, the smaller of your weight and the fund's weight. 100% would mean identical portfolios; above about 30% is a lot. 13F filings list US stocks only and arrive up to 45 days after each quarter ends.</p>`;
   }
 
   // ------------------------------------------------------------- guided screener
@@ -892,7 +950,9 @@
       <div class="sf-in"><input type="number" step="any" placeholder="min" aria-label="${lab}, minimum" data-k="${k}_min" value="${val(F[k + "_min"])}"><span>to</span><input type="number" step="any" placeholder="max" aria-label="${lab}, maximum" data-k="${k}_max" value="${val(F[k + "_max"])}"></div>
       <p class="note">${help}</p></div>`;
   }
-  async function screenerView() {
+  const b64u = { enc: (o) => btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
+                 dec: (s) => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))))) };
+  async function screenerView(qs) {
     document.title = "Screener · " + SITE;
     app.innerHTML = `<section class="hero"><h1>Screener</h1><p>Find companies that match what you're looking for. Start from one of the ideas below, or open all filters and set your own. It covers every NYSE and Nasdaq company (US-based by default), using each one's latest 10-K and today's prices. Each result links to a full model.</p></section>
       <div class="presets-grid">${SCREEN_PRESETS.map((p) => `<button class="preset" data-p="${p.id}"><b>${esc(p.t)}</b><span>${esc(p.d)}</span></button>`).join("")}</div>
@@ -909,6 +969,14 @@
     sectors.forEach((s) => { const pes = rows.filter((r) => r.sector === s && r.pe > 0).map((r) => r.pe).sort((a, b) => a - b); med[s] = pes.length ? pes[pes.length >> 1] : null; });
     let F = {}, sort = ["mcap", -1], shown = 50, active = null;
     try { F = JSON.parse(sessionStorage.getItem("mb_screen") || "{}"); } catch { F = {}; }
+    const Q = new URLSearchParams(qs || "");
+    if (Q.get("f") || Q.get("p")) {     // opened from a shared link
+      try { if (Q.get("f")) F = b64u.dec(Q.get("f")); } catch { F = {}; }
+      const pr = SCREEN_PRESETS.find((x) => x.id === Q.get("p")); active = pr ? pr.id : null; if (pr && !Q.get("f")) F = { ...pr.f };
+      const so = (Q.get("sort") || "").split("."); if (so[0] && (so[0] === "ticker" || d.fields.includes(so[0]))) sort = [so[0], so[1] === "asc" ? 1 : -1];
+    }
+    if (Q.get("sector")) F = { ...F, sector: Q.get("sector") };
+    const shareQs = () => { const q = new URLSearchParams(); if (active) q.set("p", active); if (Object.keys(F).length) q.set("f", b64u.enc(F)); q.set("sort", sort[0] + "." + (sort[1] > 0 ? "asc" : "desc")); return q.toString(); };
     const drawFilters = () => {
       document.getElementById("sf").innerHTML = `
         <div class="sf-top">
@@ -962,6 +1030,7 @@
       r.funds ? `<span class="tag fund-t" title="Held by ${r.funds} tracked fund${r.funds > 1 ? "s" : ""}">${r.funds} fund${r.funds > 1 ? "s" : ""}</span>` : ""].join("");
     function apply() {
       sessionStorage.setItem("mb_screen", JSON.stringify(F));
+      history.replaceState(null, "", "#/screener?" + shareQs());
       document.querySelectorAll(".preset").forEach((b) => b.classList.toggle("on", b.dataset.p === active));
       const hits = rows.filter(pass);
       const [sk, sd] = sort;
@@ -969,7 +1038,7 @@
       const p = SCREEN_PRESETS.find((x) => x.id === active);
       document.getElementById("sr").innerHTML = `
         ${p ? `<p class="note preset-why"><b>${esc(p.t)}.</b> ${esc(p.d)}</p>` : ""}
-        <div class="card"><div class="card-h"><h2>${hits.length.toLocaleString()} compan${hits.length === 1 ? "y" : "ies"} match</h2><span class="note">data as of ${esc(d.as_of)} · fiscal ${d.fiscal_year} 10-Ks · <a href="#" id="sr-csv">download CSV</a></span></div>
+        <div class="card"><div class="card-h"><h2>${hits.length.toLocaleString()} compan${hits.length === 1 ? "y" : "ies"} match</h2><span class="note">data as of ${esc(d.as_of)} · fiscal ${d.fiscal_year} 10-Ks · <a href="#" id="sr-csv">download CSV</a> · <a href="#" id="sr-link">copy link to this screen</a></span></div>
         <div class="scroll"><table class="scr"><thead><tr>${COLS.map(([k, lab]) => `<th class="${k === "ticker" ? "" : "r"} sortable" data-k="${k}" tabindex="0" aria-sort="${sk === k ? (sd > 0 ? "ascending" : "descending") : "none"}">${lab}${sk === k ? (sd > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}<th><span class="sr-only">Links</span></th></tr></thead><tbody>
           ${hits.slice(0, shown).map((r) => `<tr><td>${starBtn(r.ticker)}<span class="tk">${esc(r.ticker)}</span><span class="co">${esc(r.name)} · ${esc(r.sector)}</span>${notes(r)}</td>${COLS.slice(1).map(([k]) => `<td class="r num">${cell(r, k)}</td>`).join("")}<td class="r"><a class="btn sm" href="#/m/${esc(r.ticker)}">Model</a></td></tr>`).join("")}
         </tbody></table></div>
@@ -979,6 +1048,8 @@
         const go = () => { sort = [th.dataset.k, sort[0] === th.dataset.k ? -sort[1] : (th.dataset.k === "ticker" ? 1 : -1)]; apply(); document.querySelector(`th.sortable[data-k="${th.dataset.k}"]`)?.focus(); };
         th.addEventListener("click", go); th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }); });
       document.getElementById("sr-more")?.addEventListener("click", () => { shown += 50; apply(); });
+      document.getElementById("sr-link").addEventListener("click", async (e) => { e.preventDefault(); const u = location.href;
+        try { await navigator.clipboard.writeText(u); e.target.textContent = "link copied"; announce("Link copied"); } catch { prompt("Copy this link", u); } });
       document.getElementById("sr-csv").addEventListener("click", (e) => {
         e.preventDefault();
         const csv = [d.fields.filter((f) => f !== "fin").concat("tracked_funds").join(","), ...hits.map((r) => d.fields.filter((f) => f !== "fin").map((f) => JSON.stringify(r[f] ?? "")).concat(r.funds).join(","))].join("\n");
@@ -1106,7 +1177,7 @@
     app.innerHTML = `
       <a class="crumb" href="#/">← Generate</a>
       <div class="dhead">
-        <div><div class="note">${esc(m.exchange || "NYSE")}: ${esc(m.ticker)} · ${esc(m.sector)} · ${esc(m.industry || "")}</div>
+        <div><div class="note">${esc(m.exchange || "NYSE")}: ${esc(m.ticker)} · <a href="#/sector/${secSlug(m.sector)}">${esc(m.sector)}</a> · ${esc(m.industry || "")}</div>
           <h1 class="dname">${esc(m.name)} ${starBtn(m.ticker)}</h1>
           <div class="note">Version ${m.version} · generated ${ago(m.generated_at)} · 10-K filed ${esc(d.dates?.tenk_filed || "n/a")} · priced ${esc(m.price_date)} ${qualityPill(m.quality)}</div></div>
         <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <button class="btn sm primary-o" id="explain">Explain this model</button> <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a> <button class="btn sm" id="fb-open" aria-expanded="false" aria-controls="fb">Something look off?</button></div>
@@ -1134,6 +1205,7 @@
           <div><div class="note">FFO / share (approx.)</div><b>${usd(chk.ffo_ps)}</b></div><div><div class="note">P/FFO</div><b>${mult(chk.pffo)}</b></div>
           <div><div class="note">Peer median P/FFO</div><b>${mult(chk.peer_multiple)}</b></div><div><div class="note">Implied value</div><b>${usd(chk.implied_value)}</b></div>`}</div></div>` : ""}
 
+      <div id="stale-slot">${staleBanner(m, null)}</div>
       ${changesPanel(m)}
       <section class="section card"><div class="card-h"><h2>Valuation range</h2><span class="note">bars show ranges; the dashed line is the target</span></div><div class="chart-wrap" id="ff"></div></section>
 
@@ -1168,6 +1240,7 @@
 
       ${quarterPanel(m)}
       ${guidancePanel(m)}
+      ${forecastPanel(m)}
       <div id="owners-slot"></div>
       <section class="section card" id="sec-fin"><div class="card-h"><h2>Financial summary</h2><span class="note">$mm except per share · shaded columns are projections (base case)</span></div>
         <div class="scroll"><table class="fin"><thead><tr><th><span class="sr-only">Line item</span></th>${years.map((y, i) => `<th class="r${i >= hn ? " proj" : ""}">${esc(y)}</th>`).join("")}</tr></thead><tbody>
@@ -1215,6 +1288,10 @@
       } catch (err) { msg.textContent = String(err.message || err); btn.disabled = false; }
     });
     ownersPanel(m.ticker).then((h) => { const el = document.getElementById("owners-slot"); if (el) el.innerHTML = h; });
+    fetch(`${base}/api/filing?t=${encodeURIComponent(m.ticker)}`).then((r) => (r.ok ? r.json() : null)).then((f) => {
+      const el = document.getElementById("stale-slot"); if (el && f?.latest) { el.innerHTML = staleBanner(m, f.latest); document.getElementById("stale-rebuild")?.addEventListener("click", () => sessionStorage.setItem("mb_prefill", m.ticker)); }
+    }).catch(() => {});
+    document.getElementById("stale-rebuild")?.addEventListener("click", () => sessionStorage.setItem("mb_prefill", m.ticker));
 
     if (x) {
       const bounded = Math.min(30, Math.max(4, nz(x.ev_ebitda_now) ? x.ev_ebitda_now : 4));
@@ -1293,6 +1370,14 @@
           ${open.map((c) => `<tr data-t="${esc(c.ticker)}"><td><a class="tk" href="#/m/${esc(c.ticker)}">${esc(c.ticker)}</a><span class="co">${esc(c.name)}</span></td><td>${pill(c.rating)} <span class="note">${esc(c.call_date)}</span></td>
             <td class="r num">${usd(c.call_price)}</td><td class="r num">${usd(c.call_target)}</td><td class="r num px">…</td><td class="r num ret">…</td><td class="r num hide-sm spy">…</td><td class="hide-sm note">${esc(c.graded_on)}</td></tr>`).join("")}</tbody></table></div>
           ${d.open_count > open.length ? `<p class="note" style="padding:10px 18px">Showing the ${open.length} most recent of ${d.open_count}.</p>` : ""}` : `<p class="note" style="padding:14px 18px">No calls yet.</p>`}</section>
+      ${(() => { const f = d.forecast || {}; if (!f.n) return "";
+        return `<section class="section card"><div class="card-h"><h2>Forecast accuracy</h2><span class="note">the model's revenue rules re-run on each company's data from one and two years earlier</span></div>
+          <div class="kvrow" style="border:0;padding:14px 18px"><div><div class="note">Forecasts checked</div><b>${f.n}</b> <span class="note">across ${f.companies} companies</span></div>
+            <div><div class="note">Typical miss (median)</div><b>${pct(f.median_abs_rev_err)}</b></div><div><div class="note">Within 5% of actual</div><b>${pct(f.within_5, 0)}</b></div>
+            <div><div class="note">Within 10%</div><b>${pct(f.within_10, 0)}</b></div><div><div class="note">Gross margin, typical miss</div><b>${nz(f.median_abs_gm_pts) ? (f.median_abs_gm_pts * 100).toFixed(1) + " pts" : "—"}</b></div></div>
+          <div class="scroll"><table><thead><tr><th>Company</th><th>Year</th><th class="r">Growth forecast</th><th class="r">Actual</th><th class="r">Revenue miss</th><th class="hide-sm" aria-hidden="true"></th></tr></thead><tbody>
+            ${f.rows.slice(0, 40).map((b) => `<tr><td><a class="tk" href="#/m/${esc(b.ticker)}">${esc(b.ticker)}</a><span class="co">${esc(b.name)}</span></td><td>${esc(b.year)}</td><td class="r num">${pct(b.growth_fc)}</td><td class="r num">${pct(b.growth_act)}</td><td class="r num">${signed(b.rev_err)}</td><td class="hide-sm">${bar(b.rev_err, 0.25)}</td></tr>`).join("")}</tbody></table></div>
+          <p class="note" style="padding:10px 18px 14px">Most accurate first. A positive miss means the forecast was too high. Revenue is the line every other forecast in the model hangs on, so it's the one graded here; each model page shows its own detail.</p></section>`; })()}
       <p class="note section">How grading works: a Buy works if the price is higher on the grading date, a Sell if it's lower, and a Hold if the price moved less than 10% either way. The S&amp;P 500 return uses SPY over the same dates. When a model is rebuilt, its newest call is graded separately once it's 30 days old. Dividends aren't included. For education only, not investment advice.</p>`;
     if (!open.length) return;
     const { q, spy } = await quotesFor([...new Set(open.map((c) => c.ticker))]);
@@ -1338,6 +1423,133 @@
     document.getElementById("wl-cmp").addEventListener("click", (e) => { location.hash = "#/compare/" + e.target.dataset.sel; });
   }
 
+  // ------------------------------------------------------------- about JJ
+  function aboutView() {
+    document.title = "About JJ · " + SITE;
+    const site = INDEX?.site || {};
+    const job = (t, org, place, when, pts) => `<div class="cv-job"><div class="cv-h"><b>${t}</b> · ${org}<span class="note">${when}</span></div><div class="note">${place}</div><ul>${pts.map((x) => `<li>${x}</li>`).join("")}</ul></div>`;
+    app.innerHTML = `<div class="doc about">
+      <h1>Jash (JJ) Rajgandhi</h1>
+      <p class="lede">MS in Finance at Hofstra University's Frank G. Zarb School of Business, graduating December 2026. Senior Financial Analyst on Hofstra's Student Managed Investment Fund. I built this site.</p>
+      <div class="gen-actions" style="padding:0;margin:14px 0 6px">
+        <a class="btn primary" href="mailto:jrajgandhi1@pride.hofstra.edu">Email me</a>
+        ${site.linkedin ? `<a class="btn" href="${esc(site.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>` : ""}
+        ${site.portfolio ? `<a class="btn" href="${esc(site.portfolio)}" target="_blank" rel="noopener">Portfolio ↗</a>` : ""}
+        <span class="note">jrajgandhi1@pride.hofstra.edu · Long Island, New York</span></div>
+      <h2>Why I built Model Builder</h2>
+      <p>On the investment fund I build DCFs, comps and three-statement models, and I review the ones our junior analysts build. A lot of that time goes to the same mechanical work every time: pulling numbers out of the 10-K, linking the statements, rolling the schedules and the DCF. I wanted to see how much of that could be automated without cutting corners, so the time goes into the judgment calls instead.</p>
+      <p>Model Builder builds the model the way I would by hand, for any NYSE or Nasdaq company. It uses SEC filings for the historicals, keeps every cell color-coded and linked so a reviewer can audit it, and runs bull, base and bear cases. Every call is graded in public on the <a href="#/track">Track record</a> page, because a model you can't check isn't worth much.</p>
+      <h2>Experience</h2>
+      ${job("Senior Financial Analyst", "Student Managed Investment Fund, Hofstra University", "Hempstead, New York", "Jun 2025 – present", [
+        "Fundamental equity research on 8+ public companies across healthcare and consumer sectors for a $500K student-managed portfolio, with buy/sell recommendations built on Bloomberg Terminal work and financial statement analysis.",
+        "DCF models, trading comparables and scenario analysis to assess intrinsic value and risk; investment theses presented to faculty advisors and the investment committee.",
+        "Review junior analysts' three-statement models, applying margin decomposition to meet institutional standards."])}
+      ${job("Financial Planning &amp; Analysis Associate", "MedMart Pharma", "Mumbai, India", "Jan – Dec 2024", [
+        "Built integrated three-statement forecast models with revenue drivers, R&amp;D spending and product launch timelines, improving cash-runway forecast accuracy by 30%.",
+        "Margin analysis and revenue forecasting for pharma and surgical product lines; reporting packages and variance analysis for management and investor updates."])}
+      ${job("Financial Research Analyst Intern", "Motilal Oswal", "Mumbai, India", "Apr – Jun 2023", [
+        "Financial analysis on 10+ public companies supporting M&amp;A and capital-raising mandates: DCF models, trading comps and precedent transactions for internal deal materials.",
+        "Helped prepare equity research reports, pitch decks and client presentations."])}
+      <h2>Projects</h2>
+      ${job("AMCOR valuation, team lead", "Hofstra course project", "", "Apr 2026", [
+        "Five-year three-statement forecast with bear, base and bull cases, stress-testing operating leverage and working capital (DSO, DIO, DPO) to derive an implied per-share equity value."])}
+      ${job("Pacira BioSciences (PCRX) equity research report", "Independent project", "", "Nov 2025", [
+        "Full-length report with an FCFE-based DCF at a 10% cost of equity and scenario analysis across margin, market share and terminal growth, ending in a price target and recommendation."])}
+      ${job("Model Builder", "This site", "", "2026", [
+        "Type any NYSE or Nasdaq ticker and get a linked Excel model, PDF report and model page in about a minute, plus a screener, 13F fund tracker, practice portfolio and public track record. Built with Python, Excel/LibreOffice, GitHub Actions and Cloudflare Workers. <a href=\"#/built\">How I built it</a>."])}
+      <h2>Education</h2>
+      <div class="cv-job"><div class="cv-h"><b>MS in Finance</b> · Frank G. Zarb School of Business, Hofstra University<span class="note">Jan 2025 – Dec 2026</span></div>
+        <div class="note">GPA 3.95 / 4.0 · Financial Modeling, Corporate Finance, Investments, Derivatives, Econometrics</div></div>
+      <div class="cv-job"><div class="cv-h"><b>Bachelor of Management Studies, Finance</b> · University of Mumbai<span class="note">Jul 2021 – May 2024</span></div></div>
+      <h2>Skills</h2>
+      <ul class="cv-skills">
+        <li><b>Modeling and valuation:</b> three-statement models, DCF, trading comparables, sensitivity and scenario analysis, DDM, WACC</li>
+        <li><b>Financial analysis:</b> revenue drivers, operating leverage, margin, working capital and variance analysis</li>
+        <li><b>Tools:</b> Excel (advanced), VBA, PowerPoint, Bloomberg Terminal, Claude Code</li>
+        <li><b>Certifications:</b> Bloomberg Market Concepts (BMC)</li>
+        <li><b>Languages:</b> English (fluent), Hindi and Gujarati (native)</li>
+        <li><b>Leadership:</b> Treasurer, ZGBA student club (2026 – present). Ran the budget for 10+ events and cut costs about 20% through competitive sourcing.</li>
+      </ul>
+    </div>`;
+  }
+
+  // ------------------------------------------------------------- sector pages
+  const SEC_STAT = [["pe", "P/E", mult], ["ev_ebitda", "EV/EBITDA", mult], ["rev_growth", "Revenue growth", pct], ["op_m", "Operating margin", pct], ["net_m", "Net margin", pct], ["div_yield", "Dividend yield", pct]];
+  const medOf = (xs) => { const a = xs.filter((v) => nz(v)).sort((x, y) => x - y); return a.length ? (a.length % 2 ? a[a.length >> 1] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2) : null; };
+  async function screenRows() {
+    const d = await loadScreen(); const I = Object.fromEntries(d.fields.map((f, i) => [f, i]));
+    return { d, rows: d.rows.map((r) => Object.fromEntries(d.fields.map((f) => [f, r[I[f]]]))).filter((r) => !r.country || r.country === "United States") };
+  }
+  async function sectorsView() {
+    document.title = "Sectors · " + SITE;
+    app.innerHTML = `<p class="muted loading">Loading sectors…</p>`;
+    let S; try { S = await screenRows(); } catch { app.innerHTML = `<div class="warn">Sector data isn't available right now.</div>`; return; }
+    const by = {}; S.rows.forEach((r) => (by[r.sector] ||= []).push(r));
+    const secs = Object.entries(by).filter(([k]) => k && k !== "Other").sort((a, b) => b[1].reduce((x, r) => x + (r.mcap || 0), 0) - a[1].reduce((x, r) => x + (r.mcap || 0), 0));
+    app.innerHTML = `<section class="hero"><h1>Sectors</h1><p>Every US-based NYSE and Nasdaq company, grouped into the 11 standard sectors. Medians show what's normal for each sector, which is the fair way to judge a company's numbers: a P/E of 25 is cheap for software and expensive for a utility.</p></section>
+      <div class="card"><div class="scroll"><table><thead><tr><th>Sector</th><th class="r">Companies</th><th class="r">Market value</th>${SEC_STAT.map(([, l]) => `<th class="r${l.length > 12 ? " hide-sm" : ""}">${l}</th>`).join("")}</tr></thead><tbody>
+        ${secs.map(([n, rs]) => `<tr><td><a class="plain-l" href="#/sector/${secSlug(n)}">${esc(n)}</a></td><td class="r num">${rs.length.toLocaleString()}</td><td class="r num">${big(rs.reduce((x, r) => x + (r.mcap || 0), 0))}</td>
+          ${SEC_STAT.map(([k, l, f]) => `<td class="r num${l.length > 12 ? " hide-sm" : ""}">${f(medOf(rs.filter((r) => (r.mcap || 0) >= 300 && (k !== "pe" || r.pe > 0)).map((r) => r[k])))}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>
+      <p class="note section">Medians across companies worth $300M or more in each sector (P/E counts profitable companies only). Data from each company's latest 10-K and recent prices, rebuilt nightly. Click a sector for its largest companies, standouts and the site's models.</p>`;
+  }
+  async function sectorPage(slug) {
+    app.innerHTML = `<p class="muted loading">Loading…</p>`;
+    let S; try { S = await screenRows(); } catch { app.innerHTML = `<div class="warn">Sector data isn't available right now.</div>`; return; }
+    const name = [...new Set(S.rows.map((r) => r.sector))].find((n) => secSlug(n) === slug);
+    if (!name) { app.innerHTML = `<a class="crumb" href="#/sectors">← Sectors</a><div class="card empty">No sector called “${esc(slug)}”.</div>`; return; }
+    document.title = `${name} · ${SITE}`;
+    const rs = S.rows.filter((r) => r.sector === name);
+    const top = (f, k, dir, n = 6) => rs.filter(f).sort((a, b) => dir * ((a[k] ?? 0) - (b[k] ?? 0))).slice(0, n);
+    const list = (title, why, xs, k, fmt) => `<section class="card"><div class="card-h"><h2>${title}</h2><span class="note">${why}</span></div>
+      ${xs.length ? xs.map((r) => `<div class="kv"><span>${starBtn(r.ticker)}<a class="tk" href="#/m/${esc(r.ticker)}">${esc(r.ticker)}</a> <span class="co-i">${esc(r.name)}</span></span><span class="num">${fmt(r[k])}</span></div>`).join("") : `<p class="note" style="padding:12px 18px">None qualify.</p>`}</section>`;
+    const owners = await loadOwners().catch(() => ({}));
+    const fav = rs.map((r) => ({ ...r, nf: (owners[r.ticker] || []).length })).filter((r) => r.nf).sort((a, b) => b.nf - a.nf || (b.mcap || 0) - (a.mcap || 0)).slice(0, 6);
+    app.innerHTML = `<a class="crumb" href="#/sectors">← Sectors</a>
+      <section class="hero"><h1>${esc(name)}</h1><p>${rs.length.toLocaleString()} US-based NYSE and Nasdaq companies worth ${big(rs.reduce((x, r) => x + (r.mcap || 0), 0))} in total. <a href="#/screener?sector=${encodeURIComponent(name)}">Screen this sector →</a></p></section>
+      <div class="kpis">${SEC_STAT.map(([k, l, f]) => `<div class="kpi"><div class="k">Median ${l}</div><div class="v">${f(medOf(rs.filter((r) => (r.mcap || 0) >= 300 && (k !== "pe" || r.pe > 0)).map((r) => r[k])))}</div></div>`).join("")}</div>
+      <p class="note">Medians cover companies worth $300M or more (P/E: profitable ones only), so thousands of tiny companies don't drown out what's typical.</p>
+      <section class="section card" id="sec-models"><div class="card-h"><h2>Models on this site</h2><span class="note">built by visitors</span></div><p class="muted loading" style="padding:12px 18px">Loading…</p></section>
+      <div class="grid2 section">
+        ${list("Largest companies", "by market value", top((r) => r.mcap, "mcap", -1, 8), "mcap", big)}
+        ${list("Most owned by famous funds", "of the 15 tracked 13F filers", fav, "nf", (n) => `${n} fund${n > 1 ? "s" : ""}`)}
+        ${list("Growing fastest", "profitable, over $1B, revenue growth", top((r) => r.mcap >= 1000 && r.net_m > 0 && nz(r.rev_growth), "rev_growth", -1), "rev_growth", pct)}
+        ${list("Lowest P/E", "profitable, over $2B", top((r) => r.mcap >= 2000 && r.pe > 0, "pe", 1), "pe", mult)}
+        ${list("Highest dividend yield", "over $1B, paying out under 90% of profit", top((r) => r.mcap >= 1000 && r.div_yield > 0 && nz(r.payout) && r.payout <= 0.9 && (r.chg_1y ?? 0) > -0.3, "div_yield", -1), "div_yield", pct)}
+        ${list("Highest operating margin", "over $1B", top((r) => r.mcap >= 1000 && nz(r.op_m) && r.op_m < 0.9, "op_m", -1), "op_m", pct)}
+      </div>
+      <p class="note section">Lists show companies that stand out on one number, not recommendations. Figures from the latest 10-K (fiscal ${esc(S.d.fiscal_year)}) and recent prices; stocks down more than 30% in a year are left out of the dividend list.</p>`;
+    const base = await apiBase();
+    let ms = []; try { ms = (await fetch(base + "/api/sector?name=" + encodeURIComponent(name)).then((r) => r.json())).models || []; } catch { /* leave empty */ }
+    const el = document.getElementById("sec-models"); if (!el) return;
+    const head = el.querySelector(".card-h").outerHTML;
+    el.innerHTML = head + (ms.length ? `<div class="kvrow" style="border:0;padding:12px 18px 0"><div><div class="note">Models</div><b>${ms.length}</b></div><div><div class="note">Median upside</div><b>${signed(medOf(ms.map((m) => m.upside)))}</b></div>
+        <div><div class="note">Rated Buy</div><b>${pct(ms.filter((m) => m.rating === "Buy").length / ms.length, 0)}</b></div><div><div class="note">Median WACC</div><b>${pct(medOf(ms.map((m) => m.wacc)))}</b></div></div>
+      <div class="scroll"><table><thead><tr><th>Company</th><th class="r">Target</th><th class="r">Price</th><th class="r">Upside</th><th>Rating</th><th class="r hide-sm">EV/EBITDA</th><th class="hide-sm">Built</th></tr></thead><tbody>
+        ${ms.sort((a, b) => (b.upside ?? -9) - (a.upside ?? -9)).map((m) => `<tr><td>${starBtn(m.ticker)}<a class="tk" href="#/m/${esc(m.ticker)}">${esc(m.ticker)}</a><span class="co">${esc(m.name)}</span></td><td class="r num">${usd(m.target)}</td><td class="r num">${usd(m.price)}</td><td class="r num">${signed(m.upside)}</td><td>${pill(m.rating)}</td><td class="r num hide-sm">${mult(m.ev_ebitda)}</td><td class="hide-sm note">${ago(m.generated_at)}</td></tr>`).join("")}</tbody></table></div>`
+      : `<p class="note" style="padding:12px 18px">No models in ${esc(name)} yet. <a href="#/">Build the first one</a>.</p>`);
+  }
+
+  // ------------------------------------------------------------- site errors (owner only)
+  async function loadErrors() {
+    const el = document.getElementById("err-list"); if (!el) return;
+    const base = await apiBase();
+    let items = [];
+    try { const r = await fetch(base + "/api/error", { headers: { "X-Owner-Key": ownerKey() } }); if (r.ok) items = (await r.json()).items || []; } catch { return; }
+    const groups = {}; items.forEach((e) => { const g = (groups[e.msg] ||= { msg: e.msg, n: 0, ids: [], last: e.at, ex: e }); g.n++; g.ids.push(e.id); if (e.at > g.last) { g.last = e.at; g.ex = e; } });
+    const gs = Object.values(groups).sort((a, b) => b.last.localeCompare(a.last));
+    el.innerHTML = `<div class="card section"><div class="card-h"><h2>Site errors</h2><span class="note">${items.length ? `${items.length} in the past 30 days` : "none in the past 30 days"}</span></div>
+      ${gs.length ? `<div class="scroll"><table><thead><tr><th>Error</th><th class="r">Times</th><th>Page</th><th class="hide-sm">Last seen</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
+        ${gs.map((g, i) => `<tr><td><details><summary>${esc(g.msg)}</summary><pre class="err-pre">${esc(g.ex.src || "")}${g.ex.line ? ":" + g.ex.line : ""}
+${esc(g.ex.stack || "")}
+${esc(g.ex.ua || "")}</pre></details></td><td class="r num">${g.n}</td><td class="note">${esc(g.ex.route || "")}</td><td class="hide-sm note">${ago(g.last)}</td><td class="r"><button class="btn sm" data-err="${i}">Clear</button></td></tr>`).join("")}</tbody></table></div>`
+        : `<p class="note" style="padding:12px 18px">If something breaks in a visitor's browser, it shows up here.</p>`}</div>`;
+    el.querySelectorAll("[data-err]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true;
+      const r = await fetch(base + "/api/error?ids=" + encodeURIComponent(gs[b.dataset.err].ids.join(",")), { method: "DELETE", headers: { "X-Owner-Key": ownerKey() } });
+      if (r.ok) setTimeout(loadErrors, 800); else b.disabled = false;
+    }));
+  }
+
   // ------------------------------------------------------------- library (owner only)
   async function libraryView() {
     document.title = "Library · " + SITE;
@@ -1370,8 +1582,9 @@
       <div class="lib-tools"><input id="lib-q" placeholder="Filter by ticker or name" aria-label="Filter library">
         <div class="chips"><button class="chip on" data-s="">All</button>${sectors.map((s) => `<button class="chip" data-s="${esc(s)}">${esc(s)} <span>${models.filter((m) => m.sector === s).length}</span></button>`).join("")}</div></div>
       <div id="fb-list"></div>
+      <div id="err-list"></div>
       <div id="lib-body"></div>`;
-    loadFeedback();
+    loadFeedback(); loadErrors();
     let sel = "";
     const q = document.getElementById("lib-q");
     q.addEventListener("input", () => render(q.value, sel));
@@ -1477,9 +1690,9 @@
       .then((x) => { INDEX = x; if (x.generated_at) DATA_V = String(x.generated_at).replace(/\D/g, "").slice(0, 12); })
       .catch(() => { INDEX = { coverage: [], site: {}, generated_at: "— first refresh pending" }; })
       .then(() => {
-        const site = INDEX.site || {}, nav = document.getElementById("nav");
-        if (site.portfolio) nav.insertAdjacentHTML("beforeend", `<a href="${esc(site.portfolio)}" target="_blank" rel="noopener">Portfolio ↗</a>`);
-        if (site.linkedin) nav.insertAdjacentHTML("beforeend", `<a href="${esc(site.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>`);
+        const site = INDEX.site || {}, fl = document.querySelector(".foot-links");
+        if (fl && site.linkedin) fl.insertAdjacentHTML("beforeend", ` · <a href="${esc(site.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>`);
+        if (fl && site.portfolio) fl.insertAdjacentHTML("beforeend", ` · <a href="${esc(site.portfolio)}" target="_blank" rel="noopener">Portfolio ↗</a>`);
         document.getElementById("foot-right").textContent = INDEX.owner ? "© " + new Date().getFullYear() + " " + INDEX.owner : "";
         beacon();
         return INDEX;
@@ -1490,11 +1703,12 @@
     hideTip();
     bootIndex(); apiBase();
     const h = location.hash.replace(/^#\/?/, "");
-    if (h === "built") await bootIndex();
+    if (h === "built" || h === "about") await bootIndex();
     navLib();
     if (!window.__mbChrome) { window.__mbChrome = true; initChrome(); }
-    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds", "track", "watch"];
-    const tab = TABS.includes(h) ? h : h.startsWith("funds/") ? "funds" : h ? "__" : "";
+    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds", "track", "watch", "about", "sectors"];
+    const hb = h.split("?")[0];
+    const tab = TABS.includes(hb) ? hb : h.startsWith("funds/") ? "funds" : h.startsWith("sector/") ? "sectors" : h ? "__" : "";
     document.querySelectorAll("nav a").forEach((a) => { const on = a.getAttribute("href") === "#/" + tab; a.classList.toggle("on", on);
       if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
     window.scrollTo(0, 0);
@@ -1507,7 +1721,10 @@
     else if (h === "built") built();
     else if (h === "update") updateView();
     else if (h === "portfolio") portfolioView();
-    else if (h === "screener") screenerView();
+    else if (hb === "screener") screenerView(h.split("?")[1] || "");
+    else if (h === "about") aboutView();
+    else if (h === "sectors") sectorsView();
+    else if (h.startsWith("sector/")) sectorPage(decodeURIComponent(h.slice(7)));
     else if (h === "funds") fundsView();
     else if (h.startsWith("funds/")) fundPage(decodeURIComponent(h.slice(6)));
     else if (h === "quiz") quizView();

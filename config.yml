@@ -3,7 +3,7 @@ owner: "Jash (JJ) Rajgandhi"
 site:
   title: "Model Builder — JJ Rajgandhi"
   tagline: "Full Excel models for any NYSE or Nasdaq company, built from SEC 10-K data."
-  linkedin: ""        # e.g. https://www.linkedin.com/in/your-handle
+  linkedin: "https://www.linkedin.com/in/jashrg"
   portfolio: ""       # link to your Bloomberg-terminal-style portfolio site
   email: ""
   analytics_token: "e13e5274515c46c787775d6a5451300a"   # Cloudflare Web Analytics site token (free): dash.cloudflare.com → Analytics & Logs → Web Analytics

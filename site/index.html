@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="assets/style.css">
+  <link rel="alternate" type="application/rss+xml" title="Model Builder: new models, graded calls, fund filings" href="feed.xml">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230b0b0b'/><path d='M3 11l3-3 2 2 5-5' stroke='white' stroke-width='1.6' fill='none'/></svg>">
 </head>
 <body>
@@ -25,13 +26,14 @@
         <a href="#/">Generate</a>
         <a href="#/update">Update a model</a>
         <a href="#/screener">Screener</a>
+        <a href="#/sectors">Sectors</a>
         <a href="#/funds">Funds</a>
         <a href="#/portfolio">Portfolio</a>
         <a href="#/quiz">Quiz</a>
         <a href="#/track">Track record</a>
         <a href="#/watch" id="nav-watch">Watchlist</a>
         <a href="#/library" id="nav-lib" hidden>Library</a>
-        <a href="#/method">Methodology</a>
+        <a href="#/about">About JJ</a>
       </nav>
     </div>
   </header>
@@ -40,8 +42,8 @@
     <script>if (location.hash.replace(/^#\/?/, "")) document.getElementById("boot-hero").innerHTML = '<p class="muted loading">Loading…</p>';</script></main>
   <footer class="wrap foot">
     <span id="foot-left">Fundamentals: SEC EDGAR (10-K XBRL). Prices: Yahoo Finance. For educational purposes only — not investment advice.</span>
-    <span class="note foot-links"><a href="#/built">How I built this</a> · <a href="downloads/DCF_Template.xlsx" download>DCF template</a></span>
-    <span class="note keys">Keys: <kbd>/</kbd> search · <kbd>g</kbd> generate · <kbd>u</kbd> update · <kbd>c</kbd> compare · <kbd>s</kbd> screener · <kbd>f</kbd> funds · <kbd>p</kbd> portfolio · <kbd>q</kbd> quiz · <kbd>r</kbd> track record · <kbd>w</kbd> watchlist · <kbd>t</kbd> theme</span>
+    <span class="note foot-links"><a href="#/method">Methodology</a> · <a href="#/built">How I built this</a> · <a href="feed.xml">RSS feed</a> · <a href="downloads/DCF_Template.xlsx" download>DCF template</a></span>
+    <span class="note keys">Keys: <kbd>/</kbd> search · <kbd>g</kbd> generate · <kbd>u</kbd> update · <kbd>c</kbd> compare · <kbd>s</kbd> screener · <kbd>f</kbd> funds · <kbd>p</kbd> portfolio · <kbd>q</kbd> quiz · <kbd>r</kbd> track record · <kbd>w</kbd> watchlist · <kbd>x</kbd> sectors · <kbd>a</kbd> about · <kbd>t</kbd> theme</span>
     <span id="foot-right"></span>
   </footer>
   <div id="tip" class="tip" role="tooltip" hidden></div>

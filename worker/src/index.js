@@ -13,6 +13,9 @@
 // GET  /api/track                calls graded 30+ days after they were made, plus open calls still being tracked
 // GET  /api/models?t=A,B           summary of the models for a list of tickers (watchlist)
 // POST /api/feedback               "this looks off" report for a model; GET / DELETE are owner only
+// GET  /api/filing?t=T             newest 10-K / 10-Q on SEC EDGAR for a model's company (stale-model banner)
+// GET  /api/sector?name=S          models in one sector (sector pages)
+// POST /api/error                  browser error report; GET / DELETE are owner only
 // GET  /api/health
 // Secrets/vars: GH_TOKEN (fine-grained PAT: Actions RW, Contents R), GH_REPO, ALLOWED_ORIGINS (comma list)
 
@@ -38,6 +41,9 @@ export default {
       if (url.pathname === "/api/track" && req.method === "GET") return json(await track(env, ctx), 200, cors, 300);
       if (url.pathname === "/api/models" && req.method === "GET") return json(await modelsFor(url, env, ctx), 200, cors, 60);
       if (url.pathname === "/api/feedback") return await feedbackRoutes(req, url, env, ctx, cors);
+      if (url.pathname === "/api/error") return await errorRoutes(req, url, env, ctx, cors);
+      if (url.pathname === "/api/filing" && req.method === "GET") return json(await latestFiling(url, env, ctx), 200, cors, 3600);
+      if (url.pathname === "/api/sector" && req.method === "GET") return json(await sectorModels(url, env, ctx), 200, cors, 120);
       if (url.pathname === "/api/recent" && req.method === "GET") return json(await recent(env, ctx), 200, cors, 30);
       if (url.pathname === "/api/model" && req.method === "GET") return json(await model(url, env, ctx), 200, cors, 60);
       if (url.pathname.startsWith("/m/") && req.method === "GET") return sharePage(url, env, ctx);
@@ -319,14 +325,79 @@ async function track(env, ctx) {
     .map((m) => ({ ticker: m.ticker, name: m.name, sector: m.sector, rating: m.rating, call_date: m.generated_at.slice(0, 10),
                    call_price: m.price, call_target: m.target, graded_on: plus30(m.generated_at) }))
     .sort((a, b) => b.call_date.localeCompare(a.call_date) || a.ticker.localeCompare(b.ticker));
+  // forecast vs actual: the model's rules re-run on data from one and two years earlier
+  const bt = ms.flatMap((m) => (m.backtest || []).map((b) => ({ ticker: m.ticker, name: m.name, sector: m.sector, ...b })));
+  const abs = bt.map((b) => Math.abs(b.rev_err)).filter((v) => isFinite(v));
+  const gms = bt.map((b) => b.gm_err_pts).filter((v) => typeof v === "number" && isFinite(v)).map(Math.abs);
+  const forecast = { n: bt.length, companies: new Set(bt.map((b) => b.ticker)).size, median_abs_rev_err: median(abs),
+    within_5: abs.length ? abs.filter((v) => v <= 0.05).length / abs.length : null,
+    within_10: abs.length ? abs.filter((v) => v <= 0.10).length / abs.length : null,
+    too_high: abs.length ? bt.filter((b) => b.rev_err > 0).length / bt.length : null, median_abs_gm_pts: median(gms),
+    rows: bt.sort((a, b) => Math.abs(a.rev_err) - Math.abs(b.rev_err)) };
   return { updated_at: idx.updated_at, summary, scored, open: open.slice(0, 48), open_count: open.length,
-           first_grade: open.length ? open.map((o) => o.graded_on).sort()[0] : null };
+           first_grade: open.length ? open.map((o) => o.graded_on).sort()[0] : null, forecast };
 }
 
 async function modelsFor(url, env, ctx) {
   const want = [...new Set(String(url.searchParams.get("t") || "").toUpperCase().split(/[,\s]+/).map((x) => x.replace(/[./]/g, "-")).filter(Boolean))].slice(0, 40);
   const idx = await library(env, ctx);
   return { models: idx.models.filter((m) => want.includes(m.ticker)).map((m) => ({ ...slim(m), mark: m.mark || null })) };
+}
+
+async function latestFiling(url, env, ctx) {
+  const t = String(url.searchParams.get("t") || "").toUpperCase().replace(/[./]/g, "-");
+  const m = (await library(env, ctx)).models.find((x) => x.ticker === t);
+  if (!m || !m.cik) fail("No model for that ticker.", 404);
+  return cached(ctx, `filing-v1-${m.cik}`, 6 * 3600, async () => {
+    const cik = String(m.cik).padStart(10, "0");
+    const r = await fetch(`https://data.sec.gov/submissions/CIK${cik}.json`, { headers: { "User-Agent": env.SEC_USER_AGENT || "Model Builder admin@example.com", Accept: "application/json" } });
+    if (!r.ok) return { ticker: t, latest: null, error: `SEC ${r.status}` };
+    const rec = (await r.json()).filings?.recent || {};
+    for (let i = 0; i < (rec.form || []).length; i++) {
+      if (["10-K", "10-K/A", "10-Q", "10-Q/A"].includes(rec.form[i])) {
+        return { ticker: t, latest: { form: rec.form[i], filed: rec.filingDate[i], accession: rec.accessionNumber[i], period: rec.reportDate[i],
+          url: `https://www.sec.gov/Archives/edgar/data/${Number(m.cik)}/${rec.accessionNumber[i].replace(/-/g, "")}/${rec.primaryDocument[i]}` } };
+      }
+    }
+    return { ticker: t, latest: null };
+  });
+}
+
+async function sectorModels(url, env, ctx) {
+  const name = String(url.searchParams.get("name") || "");
+  const ms = (await library(env, ctx)).models.filter((m) => m.sector === name);
+  return { sector: name, models: ms.map((m) => ({ ...slim(m), ev_ebitda: m.ev_ebitda, growth_next: m.growth_next })) };
+}
+
+async function errorRoutes(req, url, env, ctx, cors) {
+  if (!env.UPLOADS) fail("Error log isn't set up yet.", 503);
+  if (req.method === "POST") {
+    const b = await req.json().catch(() => ({}));
+    const msg = String(b.msg || "").slice(0, 300);
+    if (!msg) fail("msg required");
+    const ip = req.headers.get("CF-Connecting-IP") || "anon", hour = new Date().toISOString().slice(0, 13);
+    const key = new Request(`https://err.local/${encodeURIComponent(ip)}/${hour}`), cache = caches.default;
+    const hit = await cache.match(key), n = hit ? Number(await hit.text()) : 0;
+    if (n >= 20) return json({ ok: true, dropped: true }, 200, cors);
+    ctx.waitUntil(cache.put(key, new Response(String(n + 1), { headers: { "Cache-Control": "max-age=3600" } })));
+    const at = new Date().toISOString();
+    await env.UPLOADS.put(`err:${at}:${rid(3)}`, JSON.stringify({ msg, src: String(b.src || "").slice(0, 200), line: Number(b.line) || null,
+      stack: String(b.stack || "").slice(0, 1200), route: String(b.route || "").slice(0, 80), ua: String(req.headers.get("User-Agent") || "").slice(0, 160),
+      build: String(b.build || "").slice(0, 40), at }), { expirationTtl: 30 * 86400 });
+    return json({ ok: true }, 200, cors);
+  }
+  if (!(await isOwner(req, env))) return json({ error: "Owner only." }, 403, cors);
+  if (req.method === "GET") {
+    const keys = (await env.UPLOADS.list({ prefix: "err:", limit: 300 })).keys.map((k) => k.name).sort().reverse();
+    const items = await Promise.all(keys.map(async (id) => ({ id, ...(JSON.parse((await env.UPLOADS.get(id)) || "{}")) })));
+    return json({ items }, 200, cors);
+  }
+  if (req.method === "DELETE") {
+    const ids = (url.searchParams.get("ids") || "").split(",").filter((x) => x.startsWith("err:")).slice(0, 300);
+    await Promise.all(ids.map((id) => env.UPLOADS.delete(id)));
+    return json({ ok: true, deleted: ids.length }, 200, cors);
+  }
+  fail("method not allowed", 405);
 }
 
 const FEEDBACK_KINDS = ["number", "peer", "target", "other"];

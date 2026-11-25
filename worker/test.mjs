@@ -81,4 +81,13 @@ ok(Math.abs(b.quotes[1].pe - 110 / 8) < 1e-9 && b.quotes[1].market_cap === 110 *
   r = await fb("DELETE", "/api/feedback?id=" + encodeURIComponent(items[0].id), null, "secret-key"); ok(r.status === 200 && ![...kv.keys()].some((k) => k.startsWith("fb:")), "owner clears feedback"); }
 [s, b] = await call("/api/track"); ok(s === 200 && Array.isArray(b.open) && Array.isArray(b.scored) && "summary" in b, "track " + JSON.stringify(b).slice(0, 200));
 [s, b] = await call("/api/models?t=xom,zzz"); ok(s === 200 && Array.isArray(b.models), "watchlist models " + JSON.stringify(b).slice(0, 200));
-console.log("OK  worker: feedback, track, watchlist models, quotes, insights, model updates, private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");
+{ const r0 = await worker.fetch(new Request("https://w.dev/api/error", { method: "POST", body: JSON.stringify({ msg: "TypeError: x is undefined", route: "m/KO", line: 12 }), headers: { "CF-Connecting-IP": "7.7.7.7" } }), env, ctx);
+  ok(r0.status === 200 && [...kv.keys()].some((k) => k.startsWith("err:")), "error logged");
+  let r = await worker.fetch(new Request("https://w.dev/api/error"), env, ctx); ok(r.status === 403, "error log owner only");
+  r = await worker.fetch(new Request("https://w.dev/api/error", { headers: { "X-Owner-Key": "secret-key" } }), env, ctx); const it = (await r.json()).items;
+  ok(it.length === 1 && it[0].route === "m/KO", "owner reads errors");
+  r = await worker.fetch(new Request("https://w.dev/api/error?ids=" + encodeURIComponent(it[0].id), { method: "DELETE", headers: { "X-Owner-Key": "secret-key" } }), env, ctx);
+  ok(!(([...kv.keys()]).some((k) => k.startsWith("err:"))), "owner clears errors"); }
+[s, b] = await call("/api/sector?name=Energy"); ok(s === 200 && Array.isArray(b.models), "sector models");
+[s, b] = await call("/api/track"); ok(b.forecast && "median_abs_rev_err" in b.forecast, "forecast accuracy block");
+console.log("OK  worker: errors, sector, feedback, track, watchlist models, quotes, insights, model updates, private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");

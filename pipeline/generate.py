@@ -484,7 +484,7 @@ def update_index():
     for meta in LIB.glob("*/*/meta.json"):
         try:
             e = json.loads(meta.read_text())
-            for k in ("detail", "history", "guidance", "changes", "latest_quarter"):
+            for k in ("detail", "history", "guidance", "changes", "latest_quarter", "forecasts", "forecast_check"):
                 e.pop(k, None)
             entries.append(e)
         except Exception:  # noqa: BLE001
@@ -635,6 +635,14 @@ def generate(ticker: str, allow_any: bool = False, rebuild: bool = False, reason
     rec["detail"] = detail_block(model, fin, me, mkt, rec)
     prev_meta = json.loads((folder / "meta.json").read_text()) if (folder / "meta.json").exists() else {}
     rec["changes"] = explain_changes(prev_meta, rec)
+    import backtest
+    try:
+        rec["backtest"] = backtest.backtest(fin)
+        snap = backtest.snapshot(rec["detail"], fin["labels"][-1], rec["generated_at"][:10], n)
+        rec["forecast_check"] = backtest.check(prev_meta.get("forecasts"), rec["detail"])
+        rec["forecasts"] = backtest.merge(prev_meta.get("forecasts"), snap)
+    except Exception as exc:  # noqa: BLE001
+        print("  ! forecast check skipped:", exc)
     rec["history"] = ((prev_meta.get("history") or [])
                       + [{"date": rec["generated_at"][:10], "version": n, "price": rec["price"], "target": rec["target"],
                           "rating": rec["rating"]}])[-40:]
