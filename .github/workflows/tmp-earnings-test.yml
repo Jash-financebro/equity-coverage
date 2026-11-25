@@ -16,9 +16,90 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - env:
+          TK: KO
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
         run: |
-          for T in KO AAPL JPM NVDA; do
+          for T in $TK; do
+            python3 pipeline/earnings.py $T /tmp/$T.json
+            python3 - "$T" <<'PY'
+          import json,sys
+          T=sys.argv[1]; d=json.load(open(f"/tmp/{T}.json"))
+          ev=(d.get("events") or [{}])[0]
+          out={"T":T,"status":d.get("status"),"err":d.get("error"),"n_ev":len(d.get("events",[])),"period":ev.get("period"),"head":ev.get("headline"),
+               "src":ev.get("source_label"),"docs":[x["label"] for x in ev.get("docs",[])],"call":ev.get("call"),
+               "n_res":len(ev.get("results") or []),"n_out":len(ev.get("outlook") or []),"n_q":len(ev.get("quotes") or []),"n_cap":len(ev.get("capital") or []),
+               "summary":d.get("summary"),"ir":d.get("ir_site")}
+          print("::notice title=" + T + " meta::" + json.dumps(out)[:4000])
+          for k in ("results","outlook","capital"):
+              print("::notice title=" + T + " " + k + "::" + json.dumps(ev.get(k) or [])[:4000])
+          print("::notice title=" + T + " quotes::" + json.dumps(ev.get("quotes") or [])[:4000])
+          PY
+          done
+      - env:
+          TK: JPM
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: |
+          for T in $TK; do
+            python3 pipeline/earnings.py $T /tmp/$T.json
+            python3 - "$T" <<'PY'
+          import json,sys
+          T=sys.argv[1]; d=json.load(open(f"/tmp/{T}.json"))
+          ev=(d.get("events") or [{}])[0]
+          out={"T":T,"status":d.get("status"),"err":d.get("error"),"n_ev":len(d.get("events",[])),"period":ev.get("period"),"head":ev.get("headline"),
+               "src":ev.get("source_label"),"docs":[x["label"] for x in ev.get("docs",[])],"call":ev.get("call"),
+               "n_res":len(ev.get("results") or []),"n_out":len(ev.get("outlook") or []),"n_q":len(ev.get("quotes") or []),"n_cap":len(ev.get("capital") or []),
+               "summary":d.get("summary"),"ir":d.get("ir_site")}
+          print("::notice title=" + T + " meta::" + json.dumps(out)[:4000])
+          for k in ("results","outlook","capital"):
+              print("::notice title=" + T + " " + k + "::" + json.dumps(ev.get(k) or [])[:4000])
+          print("::notice title=" + T + " quotes::" + json.dumps(ev.get("quotes") or [])[:4000])
+          PY
+          done
+      - env:
+          TK: NVDA
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: |
+          for T in $TK; do
+            python3 pipeline/earnings.py $T /tmp/$T.json
+            python3 - "$T" <<'PY'
+          import json,sys
+          T=sys.argv[1]; d=json.load(open(f"/tmp/{T}.json"))
+          ev=(d.get("events") or [{}])[0]
+          out={"T":T,"status":d.get("status"),"err":d.get("error"),"n_ev":len(d.get("events",[])),"period":ev.get("period"),"head":ev.get("headline"),
+               "src":ev.get("source_label"),"docs":[x["label"] for x in ev.get("docs",[])],"call":ev.get("call"),
+               "n_res":len(ev.get("results") or []),"n_out":len(ev.get("outlook") or []),"n_q":len(ev.get("quotes") or []),"n_cap":len(ev.get("capital") or []),
+               "summary":d.get("summary"),"ir":d.get("ir_site")}
+          print("::notice title=" + T + " meta::" + json.dumps(out)[:4000])
+          for k in ("results","outlook","capital"):
+              print("::notice title=" + T + " " + k + "::" + json.dumps(ev.get(k) or [])[:4000])
+          print("::notice title=" + T + " quotes::" + json.dumps(ev.get("quotes") or [])[:4000])
+          PY
+          done
+      - env:
+          TK: PG
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: |
+          for T in $TK; do
+            python3 pipeline/earnings.py $T /tmp/$T.json
+            python3 - "$T" <<'PY'
+          import json,sys
+          T=sys.argv[1]; d=json.load(open(f"/tmp/{T}.json"))
+          ev=(d.get("events") or [{}])[0]
+          out={"T":T,"status":d.get("status"),"err":d.get("error"),"n_ev":len(d.get("events",[])),"period":ev.get("period"),"head":ev.get("headline"),
+               "src":ev.get("source_label"),"docs":[x["label"] for x in ev.get("docs",[])],"call":ev.get("call"),
+               "n_res":len(ev.get("results") or []),"n_out":len(ev.get("outlook") or []),"n_q":len(ev.get("quotes") or []),"n_cap":len(ev.get("capital") or []),
+               "summary":d.get("summary"),"ir":d.get("ir_site")}
+          print("::notice title=" + T + " meta::" + json.dumps(out)[:4000])
+          for k in ("results","outlook","capital"):
+              print("::notice title=" + T + " " + k + "::" + json.dumps(ev.get(k) or [])[:4000])
+          print("::notice title=" + T + " quotes::" + json.dumps(ev.get("quotes") or [])[:4000])
+          PY
+          done
+      - env:
+          TK: CVX
+          SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
+        run: |
+          for T in $TK; do
             python3 pipeline/earnings.py $T /tmp/$T.json
             python3 - "$T" <<'PY'
           import json,sys

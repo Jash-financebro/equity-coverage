@@ -56,20 +56,24 @@ def _clean(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
-def _ok_sentence(s: str, lo=40, hi=330) -> bool:
-    return lo <= len(s) <= hi and len(s.split()) >= 8 and not NOISE.search(s) and not s.rstrip(".").endswith(":")
+TABLE_ROW = re.compile(r"\(\d[\d,.]*\)\s*\(?\d|\d[\d,]{3,}\s+\(?\d[\d,]{3,}")
+
+
+def _ok_sentence(s: str, lo=40, hi=330, words=6) -> bool:
+    return (lo <= len(s) <= hi and len(s.split()) >= words and not NOISE.search(s) and not s.rstrip(".").endswith(":")
+            and not TABLE_ROW.search(s))
 
 
 def _rank_results(sents: list[str]) -> list[str]:
     scored = []
     for i, s in enumerate(sents):
-        if not _ok_sentence(s) or not METRIC.search(s) or not re.search(r"\d", s) or not PAST.search(s):
+        if not _ok_sentence(s, 30) or not METRIC.search(s) or not re.search(r"\d", s) or not PAST.search(s) or re.search(r"[“”\"]", s):
             continue
         if guidance.KEYWORDS.search(s) and not PAST.search(s[:40]):
             continue  # outlook, shown separately
         sc = 3 * bool(re.search(r"\b(revenue|net sales|sales)\b", s, re.I)) + 3 * bool(re.search(r"\bEPS\b|per (?:diluted )?share", s, re.I)) \
             + 2 * bool(re.search(r"operating (?:income|margin)|free cash flow|gross margin", s, re.I)) \
-            + bool(re.search(r"quarter|year[- ]over[- ]year|compared", s, re.I)) - i / 400
+            + bool(re.search(r"quarter|year[- ]over[- ]year|compared", s, re.I)) - i / 60
         scored.append((sc, i, s))
     pick = sorted(scored, reverse=True)[:7]
     return [s for _, _, s in sorted(pick, key=lambda x: x[1])]
@@ -105,10 +109,27 @@ def _quotes(text: str) -> list[dict]:
     return keep[:3]
 
 
+def _outlook(text: str, sents: list[str]) -> list[str]:
+    """Guidance sentences, plus the lines under an "Outlook" / "Guidance" heading (often bullets with no verb)."""
+    found = list(guidance._sentences(text))
+    for m in re.finditer(r"(?:^|[.\s])((?:full[- ]year |fiscal |20\d\d |\bQ[1-4] )*(?:outlook|guidance))\b", text, re.I):
+        if m.start() < 300:
+            continue
+        chunk = text[m.end(): m.end() + 2200]
+        for s in _sentences(chunk)[:10]:
+            if re.search(r"forward-looking|conference call|webcast|non-gaap financial measures", s, re.I):
+                break
+            if 20 <= len(s) <= 300 and METRIC.search(s) and re.search(r"\d", s) and not TABLE_ROW.search(s) and not NOISE.search(s):
+                found.append(s)
+        if len(found) >= 3:
+            break
+    return _dedupe(found, 6)
+
+
 def _call_info(sents: list[str], raw: str) -> dict:
     info = {}
     for s in sents:
-        if re.search(r"\b(conference call|webcast|earnings call|call to discuss)\b", s, re.I) and len(s) <= 400:
+        if re.search(r"\b(conference call|webcast|earnings call|call to discuss)\b", s, re.I) and 40 <= len(s) <= 400:
             info["sentence"] = s
             break
     for m in re.finditer(r'href="(https?://[^"]+)"[^>]*>([^<]{0,120})', raw, re.I):
@@ -204,9 +225,9 @@ def notes(ticker: str) -> dict:
             head = next((s for s in sents[:12] if re.search(r"\b(reports?|announces?|results|delivers)\b", s, re.I) and len(s) <= 220), None)
             ev.update({"period": _period(text[:4000], filed), "source_url": main["url"], "source_label": _label(main),
                        "headline": head, "results": _dedupe(_rank_results(sents), 6),
-                       "outlook": _dedupe(list(guidance._sentences(text)), 5),
+                       "outlook": _outlook(text, sents),
                        "quotes": _quotes(text),
-                       "capital": _dedupe([s for s in sents if CAPITAL.search(s) and re.search(r"\d", s) and _ok_sentence(s, 40, 300)], 3),
+                       "capital": _dedupe([s for s in sents if CAPITAL.search(s) and re.search(r"\d", s) and _ok_sentence(s, 40, 300) and not re.search(r"[“”\"]", s)], 3),
                        "call": _call_info(sents, raw)})
             # remarks or a transcript filed as a separate exhibit: take management quotes from it too
             extra = next((d for d in exs if _label(d) in ("Call transcript", "Prepared remarks", "CFO commentary", "Management commentary") and d is not main), None)
@@ -247,7 +268,7 @@ def summarize(o: dict) -> list[str]:
     lab = (o.get("numbers") or {}).get("label") or "the latest quarter"
     rv, ni, eps, oi = q.get("revenue"), q.get("net_income"), q.get("eps_diluted"), q.get("operating_income")
     if rv and rv.get("cur"):
-        lines.append(f"Revenue was ${rv['cur'] / 1000:,.2f} billion in {lab.lower().replace('quarter ended', 'the quarter ended')}"
+        lines.append(f"Revenue was ${rv['cur'] / 1000:,.2f} billion in {lab.replace('Quarter ended', 'the quarter ended').replace('Year ended', 'the year ended')}"
                      + (f", {_chg(rv.get('chg'))} from a year earlier." if rv.get("chg") is not None else "."))
     if eps and eps.get("cur") is not None:
         lines.append(f"Diluted earnings per share were ${eps['cur']:,.2f}" + (f", {_chg(eps.get('chg'))} on the year." if eps.get("chg") is not None else "."))
