@@ -442,7 +442,7 @@
     const tok = INDEX?.site?.analytics_token;
     if (tok && !document.getElementById("cf-beacon")) {
       const s = document.createElement("script"); s.id = "cf-beacon"; s.defer = true; s.src = "https://static.cloudflareinsights.com/beacon.min.js";
-      s.setAttribute("data-cf-beacon", JSON.stringify({ token: tok })); document.head.appendChild(s);
+      s.setAttribute("data-cf-beacon", JSON.stringify({ token: tok, spa: true })); document.head.appendChild(s);
     }
   }
   function toggleTheme() {
