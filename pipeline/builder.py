@@ -698,8 +698,9 @@ def build(ticker: str, dest: Path, ctx: dict, stance: str = "Balanced") -> Path:
     _cover(wb, T, label, live, ctx, VS, WA, RB, IS, BS, CF)
     SN = _scenarios(wb, T, label, live, d, RB, IS, DC, VS)
     AU = _audit(wb, T, label, live, IS, BS, CF, VS)
+    MC = _monte_carlo(wb, T, label, live, IS, RB, WA, DC, VS)
     order = [f"{T} Cover", SN.title, RB.title, IS.title, BS.title, CF.title, SC.title, WA.title, DC.title, CO.title,
-             VS.title, FR.title, AU.title, "Live_Data"]
+             VS.title, MC.title, FR.title, AU.title, "Live_Data"]
     wb._sheets.sort(key=lambda w: order.index(w.title) if w.title in order else 99)
     wb.active = 0
 
@@ -723,6 +724,148 @@ def _big(sheet, cell, value, fmt, size, bold=True, fill=None):
     if fill:
         c.fill = PatternFill("solid", fgColor=fill)
     return c
+
+
+MC_TRIALS = 1000
+MC_FIRST = 73          # first trial row
+
+
+def _monte_carlo(wb, T, label, live, IS, RB, WA, DC, VS):
+    """1,000 random trials of the DCF. Each trial redraws growth, margin, WACC, terminal growth and the exit multiple
+    around the active case, then runs the same cash-flow bridge as the DCF tab. Press F9 to draw a new set."""
+    MC = Sheet(wb, f"{T} Monte Carlo", label, f"{live['company']} ({T}) - Monte Carlo simulation: {MC_TRIALS:,} trials of the valuation")
+    ws, put = MC.ws, MC.put
+    for col, w in {"B": 46, "C": 13, "D": 13}.items():
+        ws.column_dimensions[col].width = w
+    for col in _cols("L", "W"):
+        ws.column_dimensions[col].width = 13
+    put("B4", "Each row below the histogram is one possible future. Growth, operating margin, WACC, terminal growth and the")
+    put("B5", "exit multiple are drawn at random around the model's active case, then valued the same way as the DCF tab.")
+    put("B6", "The spreads come from the bear and bull cases (treated as the 10th and 90th percentiles). Press F9 to re-run.")
+    is_, dc, vs, rb, wa = IS.ref, DC.ref, VS.ref, RB.ref, WA.ref
+    yrs = ["C", "D", "E", "F", "G", "H"]              # C = last actual year, D..H = projection years 1..5
+    MC.section(8, "Base path (linked to the model, active case)")
+    put("B9", "Revenue ($mm)")
+    put("C9", f"={is_('F5')}", NUM)
+    rows = (("Revenue ($mm)", 9, "5", IS), ("Operating income / EBIT ($mm)", 10, "5", DC), ("Tax rate", 11, "6", DC),
+            ("D&A ($mm)", 12, "8", DC), ("Capital expenditures ($mm)", 13, "9", DC), ("Change in working capital ($mm)", 14, "10", DC))
+    for lab, r, src, S in rows:
+        put(f"B{r}", lab)
+        for c, sc in zip(yrs[1:], PROJ):
+            put(f"{c}{r}", f"={S.ref(sc + src)}", PCT if r == 11 else NUM)
+    scal = (("WACC", 15, f"={wa('D23')}", PCT), ("Terminal growth", 16, f"={dc('D19')}", PCT),
+            ("Exit EV/EBITDA multiple", 17, f"={dc('D46')}", MULT), ("Debt (negative) ($mm)", 18, f"={dc('D23')}", NUM),
+            ("Cash ($mm)", 19, f"={dc('D24')}", NUM), ("Non-controlling interest / equity value", 20, f"=IFERROR({dc('D26')}/{dc('D25')},0)", PCT),
+            ("Diluted shares (mm)", 21, f"={dc('D28')}", NUM), ("Comps value per share", 22, f"={vs('D6')}", PS),
+            ("Weight: DCF perpetuity", 23, f"={vs('D8')}", PCT), ("Weight: DCF exit multiple", 24, f"={vs('D10')}", PCT),
+            ("Weight: comps", 25, f"={vs('D9')}", PCT), ("Base-case model value per share", 26, f"={vs('D29')}", PS),
+            ("Anchored base-case target", 27, f"={vs('D45')}", PS), ("Share price today", 28, f"={vs('D14')}", PS))
+    for lab, r, f, fmt in scal:
+        put(f"B{r}", lab)
+        put(f"D{r}", f, fmt)
+
+    MC.section(30, "How much each input can move (one standard deviation)")
+    sds = (("Revenue growth, each year (+/- pts)", 31, f"=ABS({rb('G9')}-{rb('G11')})/2/1.2816", PCT),
+           ("Operating margin (+/- pts)", 32, f"=ABS({rb('G21')}-{rb('G19')})/2/1.2816", PCT),
+           ("WACC (+/- pts)", 33, 0.0075, PCT),
+           ("Terminal growth (+/- pts)", 34, f"=ABS({rb('D40')}-{rb('D42')})/2/1.2816", PCT),
+           ("Exit multiple (log scale)", 35, f"=ABS(LN({rb('D44')}/{rb('F44')}))/2/1.2816", "0.000"))
+    for lab, r, f, fmt in sds:
+        put(f"B{r}", lab)
+        put(f"D{r}", f, fmt)
+        ws[f"D{r}"].fill = PatternFill("solid", fgColor="FFFF00")
+    put("B36", "Bear and bull cases sit about 1.28 standard deviations either side of base, so each spread = (bull - bear) / 2 / 1.28.")
+
+    first, last = MC_FIRST, MC_FIRST + MC_TRIALS - 1
+    rng = lambda c: f"${c}${first}:${c}${last}"  # noqa: E731
+    MC.section(38, "Results")
+    res = (("Trials", 39, f"=COUNT({rng('W')})", "#,##0"),
+           ("Average target", 40, f"=AVERAGE({rng('W')})", PS),
+           ("Median target (50th percentile)", 41, f"=MEDIAN({rng('W')})", PS),
+           ("Downside case (10th percentile)", 42, f"=PERCENTILE({rng('W')},0.1)", PS),
+           ("Upside case (90th percentile)", 43, f"=PERCENTILE({rng('W')},0.9)", PS),
+           ("Chance the target is above today's price", 44, f'=COUNTIF({rng("W")},">"&D28)/D39', PCT),
+           ("Chance of 15%+ upside (Buy territory)", 45, f'=COUNTIF({rng("W")},">"&D28*1.15)/D39', PCT),
+           ("Chance of 15%+ downside (Sell territory)", 46, f'=COUNTIF({rng("W")},"<"&D28*0.85)/D39', PCT),
+           ("Engine check: trial at base inputs", 47, f"=W{first - 2}", PS),
+           ("Model target (Target Price tab)", 48, f"={vs('D43')}", PS))
+    for lab, r, f, fmt in res:
+        put(f"B{r}", lab)
+        put(f"D{r}", f, fmt)
+    for r in (41, 44):
+        ws[f"D{r}"].fill = PatternFill("solid", fgColor=HILITE)
+    put("B49", "With the Scenario switch on Base, the engine check equals the model target.")
+
+    MC.section(51, "Histogram of trial targets ($/share)")
+    put("B52", "Bin")
+    put("C52", "From")
+    put("D52", "To")
+    put("E52", "Trials")
+    banner(ws, 52, last="E", fill=NAVY2)
+    put("C53", f"=PERCENTILE({rng('W')},0.01)", PS)
+    put("H53", f"=(PERCENTILE({rng('W')},0.99)-C53)/15", PS)
+    put("G53", "Bin width")
+    for i in range(15):
+        r = 53 + i
+        put(f"B{r}", f'=TEXT(C{r},"$0")&" - "&TEXT(D{r},"$0")')
+        if i:
+            put(f"C{r}", f"=D{r - 1}", PS)
+        put(f"D{r}", f"=C{r}+$H$53", PS)
+        put(f"E{r}", (f'=COUNTIF({rng("W")},"<"&D{r})' if i == 0 else
+                      f'=COUNTIF({rng("W")},">="&C{r})' if i == 14 else
+                      f'=COUNTIFS({rng("W")},">="&C{r},{rng("W")},"<"&D{r})'), "#,##0")
+    from openpyxl.chart import BarChart, Reference
+    ch = BarChart()
+    ch.type, ch.gapWidth = "col", 20
+    ch.title, ch.y_axis.title, ch.x_axis.title = "Distribution of 12-month targets", "Trials", "Target ($/share)"
+    ch.add_data(Reference(ws, min_col=5, min_row=52, max_row=67), titles_from_data=True)
+    ch.set_categories(Reference(ws, min_col=2, min_row=53, max_row=67))
+    ch.legend = None
+    ch.roundedCorners = False
+    ch.x_axis.delete = False
+    ch.y_axis.delete = False
+    ch.height, ch.width = 8.5, 17
+    ws.add_chart(ch, "G38")
+
+    hdr = ["Trial", "Growth shock", "Margin shock", "WACC", "Terminal g", "Exit multiple", "Revenue Y1", "Revenue Y2",
+           "Revenue Y3", "Revenue Y4", "Revenue Y5", "UFCF Y1", "UFCF Y2", "UFCF Y3", "UFCF Y4", "UFCF Y5",
+           "PV of UFCF", "DCF value", "EBITDA Y5", "Exit value", "Model value", "Target"]
+    cols = _cols("B", "W")
+
+    def trial(r, shocks: bool):
+        draw = (lambda sd, extra="": f"NORMINV(RAND(),0,{sd}){extra}") if shocks else (lambda sd, extra="": "0")
+        put(f"B{r}", f"={r}-{first - 1}" if shocks else "Base inputs, no shocks")
+        put(f"C{r}", f"={draw('$D$31')}", PCT)
+        put(f"D{r}", f"={draw('$D$32')}", PCT)
+        put(f"E{r}", f"=MAX(0.04,$D$15+{draw('$D$33')})", PCT)
+        put(f"F{r}", f"=MIN(E{r}-0.005,$D$16+{draw('$D$34')})", PCT)
+        put(f"G{r}", f"=$D$17*EXP({draw('$D$35')})", MULT)
+        rv = ["H", "I", "J", "K", "L"]
+        for i, c in enumerate(rv):
+            prev, bprev, bcur = (f"$C$9", f"$C$9", f"${yrs[1]}$9") if i == 0 else (f"{rv[i - 1]}{r}", f"${yrs[i]}$9", f"${yrs[i + 1]}$9")
+            put(f"{c}{r}", f"={prev}*({bcur}/{bprev}+$C{r})", NUM)
+        uf = ["M", "N", "O", "P", "Q"]
+        for i, c in enumerate(uf):
+            y, R = yrs[i + 1], rv[i]
+            prevR, bprev = ("$C$9", "$C$9") if i == 0 else (f"{rv[i - 1]}{r}", f"${yrs[i]}$9")
+            put(f"{c}{r}", f"={R}{r}*(${y}$10/${y}$9+$D{r})*(1-${y}$11)+${y}$12*(1+0.5*({R}{r}/${y}$9-1))"
+                           f"+${y}$13*{R}{r}/${y}$9+${y}$14*IFERROR(({R}{r}-{prevR})/(${y}$9-{bprev}),{R}{r}/${y}$9)", NUM)
+        put(f"R{r}", "=" + "+".join(f"{c}{r}/(1+E{r})^{i + 1}" for i, c in enumerate(uf)), NUM)
+        put(f"S{r}", f"=((R{r}+Q{r}*(1+F{r})/(E{r}-F{r})/(1+E{r})^5+$D$18+$D$19)*(1+$D$20))/$D$21", PS)
+        put(f"T{r}", f"=L{r}*($H$10/$H$9+D{r})+$H$12*(1+0.5*(L{r}/$H$9-1))", NUM)
+        put(f"U{r}", f"=MAX(0,((R{r}+G{r}*T{r}/(1+E{r})^5+$D$18+$D$19)*(1+$D$20))/$D$21)", PS)
+        put(f"V{r}", f"=$D$23*S{r}+$D$24*U{r}+$D$25*$D$22", PS)
+        put(f"W{r}", f"=$D$27*V{r}/$D$26", PS)
+
+    for c, h in zip(cols, hdr):
+        put(f"{c}{first - 3}", h)
+        ws[f"{c}{first - 3}"].alignment = Alignment(horizontal="right" if c != "B" else "left")
+    banner(ws, first - 3, last="W", fill=NAVY2)
+    trial(first - 2, shocks=False)
+    for r in range(first, last + 1):
+        trial(r, shocks=True)
+    ws.freeze_panes = f"C{first}"
+    return MC
 
 
 def _audit(wb, T, label, live, IS, BS, CF, VS):

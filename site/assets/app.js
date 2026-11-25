@@ -374,6 +374,58 @@
     const target = x.anchored_base * (x.base_model ? model / x.base_model : 1);
     return { dcf, exit, model, target, upside: target / x.price - 1, rev5: rev[5], margin5: ebit5 / rev[5], ufcf };
   }
+  // ------------------------------------------------------------- Monte Carlo (same spreads as the Excel tab)
+  function rng32(seed) { return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const hashStr = (str) => [...str].reduce((h, ch) => (Math.imul(h, 31) + ch.charCodeAt(0)) | 0, 7);
+  function mcSpreads(cs) {
+    const z = 1.2816;
+    const g = Math.abs((cs.bull?.growth_delta?.[0] ?? 0.03) - (cs.bear?.growth_delta?.[0] ?? -0.03)) / 2 / z;
+    const mrg = Math.abs((cs.bull?.margin_delta ?? 0.01) - (cs.bear?.margin_delta ?? -0.01)) / 2 / z;
+    const tg = Math.abs((cs.bull?.tg ?? 0.03) - (cs.bear?.tg ?? 0.02)) / 2 / z;
+    const ex = Math.abs(Math.log((cs.bull?.exit_factor || 1.1) / (cs.bear?.exit_factor || 0.9))) / 2 / z;
+    return { g, m: mrg, wacc: 0.0075, tg, ex };
+  }
+  function runMonteCarlo(m, seed, N = 10000) {
+    const el = document.getElementById("mc-body"); if (!el) return;
+    const d = m.detail || {}, x = d.dcf_inputs, cs = d.cases || {}, sd = mcSpreads(cs);
+    const bounded = Math.min(30, Math.max(4, nz(x.ev_ebitda_now) ? x.ev_ebitda_now : 4)), mult0 = bounded * (cs.base?.exit_factor || 1);
+    const R = rng32(hashStr(m.ticker + ":" + (m.version || 0)) + seed * 7919);
+    const norm = () => { let u = 0, v = 0; while (!u) u = R(); while (!v) v = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    const out = new Float64Array(N); let n = 0;
+    for (let i = 0; i < N; i++) {
+      const w = Math.max(0.04, x.wacc + sd.wacc * norm());
+      const o = { dg: sd.g * norm(), dm: sd.m * norm(), wacc: w, g: Math.min(w - 0.005, x.g + sd.tg * norm()), mult: mult0 * Math.exp(sd.ex * norm()) };
+      const t = valuate(x, o).target; if (isFinite(t) && t > 0) out[n++] = t;
+    }
+    const a = Array.from(out.subarray(0, n)).sort((p, q) => p - q);
+    const q = (p) => a[Math.min(n - 1, Math.max(0, Math.floor(p * (n - 1))))];
+    const price = x.price, above = a.filter((v) => v > price).length / n, buy = a.filter((v) => v > price * 1.15).length / n, sell = a.filter((v) => v < price * 0.85).length / n;
+    const lo = q(0.01), hi = q(0.99), B = 30, wdt = (hi - lo) / B || 1, bins = new Array(B).fill(0);
+    a.forEach((v) => { if (v >= lo && v <= hi) bins[Math.min(B - 1, Math.floor((v - lo) / wdt))]++; });
+    const W = 640, H = 170, pad = 28, bw = (W - pad * 2) / B, top = Math.max(...bins), X = (v) => pad + ((v - lo) / (hi - lo)) * (W - pad * 2);
+    const bars = bins.map((c, i) => { const from = lo + i * wdt, h = (c / top) * (H - 40);
+      return `<rect x="${(pad + i * bw + 1).toFixed(1)}" y="${(H - 20 - h).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="var(${from + wdt / 2 >= price ? "--up" : "--down"})" opacity="0.75"><title>${usd(from)}–${usd(from + wdt)}: ${c.toLocaleString()} trials</title></rect>`; }).join("");
+    const mark = (v, lab, dash) => (v >= lo && v <= hi ? `<line x1="${X(v)}" x2="${X(v)}" y1="12" y2="${H - 20}" stroke="var(--ink)" stroke-width="1.5"${dash ? ' stroke-dasharray="4 3"' : ""}/><text x="${X(v)}" y="10" text-anchor="middle" font-size="11" fill="var(--ink-2)">${lab}</text>` : "");
+    el.innerHTML = `<div class="kpis" style="padding:12px 18px 0">
+        <div class="kpi hero-n"><div class="k">Chance the target beats today's price</div><div class="v">${pct(above, 0)}</div><div class="n">price ${usd(price)}</div></div>
+        <div class="kpi"><div class="k">Middle outcome</div><div class="v">${usd(q(0.5))}</div><div class="n">model target ${usd(m.target)}</div></div>
+        <div class="kpi"><div class="k">Bad case (10th percentile)</div><div class="v">${usd(q(0.1))}</div></div>
+        <div class="kpi"><div class="k">Good case (90th percentile)</div><div class="v">${usd(q(0.9))}</div></div>
+        <div class="kpi"><div class="k">15%+ upside / 15%+ downside</div><div class="v">${pct(buy, 0)} / ${pct(sell, 0)}</div></div></div>
+      <div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" class="mc-svg" role="img" aria-label="Histogram of ${n.toLocaleString()} simulated targets from ${usd(lo)} to ${usd(hi)}. ${pct(above, 0)} are above today's price of ${usd(price)}.">
+        ${bars}<line x1="${pad}" x2="${W - pad}" y1="${H - 20}" y2="${H - 20}" stroke="var(--line)"/>
+        ${mark(price, "Price " + usd(price), false)}${mark(m.target, "Target " + usd(m.target), true)}
+        <text x="${pad}" y="${H - 5}" font-size="11" fill="var(--ink-3)">${usd(lo)}</text><text x="${W - pad}" y="${H - 5}" font-size="11" text-anchor="end" fill="var(--ink-3)">${usd(hi)}</text></svg></div>
+      <div class="scroll"><table><thead><tr><th>Input</th><th class="r">Base</th><th class="r">Moves by (1 st. dev.)</th><th>Where the spread comes from</th></tr></thead><tbody>
+        <tr><td>Revenue growth, every year</td><td class="r num">${pct(cs.base?.growth?.[0])} (yr 1)</td><td class="r num">± ${(sd.g * 100).toFixed(1)} pts</td><td class="note">bull vs. bear case</td></tr>
+        <tr><td>Operating margin</td><td class="r num">—</td><td class="r num">± ${(sd.m * 100).toFixed(1)} pts</td><td class="note">bull vs. bear case</td></tr>
+        <tr><td>WACC</td><td class="r num">${pct(x.wacc)}</td><td class="r num">± 0.75 pts</td><td class="note">fixed</td></tr>
+        <tr><td>Terminal growth</td><td class="r num">${pct(x.g)}</td><td class="r num">± ${(sd.tg * 100).toFixed(1)} pts</td><td class="note">bull vs. bear case</td></tr>
+        <tr><td>Exit multiple</td><td class="r num">${mult(mult0)}</td><td class="r num">± ${(sd.ex * 100).toFixed(0)}%</td><td class="note">bull vs. bear case</td></tr></tbody></table></div>
+      <div class="gen-actions" style="padding:10px 18px 14px"><button class="btn sm" id="mc-again">Run again</button>
+        <span class="note">Each trial draws all five inputs at random (bell curve; the bear and bull cases sit at the 10th and 90th percentiles) and re-runs the valuation. Green bars are above today's price. A wide spread means the value depends heavily on assumptions nobody can know.</span></div>`;
+    document.getElementById("mc-again").addEventListener("click", () => runMonteCarlo(m, seed + 1));
+  }
   function histRows(d, hn) {
     const take = (arr) => (arr || []).slice(0, hn);
     const fcf = take(d.cf?.cfo).map((c, i) => (nz(c) && nz(d.cf?.capex?.[i]) ? c + d.cf.capex[i] : null));
@@ -492,6 +544,60 @@
   }
 
   // ------------------------------------------------------------- update an existing model
+  // ------------------------------------------------------------- Check my model (audit runs in the browser)
+  function loadAudit() {
+    if (window.MBAudit) return Promise.resolve();
+    return new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "assets/audit.js?v=" + (document.querySelector("script[src*='app.js']")?.src.split("v=")[1] || "1");
+      sc.onload = res; sc.onerror = () => rej(new Error("Couldn't load the checker.")); document.head.appendChild(sc); });
+  }
+  function initCheck() {
+    const inp = document.getElementById("chk-file"), out = document.getElementById("chk-out");
+    inp.addEventListener("change", () => { document.getElementById("chk-name").textContent = inp.files[0]?.name || "Choose .xlsx…"; });
+    inp.addEventListener("click", () => loadAudit().catch(() => {}), { once: true });
+    document.getElementById("chk-f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = inp.files[0]; if (!f) { out.innerHTML = `<p class="note" style="padding:0 18px 14px">Choose a file first.</p>`; return; }
+      if (!("DecompressionStream" in window)) { out.innerHTML = `<div class="warn" style="margin:0 18px 14px">Your browser is too old for the checker. Try a current Chrome, Edge, Safari or Firefox.</div>`; return; }
+      out.innerHTML = `<p class="note loading" style="padding:0 18px 14px">Checking ${esc(f.name)}…</p>`;
+      try {
+        await loadAudit();
+        const t0 = performance.now(), res = await window.MBAudit.run(await f.arrayBuffer()), ms = performance.now() - t0;
+        drawCheck(out, f.name, res, ms);
+      } catch (err) { out.innerHTML = `<div class="warn" style="margin:0 18px 14px">${esc(err.message || String(err))}</div>`; }
+    });
+  }
+  const SEV = { high: ["Fix first", "bad"], medium: ["Should fix", "hold-t"], low: ["Tidy up", "note"], info: ["Note", "note"] };
+  function drawCheck(out, name, { issues, stats }, ms) {
+    const cnt = (s) => issues.filter((i) => i.sev === s).length;
+    const has = (chk) => issues.some((i) => i.check === chk);
+    const tick = (ok, label, na) => `<li class="${na ? "na" : ok ? "pass" : "fail"}">${na ? "–" : ok ? "✓" : "✗"} ${label}</li>`;
+    const verdict = cnt("high") ? "Needs work before anyone relies on it" : cnt("medium") ? "Mostly sound, with a few things to fix" : "Clean: no structural problems found";
+    out.innerHTML = `<div style="padding:0 18px">
+      <p class="chk-v"><b>${esc(name)}:</b> ${verdict}.</p>
+      <div class="kpis"><div class="kpi"><div class="k">Fix first</div><div class="v">${cnt("high")}</div></div><div class="kpi"><div class="k">Should fix</div><div class="v">${cnt("medium")}</div></div>
+        <div class="kpi"><div class="k">Tidy up</div><div class="v">${cnt("low")}</div></div><div class="kpi"><div class="k">Formulas checked</div><div class="v">${stats.formulas.toLocaleString()}</div><div class="n">${stats.sheets} tabs · ${(ms / 1000).toFixed(1)}s</div></div></div>
+      <ul class="checks chk-list">
+        ${tick(!has("Formula error") && !has("Broken reference"), "No formula errors or #REF! links")}
+        ${tick(!has("Balance sheet doesn't balance") && !has("Balance check is not zero"), "Balance sheet balances", !stats.balanced && !has("Balance sheet doesn't balance") && !has("Balance check is not zero"))}
+        ${tick(!stats.circular, stats.circular ? "Circular reference found (see below)" : "No circular references")}
+        ${tick(!has("Typed number in a row of formulas"), "No numbers typed over formulas")}
+        ${tick(!has("Formula doesn't match its neighbours"), "Every formula follows the pattern of its row")}
+        ${tick(!has("Link to another workbook"), "No links to other workbooks")}
+        ${tick(!has("Colour coding"), "Blue inputs, black formulas, green links", !stats.colourConvention)}
+      </ul>
+      ${!stats.colourConvention ? `<p class="note">Colour coding wasn't checked: this model doesn't use blue for typed inputs. Most banks and funds expect blue inputs, black formulas and green links to other tabs.</p>` : ""}
+      ${!stats.balanced && !has("Balance sheet doesn't balance") ? `<p class="note">No "Total assets" and "Total liabilities and equity" rows were found, so the balance check was skipped.</p>` : ""}</div>
+      ${issues.length ? `<div class="scroll"><table><thead><tr><th>Priority</th><th>Problem</th><th>Where</th><th>Details</th></tr></thead><tbody>
+        ${issues.slice(0, 250).map((i) => `<tr><td><span class="${SEV[i.sev][1]}">${SEV[i.sev][0]}</span></td><td>${esc(i.check)}</td><td class="num">${esc(i.sheet)}${i.cell ? "!" + esc(i.cell) : ""}</td><td class="note">${esc(i.detail)}</td></tr>`).join("")}</tbody></table></div>
+        <p class="note" style="padding:10px 18px 14px">${issues.length > 250 ? `Showing 250 of ${issues.length}. ` : ""}<a href="#" id="chk-csv">Download all ${issues.length} as CSV</a>. The checker reads the values saved in the file, so open and save it in Excel first if it was built by a script.</p>`
+        : `<p class="note" style="padding:4px 18px 14px">Nothing to report.</p>`}`;
+    document.getElementById("chk-csv")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const csv = ["Priority,Problem,Tab,Cell,Details", ...issues.map((i) => [SEV[i.sev][0], i.check, i.sheet, i.cell, i.detail].map(q).join(","))].join("\n");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = name.replace(/\.xls[xm]$/i, "") + "_check.csv"; a.click();
+    });
+  }
   async function updateView() {
     document.title = "Update a model · " + SITE;
     const base = await apiBase();
@@ -502,7 +608,13 @@
           <label class="btn file-btn"><input id="up-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required><span id="up-name">Choose .xlsx…</span></label>
           <button class="btn primary big" id="up-go" type="submit">Update model</button></div>
         <p class="note">.xlsx up to 10 MB. Your file is stored privately for six hours to process it, then deleted; it is never published or added to the library. Macros and some chart formatting may not survive the round trip, so keep your original.</p>
-      </form><div id="up-status"></div></div><div id="up-result"></div>`;
+      </form><div id="up-status"></div></div><div id="up-result"></div>
+      <section class="card section" id="chk"><div class="card-h"><h2>Check my model</h2><span class="note">runs in your browser · the file never leaves your computer</span></div>
+        <p style="padding:12px 18px 0;margin:0">Drop in any Excel model, yours or a classmate's, and get the review a senior analyst would do: formula errors, broken links, a balance sheet that doesn't balance, numbers typed over formulas, formulas that break the pattern of their row, circular references and colour-coding slips.</p>
+        <form id="chk-f" class="gen-row" style="padding:12px 18px 16px"><label class="btn file-btn"><input id="chk-file" type="file" accept=".xlsx,.xlsm"><span id="chk-name">Choose .xlsx…</span></label>
+          <button class="btn primary" type="submit" id="chk-go">Check it</button><span class="note">.xlsx or .xlsm · nothing is uploaded or stored</span></form>
+        <div id="chk-out" aria-live="polite"></div></section>`;
+    initCheck();
     const file = document.getElementById("up-file");
     file.addEventListener("change", () => { document.getElementById("up-name").textContent = file.files[0]?.name || "Choose .xlsx…"; });
     document.getElementById("up-f").addEventListener("submit", async (e) => {
@@ -1238,6 +1350,8 @@
         <p class="rdcf" id="rdcf"></p>
         <p class="note" style="padding:0 18px 16px">At base settings this matches the Excel model exactly (target ${usd(x.check?.target)}). Away from base it re-runs the same DCF, exit-multiple and comps blend and the street/peer anchoring; it usually lands within 1% of the Excel engine (a few percent at most), since the workbook also re-runs its PP&amp;E, debt and interest schedules.</p></section>` : ""}
 
+      ${x?.rev ? `<section class="section card" id="sec-mc"><div class="card-h"><h2>Monte Carlo: the range of outcomes</h2><span class="note">10,000 trials in your browser · the Excel file has a 1,000-trial tab</span></div>
+        <div id="mc-body"><p class="muted loading" style="padding:12px 18px">Running…</p></div></section>` : ""}
       ${quarterPanel(m)}
       ${guidancePanel(m)}
       ${forecastPanel(m)}
@@ -1271,6 +1385,7 @@
     });
     document.getElementById("rebuild").addEventListener("click", () => sessionStorage.setItem("mb_prefill", m.ticker));
     document.getElementById("explain").addEventListener("click", () => openExplain(m));
+    if (x?.rev) setTimeout(() => runMonteCarlo(m, 1), 30);
     const fbForm = document.getElementById("fb"), fbBtn = document.getElementById("fb-open");
     const fbToggle = (open) => { fbForm.hidden = !open; fbBtn.setAttribute("aria-expanded", String(open)); if (open) fbForm.querySelector("input[type=radio]").focus(); else fbBtn.focus(); };
     fbBtn.addEventListener("click", () => fbToggle(fbForm.hidden));

@@ -398,3 +398,12 @@ th.sortable { cursor: pointer; }
 .foot-me b { color: var(--ink); font-size: 14px; font-weight: 600; }
 .foot-me p { margin: 3px 0 0; max-width: 560px; }
 .foot-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.mc-svg { width: 100%; height: auto; display: block; }
+
+.chk-v { margin: 0 0 10px; }
+.chk-list { margin: 12px 0 8px; padding: 0; columns: 2; list-style: none; }
+.chk-list li { margin: 4px 0; break-inside: avoid; }
+.chk-list .pass { color: var(--up); } .chk-list .fail { color: var(--down); } .chk-list .na { color: var(--ink-3); }
+.hold-t { color: var(--hold); white-space: nowrap; }
+@media (max-width: 760px) { .chk-list { columns: 1; } }

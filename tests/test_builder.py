@@ -69,6 +69,16 @@ for stance in ("Balanced", "Bearish"):
         calc.close()
     wb = openpyxl.load_workbook(out, data_only=True)
     bs, cf, dcf = wb["MSFT Balance Sheet"], wb["MSFT Cash Flow Statement"], wb["MSFT DCF"]
+    mc = wb["MSFT Monte Carlo"]
+    tgt, eng = wb["MSFT Target Price"]["D43"].value, mc["D47"].value
+    if stance == "Balanced" and (eng is None or abs(eng / tgt - 1) > 0.02):
+        problems.append(f"[{stance}] Monte Carlo engine at base {eng} vs target {tgt}")
+    n, p_up, p10, p50, p90 = (mc[f"D{r}"].value for r in (39, 44, 42, 41, 43))
+    if n != 1000 or not (0 <= p_up <= 1) or not (p10 < p50 < p90):
+        problems.append(f"[{stance}] Monte Carlo results n={n} p_up={p_up} p10/50/90={p10}/{p50}/{p90}")
+    if sum(mc[f"E{r}"].value or 0 for r in range(53, 68)) != 1000:
+        problems.append(f"[{stance}] histogram counts don't add to 1,000")
+    print(f"   monte carlo [{stance}]: engine {eng:.2f} vs target {tgt:.2f} | P10/50/90 {p10:.0f}/{p50:.0f}/{p90:.0f} | P(>price) {p_up:.0%}")
     for col in "DEFGHIJK":
         chk = bs[f"{col}21"].value
         if chk is None or abs(chk) > 0.01:
