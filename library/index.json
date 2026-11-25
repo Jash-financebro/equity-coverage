@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-25T01:52:57Z",
+ "updated_at": "2026-11-25T03:00:09Z",
  "count": 9,
  "sectors": {
   "Consumer Discretionary": [
@@ -26,6 +26,938 @@
  },
  "models": [
   {
+   "ticker": "GOOG",
+   "name": "Alphabet Inc.",
+   "cik": 1652044,
+   "sector": "Information Technology",
+   "industry": "Services-Computer Programming, Data Processing, Etc.",
+   "exchange": "Nasdaq",
+   "sic": "7370",
+   "city": "Mountain View",
+   "state": "CA",
+   "website": "https://abc.xyz",
+   "generated_at": "2026-11-25T02:59:55Z",
+   "version": 9,
+   "price": 276.58,
+   "price_date": "2026-11-24",
+   "target": 321.72,
+   "upside": 0.1632,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 281.59,
+    "base": 321.72,
+    "bull": 370.55
+   },
+   "model_scenarios": {
+    "base": 213.26,
+    "bull": 245.64,
+    "bear": 186.66
+   },
+   "dcf_value": 81.5874770886766,
+   "comps_value": 369.611069610829,
+   "exit_value": 266.769232816418,
+   "model_value": 213.264897884204,
+   "peer_avg_upside": 0.3132199213429648,
+   "anchor_peers": [
+    "META",
+    "SNAP",
+    "APP",
+    "PINS"
+   ],
+   "wacc": 0.1154,
+   "peers": [
+    "META",
+    "SNAP",
+    "APP",
+    "PINS"
+   ],
+   "peer_matches": {
+    "META": "Same industry (Yahoo Finance)",
+    "SNAP": "Same industry (Yahoo Finance)",
+    "APP": "Same SEC industry code and sector",
+    "PINS": "Same industry (Yahoo Finance)"
+   },
+   "consensus": {
+    "target_mean": 389.0,
+    "target_median": 380.0,
+    "analysts": 15
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "pe_ttm": 14.44,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-10-29",
+    "accession": "0001652044-26-000084",
+    "period": "2026-09-30",
+    "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
+   },
+   "ev_ebitda": 22.6429725320459,
+   "ebitda_margin": 0.372794387790565,
+   "growth_next": 0.12,
+   "quality": {
+    "grade": "High",
+    "score": 3.0,
+    "reasons": [
+     "clean 10-K data, same-industry peers and a business that fits the DCF"
+    ]
+   },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.0923,
+     "growth_act": 0.1387,
+     "rev_fc": 335767.7,
+     "rev_act": 350018.0,
+     "rev_err": -0.0407,
+     "gm_fc": 0.5663,
+     "gm_act": 0.582,
+     "gm_err_pts": -0.0158
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": 0.1124,
+     "growth_act": 0.1509,
+     "rev_fc": 389375.1,
+     "rev_act": 402836.0,
+     "rev_err": -0.0334,
+     "gm_fc": 0.5663,
+     "gm_act": 0.5965,
+     "gm_err_pts": -0.0303
+    }
+   ],
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_v9.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_tearsheet_v9.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_report_v9.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T17:39:09Z"
+  },
+  {
+   "ticker": "BE",
+   "name": "Bloom Energy Corp",
+   "cik": 1664703,
+   "sector": "Industrials",
+   "industry": "Electrical Industrial Apparatus",
+   "exchange": "NYSE",
+   "sic": "3620",
+   "city": "San Jose",
+   "state": "CA",
+   "website": "https://www.bloomenergy.com",
+   "generated_at": "2026-11-25T02:59:43Z",
+   "version": 10,
+   "price": 156.41,
+   "price_date": "2026-11-24",
+   "target": 195.73,
+   "upside": 0.2514,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 152.43,
+    "base": 195.73,
+    "bull": 259.28
+   },
+   "model_scenarios": {
+    "base": 4.15,
+    "bull": 5.49,
+    "bear": 3.23
+   },
+   "dcf_value": -2.05439892796927,
+   "comps_value": 12.738163414945,
+   "exit_value": 6.05184973662684,
+   "model_value": 4.14661300645203,
+   "peer_avg_upside": 0.40140034461479746,
+   "anchor_peers": [
+    "EAF",
+    "VRT",
+    "WWD",
+    "FELE"
+   ],
+   "wacc": 0.1005,
+   "peers": [
+    "PLUG",
+    "EAF",
+    "VRT",
+    "WWD",
+    "FELE"
+   ],
+   "peer_matches": {
+    "PLUG": "Same industry (Yahoo Finance)",
+    "EAF": "Same industry (Yahoo Finance)",
+    "VRT": "Same industry (Yahoo Finance)",
+    "WWD": "Same SEC industry code and sector",
+    "FELE": "Related SEC industry code, same sector"
+   },
+   "consensus": {
+    "target_mean": 282.69232,
+    "target_median": 295.0,
+    "analysts": 26
+   },
+   "beta_source": "default 1.0",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "pe_ttm": 94.79,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-10-22",
+    "accession": "0001628280-26-066931",
+    "period": "2026-09-30",
+    "url": "https://www.sec.gov/Archives/edgar/data/1664703/000162828026066931/be-20260930.htm"
+   },
+   "ev_ebitda": 376.171149487712,
+   "ebitda_margin": 0.0609527498599304,
+   "growth_next": 0.12,
+   "quality": {
+    "grade": "High",
+    "score": 2.5,
+    "reasons": [
+     "model value far from the street before anchoring"
+    ]
+   },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.12,
+     "growth_act": 0.1053,
+     "rev_fc": 1493.5,
+     "rev_act": 1473.9,
+     "rev_err": 0.0133,
+     "gm_fc": 0.1483,
+     "gm_act": 0.2746,
+     "gm_err_pts": -0.1262
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": 0.1087,
+     "growth_act": 0.3733,
+     "rev_fc": 1634.0,
+     "rev_act": 2024.0,
+     "rev_err": -0.1927,
+     "gm_fc": 0.1483,
+     "gm_act": 0.2902,
+     "gm_err_pts": -0.1419
+    }
+   ],
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v10.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_tearsheet_v10.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v10.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T02:49:22Z"
+  },
+  {
+   "ticker": "KO",
+   "name": "COCA COLA Co",
+   "cik": 21344,
+   "sector": "Consumer Staples",
+   "industry": "Beverages",
+   "exchange": "NYSE",
+   "sic": "2080",
+   "city": "Atlanta",
+   "state": "GA",
+   "website": "https://www.coca-colacompany.com",
+   "generated_at": "2026-11-25T02:59:31Z",
+   "version": 15,
+   "price": 97.62,
+   "price_date": "2026-11-24",
+   "target": 94.23,
+   "upside": -0.0347,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 74.44,
+    "base": 94.23,
+    "bull": 120.24
+   },
+   "model_scenarios": {
+    "base": 67.74,
+    "bull": 86.44,
+    "bear": 53.51
+   },
+   "dcf_value": 58.5391846934665,
+   "comps_value": 45.3954646429771,
+   "exit_value": 88.1176780303083,
+   "model_value": 67.7418380181053,
+   "peer_avg_upside": 0.11526338544028251,
+   "anchor_peers": [
+    "PEP",
+    "KDP",
+    "MNST",
+    "PRMB",
+    "TAP"
+   ],
+   "wacc": 0.0616,
+   "peers": [
+    "PEP",
+    "KDP",
+    "MNST",
+    "PRMB",
+    "TAP"
+   ],
+   "peer_matches": {
+    "PEP": "Same industry (Yahoo Finance)",
+    "KDP": "Same industry (Yahoo Finance)",
+    "MNST": "Same industry (Yahoo Finance)",
+    "PRMB": "Same industry (Yahoo Finance)",
+    "TAP": "Related SEC industry code, same sector"
+   },
+   "consensus": {
+    "target_mean": 99.64,
+    "target_median": 100.0,
+    "analysts": 25
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "pe_ttm": 28.8,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-10-28",
+    "accession": "0001628280-26-067844",
+    "period": "2026-10-02",
+    "url": "https://www.sec.gov/Archives/edgar/data/21344/000162828026067844/ko-20261002.htm"
+   },
+   "ev_ebitda": 30.6253492600594,
+   "ebitda_margin": 0.30896310047767,
+   "growth_next": 0.0236,
+   "quality": {
+    "grade": "High",
+    "score": 3.0,
+    "reasons": [
+     "clean 10-K data, same-industry peers and a business that fits the DCF"
+    ]
+   },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.088,
+     "growth_act": 0.0286,
+     "rev_fc": 49778.4,
+     "rev_act": 47061.0,
+     "rev_err": 0.0577,
+     "gm_fc": 0.5952,
+     "gm_act": 0.6106,
+     "gm_err_pts": -0.0154
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": 0.0461,
+     "growth_act": 0.0187,
+     "rev_fc": 49230.8,
+     "rev_act": 47941.0,
+     "rev_err": 0.0269,
+     "gm_fc": 0.5952,
+     "gm_act": 0.6163,
+     "gm_err_pts": -0.021
+    }
+   ],
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v15.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_tearsheet_v15.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v15.pdf"
+   },
+   "times_generated": 6,
+   "first_generated_at": "2026-11-24T02:12:39Z"
+  },
+  {
+   "ticker": "LNG",
+   "name": "Cheniere Energy, Inc.",
+   "cik": 3570,
+   "sector": "Utilities",
+   "industry": "Natural Gas Distribution",
+   "exchange": "NYSE",
+   "sic": "4924",
+   "city": "Houston",
+   "state": "TX",
+   "website": "https://www.cheniere.com",
+   "generated_at": "2026-11-25T02:59:14Z",
+   "version": 10,
+   "price": 296.01,
+   "price_date": "2026-11-24",
+   "target": 333.87,
+   "upside": 0.1279,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 279.32,
+    "base": 333.87,
+    "bull": 393.0
+   },
+   "model_scenarios": {
+    "base": 303.98,
+    "bull": 357.82,
+    "bear": 254.32
+   },
+   "dcf_value": 285.396330954137,
+   "comps_value": 482.053427314554,
+   "exit_value": 233.524529138693,
+   "model_value": 303.979029500043,
+   "peer_avg_upside": 0.2778754535161987,
+   "anchor_peers": [
+    "TRGP",
+    "KMI",
+    "VG",
+    "WMB",
+    "OKE"
+   ],
+   "wacc": 0.0866,
+   "peers": [
+    "TRGP",
+    "KMI",
+    "VG",
+    "WMB",
+    "OKE"
+   ],
+   "peer_matches": {
+    "TRGP": "Same industry (Yahoo Finance)",
+    "KMI": "Same industry (Yahoo Finance)",
+    "VG": "Same industry (Yahoo Finance)",
+    "WMB": "Same industry (Yahoo Finance)",
+    "OKE": "Same industry (Yahoo Finance)"
+   },
+   "consensus": {
+    "target_mean": 340.8,
+    "target_median": 347.0,
+    "analysts": 20
+   },
+   "beta_source": "default 1.0",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "pe_ttm": 21.07,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-10-29",
+    "accession": "0000003570-26-000038",
+    "period": "2026-09-30",
+    "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000038/lng-20260930.htm"
+   },
+   "ev_ebitda": 7.86901887175558,
+   "ebitda_margin": 0.522677212655186,
+   "growth_next": -0.0103,
+   "quality": {
+    "grade": "High",
+    "score": 3.0,
+    "reasons": [
+     "clean 10-K data, same-industry peers and a business that fits the DCF"
+    ]
+   },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.12,
+     "growth_act": -0.23,
+     "rev_fc": 22841.3,
+     "rev_act": 15703.0,
+     "rev_err": 0.4546,
+     "gm_fc": null,
+     "gm_act": null,
+     "gm_err_pts": null
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": -0.05,
+     "growth_act": 0.2721,
+     "rev_fc": 14917.8,
+     "rev_act": 19976.0,
+     "rev_err": -0.2532,
+     "gm_fc": null,
+     "gm_act": null,
+     "gm_err_pts": null
+    }
+   ],
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v10.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_tearsheet_v10.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v10.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T03:10:47Z"
+  },
+  {
+   "ticker": "A",
+   "name": "Agilent Technologies, INC.",
+   "cik": 1090872,
+   "sector": "Information Technology",
+   "industry": "Laboratory Analytical Instruments",
+   "exchange": "NYSE",
+   "sic": "3826",
+   "city": "Santa Clara",
+   "state": "CA",
+   "website": "https://www.agilent.com",
+   "generated_at": "2026-11-25T02:59:00Z",
+   "version": 10,
+   "price": 183.52,
+   "price_date": "2026-11-24",
+   "target": 185.19,
+   "upside": 0.0091,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 159.08,
+    "base": 185.19,
+    "bull": 217.58
+   },
+   "model_scenarios": {
+    "base": 111.83,
+    "bull": 131.38,
+    "bear": 96.06
+   },
+   "dcf_value": 45.1802866459837,
+   "comps_value": 196.04087922083,
+   "exit_value": 136.365441637731,
+   "model_value": 111.826467157652,
+   "peer_avg_upside": 0.15914022098416244,
+   "anchor_peers": [
+    "ILMN",
+    "MTD",
+    "WAT",
+    "RVTY",
+    "DHR"
+   ],
+   "wacc": 0.1127,
+   "peers": [
+    "ILMN",
+    "MTD",
+    "WAT",
+    "RVTY",
+    "DHR"
+   ],
+   "peer_matches": {
+    "ILMN": "Same industry (Yahoo Finance)",
+    "MTD": "Same industry (Yahoo Finance)",
+    "WAT": "Same industry (Yahoo Finance)",
+    "RVTY": "Same industry (Yahoo Finance)",
+    "DHR": "Same industry (Yahoo Finance)"
+   },
+   "consensus": {
+    "target_mean": 198.587,
+    "target_median": 205.0,
+    "analysts": 20
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "pe_ttm": 36.2,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-09-01",
+    "accession": "0001090872-26-000064",
+    "period": "2026-07-31",
+    "url": "https://www.sec.gov/Archives/edgar/data/1090872/000109087226000064/a-20260731.htm"
+   },
+   "ev_ebitda": 30.1667289643463,
+   "ebitda_margin": 0.254317789291883,
+   "growth_next": 0.0084,
+   "quality": {
+    "grade": "High",
+    "score": 3.0,
+    "reasons": [
+     "clean 10-K data, same-industry peers and a business that fits the DCF"
+    ]
+   },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.0399,
+     "growth_act": -0.0473,
+     "rev_fc": 7105.5,
+     "rev_act": 6510.0,
+     "rev_err": 0.0915,
+     "gm_fc": 0.5392,
+     "gm_act": 0.543,
+     "gm_err_pts": -0.0038
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": -0.025,
+     "growth_act": 0.0673,
+     "rev_fc": 6347.3,
+     "rev_act": 6948.0,
+     "rev_err": -0.0865,
+     "gm_fc": 0.543,
+     "gm_act": 0.5243,
+     "gm_err_pts": 0.0187
+    }
+   ],
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v10.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_tearsheet_v10.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v10.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T16:20:37Z"
+  },
+  {
+   "ticker": "CB",
+   "name": "Chubb Ltd",
+   "cik": 896159,
+   "sector": "Financials",
+   "industry": "Fire, Marine & Casualty Insurance",
+   "exchange": "NYSE",
+   "sic": "6331",
+   "city": "Zurich",
+   "state": "V8",
+   "website": "https://www.chubb.com",
+   "generated_at": "2026-11-25T02:58:44Z",
+   "version": 10,
+   "price": 375.37,
+   "price_date": "2026-11-24",
+   "target": 433.63,
+   "upside": 0.1552,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 340.5,
+    "base": 433.63,
+    "bull": 551.89
+   },
+   "model_scenarios": {
+    "base": 1532.09,
+    "bull": 1949.95,
+    "bear": 1203.06
+   },
+   "dcf_value": 2922.89004870828,
+   "comps_value": 0,
+   "exit_value": 907.346600351007,
+   "model_value": 1532.09465962371,
+   "peer_avg_upside": 0.005199768575005426,
+   "anchor_peers": [
+    "ALL",
+    "TRV",
+    "PGR",
+    "MKL"
+   ],
+   "wacc": 0.0621,
+   "peers": [
+    "ALL",
+    "TRV",
+    "PGR",
+    "L",
+    "MKL"
+   ],
+   "peer_matches": {
+    "ALL": "Same industry (Yahoo Finance)",
+    "TRV": "Same industry (Yahoo Finance)",
+    "PGR": "Same industry (Yahoo Finance)",
+    "L": "Same industry (Yahoo Finance)",
+    "MKL": "Same industry (Yahoo Finance)"
+   },
+   "consensus": {
+    "target_mean": 375.6087,
+    "target_median": 379.0,
+    "analysts": 23
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": {
+    "kind": "insurer",
+    "metric": "P/B",
+    "bvps": 193.0412,
+    "tbvps": 123.8199,
+    "pb": 1.9445,
+    "ptbv": 3.0316,
+    "roe": 0.1497,
+    "peer_multiple": 2.1858,
+    "implied_value": 421.952,
+    "note": "Banks, insurers and other financials are valued on book value and returns on equity: debt is their raw material, so EV/EBITDA and unlevered free cash flow don't apply. Read the DCF here as a rough cross-check and lean on P/B, P/TBV and ROE."
+   },
+   "pe_ttm": 13.16,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-10-28",
+    "accession": "0000896159-26-000021",
+    "period": "2026-09-30",
+    "url": "https://www.sec.gov/Archives/edgar/data/896159/000089615926000021/cb-20260930.htm"
+   },
+   "ev_ebitda": 0,
+   "ebitda_margin": 0,
+   "growth_next": 0.0929,
+   "quality": {
+    "grade": "Low",
+    "score": 0.0,
+    "reasons": [
+     "gaps in operating income, capital expenditures, depreciation & amortization",
+     "business model doesn't fit EV/EBITDA and free cash flow",
+     "model value far from the street before anchoring"
+    ]
+   },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.1031,
+     "growth_act": 0.121,
+     "rev_fc": 54865.1,
+     "rev_act": 55753.0,
+     "rev_err": -0.0159,
+     "gm_fc": null,
+     "gm_act": null,
+     "gm_err_pts": null
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": 0.12,
+     "growth_act": 0.0654,
+     "rev_fc": 62443.4,
+     "rev_act": 59402.0,
+     "rev_err": 0.0512,
+     "gm_fc": null,
+     "gm_act": null,
+     "gm_err_pts": null
+    }
+   ],
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_v10.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_tearsheet_v10.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_report_v10.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T16:21:42Z"
+  },
+  {
+   "ticker": "SN",
+   "name": "SharkNinja, Inc.",
+   "cik": 1957132,
+   "sector": "Consumer Discretionary",
+   "industry": "Household Appliances",
+   "exchange": "NYSE",
+   "sic": "3630",
+   "city": "Needham",
+   "state": "MA",
+   "website": "https://www.sharkninja.com",
+   "generated_at": "2026-11-25T02:58:35Z",
+   "version": 10,
+   "price": 228.93,
+   "price_date": "2026-11-24",
+   "target": 248.71,
+   "upside": 0.0864,
+   "rating": "Hold",
+   "scenarios": {
+    "bear": 195.94,
+    "base": 248.71,
+    "bull": 315.6
+   },
+   "model_scenarios": {
+    "base": 104.2,
+    "bull": 132.23,
+    "bear": 82.09
+   },
+   "dcf_value": 55.9729290172437,
+   "comps_value": 46.2719475696801,
+   "exit_value": 181.399709070402,
+   "model_value": 104.203444748994,
+   "peer_avg_upside": 0.2364053081543574,
+   "anchor_peers": [
+    "WHR",
+    "AOS",
+    "COOK",
+    "VIOT"
+   ],
+   "wacc": 0.1118,
+   "peers": [
+    "WHR",
+    "AOS",
+    "HBB",
+    "COOK",
+    "VIOT"
+   ],
+   "peer_matches": {
+    "WHR": "Same industry (Yahoo Finance)",
+    "AOS": "Same SEC industry code",
+    "HBB": "Same industry (Yahoo Finance)",
+    "COOK": "Same industry (Yahoo Finance)",
+    "VIOT": "Same industry (Yahoo Finance)"
+   },
+   "consensus": {
+    "target_mean": 249.58214,
+    "target_median": 250.0,
+    "analysts": 14
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "pe_ttm": 38.41,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-11-04",
+    "accession": "0001957132-26-000056",
+    "period": "2026-09-30",
+    "url": "https://www.sec.gov/Archives/edgar/data/1957132/000195713226000056/sharkninja-20260930.htm"
+   },
+   "ev_ebitda": 30.3967066699877,
+   "ebitda_margin": 0.16563226459357,
+   "growth_next": 0.12,
+   "quality": {
+    "grade": "High",
+    "score": 2.5,
+    "reasons": [
+     "model value far from the street before anchoring"
+    ]
+   },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.0683,
+     "growth_act": 0.2997,
+     "rev_fc": 4544.4,
+     "rev_act": 5528.6,
+     "rev_err": -0.178,
+     "gm_fc": 0.3859,
+     "gm_act": 0.4815,
+     "gm_err_pts": -0.0956
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": 0.12,
+     "growth_act": 0.1575,
+     "rev_fc": 6192.1,
+     "rev_act": 6399.2,
+     "rev_err": -0.0324,
+     "gm_fc": 0.4485,
+     "gm_act": 0.4901,
+     "gm_err_pts": -0.0416
+    }
+   ],
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v10.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_tearsheet_v10.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v10.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T16:42:38Z"
+  },
+  {
+   "ticker": "GOOGL",
+   "name": "Alphabet Inc.",
+   "cik": 1652044,
+   "sector": "Information Technology",
+   "industry": "Services-Computer Programming, Data Processing, Etc.",
+   "exchange": "Nasdaq",
+   "sic": "7370",
+   "city": "Mountain View",
+   "state": "CA",
+   "website": "https://abc.xyz",
+   "generated_at": "2026-11-25T02:58:22Z",
+   "version": 2,
+   "price": 279.05,
+   "price_date": "2026-11-24",
+   "target": 324.59,
+   "upside": 0.1632,
+   "rating": "Buy",
+   "scenarios": {
+    "bear": 283.98,
+    "base": 324.59,
+    "bull": 374.02
+   },
+   "model_scenarios": {
+    "base": 214.12,
+    "bull": 246.72,
+    "bear": 187.33
+   },
+   "dcf_value": 81.5785001839797,
+   "comps_value": 369.611069610829,
+   "exit_value": 268.913151597005,
+   "model_value": 214.11887463456,
+   "peer_avg_upside": 0.3132199213429648,
+   "anchor_peers": [
+    "META",
+    "SNAP",
+    "APP",
+    "PINS"
+   ],
+   "wacc": 0.1154,
+   "peers": [
+    "META",
+    "SNAP",
+    "APP",
+    "PINS"
+   ],
+   "peer_matches": {
+    "META": "Same industry (Yahoo Finance)",
+    "SNAP": "Same industry (Yahoo Finance)",
+    "APP": "Same SEC industry code and sector",
+    "PINS": "Same industry (Yahoo Finance)"
+   },
+   "consensus": {
+    "target_mean": 395.47815,
+    "target_median": 390.0,
+    "analysts": 54
+   },
+   "beta_source": "Yahoo Finance",
+   "fiscal_year": "FY2025",
+   "sector_check": null,
+   "pe_ttm": 14.57,
+   "last_filing": {
+    "form": "10-Q",
+    "filed": "2026-10-29",
+    "accession": "0001652044-26-000084",
+    "period": "2026-09-30",
+    "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
+   },
+   "ev_ebitda": 22.8441251872815,
+   "ebitda_margin": 0.372794387790565,
+   "growth_next": 0.12,
+   "quality": {
+    "grade": "High",
+    "score": 3.0,
+    "reasons": [
+     "clean 10-K data, same-industry peers and a business that fits the DCF"
+    ]
+   },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.0923,
+     "growth_act": 0.1387,
+     "rev_fc": 335767.7,
+     "rev_act": 350018.0,
+     "rev_err": -0.0407,
+     "gm_fc": 0.5663,
+     "gm_act": 0.582,
+     "gm_err_pts": -0.0158
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": 0.1124,
+     "growth_act": 0.1509,
+     "rev_fc": 389375.1,
+     "rev_act": 402836.0,
+     "rev_err": -0.0334,
+     "gm_fc": 0.5663,
+     "gm_act": 0.5965,
+     "gm_err_pts": -0.0303
+    }
+   ],
+   "files": {
+    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/card.png",
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_v2.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_tearsheet_v2.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_report_v2.pdf"
+   },
+   "times_generated": 1,
+   "first_generated_at": "2026-11-24T22:03:48Z"
+  },
+  {
    "ticker": "PEP",
    "name": "Pepsico Inc",
    "cik": 77476,
@@ -36,8 +968,8 @@
    "city": "Purchase",
    "state": "NY",
    "website": "https://www.pepsico.com",
-   "generated_at": "2026-11-25T01:52:47Z",
-   "version": 1,
+   "generated_at": "2026-11-25T02:58:10Z",
+   "version": 2,
    "price": 142.68,
    "price_date": "2026-11-24",
    "target": 150.47,
@@ -105,738 +1037,40 @@
      "clean 10-K data, same-industry peers and a business that fits the DCF"
     ]
    },
+   "backtest": [
+    {
+     "year": "FY2024",
+     "from": "FY2023",
+     "growth_fc": 0.0728,
+     "growth_act": 0.0042,
+     "rev_fc": 98132.4,
+     "rev_act": 91854.0,
+     "rev_err": 0.0684,
+     "gm_fc": 0.5335,
+     "gm_act": 0.5455,
+     "gm_err_pts": -0.012
+    },
+    {
+     "year": "FY2025",
+     "from": "FY2024",
+     "growth_fc": 0.0311,
+     "growth_act": 0.0225,
+     "rev_fc": 94713.2,
+     "rev_act": 93925.0,
+     "rev_err": 0.0084,
+     "gm_fc": 0.5421,
+     "gm_act": 0.5415,
+     "gm_err_pts": 0.0007
+    }
+   ],
    "files": {
     "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_v1.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_tearsheet_v1.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_report_v1.pdf"
+    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_v2.xlsx",
+    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_tearsheet_v2.pdf",
+    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_report_v2.pdf"
    },
    "times_generated": 1,
    "first_generated_at": "2026-11-25T01:52:47Z"
-  },
-  {
-   "ticker": "GOOGL",
-   "name": "Alphabet Inc.",
-   "cik": 1652044,
-   "sector": "Information Technology",
-   "industry": "Services-Computer Programming, Data Processing, Etc.",
-   "exchange": "Nasdaq",
-   "sic": "7370",
-   "city": "Mountain View",
-   "state": "CA",
-   "website": "https://abc.xyz",
-   "generated_at": "2026-11-24T22:03:48Z",
-   "version": 1,
-   "price": 279.05,
-   "price_date": "2026-11-24",
-   "target": 324.59,
-   "upside": 0.1632,
-   "rating": "Buy",
-   "scenarios": {
-    "bear": 283.98,
-    "base": 324.59,
-    "bull": 374.02
-   },
-   "model_scenarios": {
-    "base": 214.12,
-    "bull": 246.72,
-    "bear": 187.33
-   },
-   "dcf_value": 81.5785001839797,
-   "comps_value": 369.611069610829,
-   "exit_value": 268.913151597005,
-   "model_value": 214.11887463456,
-   "peer_avg_upside": 0.3132199213429648,
-   "anchor_peers": [
-    "META",
-    "SNAP",
-    "APP",
-    "PINS"
-   ],
-   "wacc": 0.1154,
-   "peers": [
-    "META",
-    "SNAP",
-    "APP",
-    "PINS"
-   ],
-   "peer_matches": {
-    "META": "Same industry (Yahoo Finance)",
-    "SNAP": "Same industry (Yahoo Finance)",
-    "APP": "Same SEC industry code and sector",
-    "PINS": "Same industry (Yahoo Finance)"
-   },
-   "consensus": {
-    "target_mean": 395.47815,
-    "target_median": 390.0,
-    "analysts": 54
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "sector_check": null,
-   "pe_ttm": 14.57,
-   "last_filing": {
-    "form": "10-Q",
-    "filed": "2026-10-29",
-    "accession": "0001652044-26-000084",
-    "period": "2026-09-30",
-    "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
-   },
-   "ev_ebitda": 22.8441251872815,
-   "ebitda_margin": 0.372794387790565,
-   "growth_next": 0.12,
-   "quality": {
-    "grade": "High",
-    "score": 3.0,
-    "reasons": [
-     "clean 10-K data, same-industry peers and a business that fits the DCF"
-    ]
-   },
-   "files": {
-    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_v1.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_tearsheet_v1.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_report_v1.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T22:03:48Z"
-  },
-  {
-   "ticker": "SN",
-   "name": "SharkNinja, Inc.",
-   "cik": 1957132,
-   "sector": "Consumer Discretionary",
-   "industry": "Household Appliances",
-   "exchange": "NYSE",
-   "sic": "3630",
-   "city": "Needham",
-   "state": "MA",
-   "website": "https://www.sharkninja.com",
-   "generated_at": "2026-11-24T18:46:31Z",
-   "version": 9,
-   "price": 229.6,
-   "price_date": "2026-11-24",
-   "target": 250.32,
-   "upside": 0.0902,
-   "rating": "Hold",
-   "scenarios": {
-    "bear": 197.2,
-    "base": 250.32,
-    "bull": 317.64
-   },
-   "model_scenarios": {
-    "base": 104.18,
-    "bull": 132.21,
-    "bear": 82.08
-   },
-   "dcf_value": 55.9562779643022,
-   "comps_value": 46.2440136568551,
-   "exit_value": 181.380287784549,
-   "model_value": 104.183429030912,
-   "peer_avg_upside": 0.2401780076525854,
-   "anchor_peers": [
-    "WHR",
-    "AOS",
-    "COOK",
-    "VIOT"
-   ],
-   "wacc": 0.1118,
-   "peers": [
-    "WHR",
-    "AOS",
-    "HBB",
-    "COOK",
-    "VIOT"
-   ],
-   "peer_matches": {
-    "WHR": "Same industry (Yahoo Finance)",
-    "AOS": "Same SEC industry code",
-    "HBB": "Same industry (Yahoo Finance)",
-    "COOK": "Same industry (Yahoo Finance)",
-    "VIOT": "Same industry (Yahoo Finance)"
-   },
-   "consensus": {
-    "target_mean": 249.58214,
-    "target_median": 250.0,
-    "analysts": 14
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "sector_check": null,
-   "pe_ttm": 38.52,
-   "last_filing": {
-    "form": "10-Q",
-    "filed": "2026-11-04",
-    "accession": "0001957132-26-000056",
-    "period": "2026-09-30",
-    "url": "https://www.sec.gov/Archives/edgar/data/1957132/000195713226000056/sharkninja-20260930.htm"
-   },
-   "ev_ebitda": 30.4864458181434,
-   "ebitda_margin": 0.16563226459357,
-   "growth_next": 0.12,
-   "quality": {
-    "grade": "High",
-    "score": 2.5,
-    "reasons": [
-     "model value far from the street before anchoring"
-    ]
-   },
-   "files": {
-    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_v9.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_tearsheet_v9.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v9.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T16:42:38Z"
-  },
-  {
-   "ticker": "CB",
-   "name": "Chubb Ltd",
-   "cik": 896159,
-   "sector": "Financials",
-   "industry": "Fire, Marine & Casualty Insurance",
-   "exchange": "NYSE",
-   "sic": "6331",
-   "city": "Zurich",
-   "state": "V8",
-   "website": "https://www.chubb.com",
-   "generated_at": "2026-11-24T18:46:13Z",
-   "version": 9,
-   "price": 373.3,
-   "price_date": "2026-11-24",
-   "target": 432.28,
-   "upside": 0.158,
-   "rating": "Buy",
-   "scenarios": {
-    "bear": 339.47,
-    "base": 432.28,
-    "bull": 550.13
-   },
-   "model_scenarios": {
-    "base": 1531.22,
-    "bull": 1948.65,
-    "bear": 1202.46
-   },
-   "dcf_value": 2920.80094085883,
-   "comps_value": 0,
-   "exit_value": 907.253666565354,
-   "model_value": 1531.22184296967,
-   "peer_avg_upside": 0.008022666156133701,
-   "anchor_peers": [
-    "ALL",
-    "TRV",
-    "PGR",
-    "MKL"
-   ],
-   "wacc": 0.0621,
-   "peers": [
-    "ALL",
-    "TRV",
-    "PGR",
-    "L",
-    "MKL"
-   ],
-   "peer_matches": {
-    "ALL": "Same industry (Yahoo Finance)",
-    "TRV": "Same industry (Yahoo Finance)",
-    "PGR": "Same industry (Yahoo Finance)",
-    "L": "Same industry (Yahoo Finance)",
-    "MKL": "Same industry (Yahoo Finance)"
-   },
-   "consensus": {
-    "target_mean": 375.6087,
-    "target_median": 379.0,
-    "analysts": 23
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "sector_check": {
-    "kind": "insurer",
-    "metric": "P/B",
-    "bvps": 193.0412,
-    "tbvps": 123.8199,
-    "pb": 1.9338,
-    "ptbv": 3.0149,
-    "roe": 0.1497,
-    "peer_multiple": 2.1837,
-    "implied_value": 421.5463,
-    "note": "Banks, insurers and other financials are valued on book value and returns on equity: debt is their raw material, so EV/EBITDA and unlevered free cash flow don't apply. Read the DCF here as a rough cross-check and lean on P/B, P/TBV and ROE."
-   },
-   "pe_ttm": 13.08,
-   "last_filing": {
-    "form": "10-Q",
-    "filed": "2026-10-28",
-    "accession": "0000896159-26-000021",
-    "period": "2026-09-30",
-    "url": "https://www.sec.gov/Archives/edgar/data/896159/000089615926000021/cb-20260930.htm"
-   },
-   "ev_ebitda": 0,
-   "ebitda_margin": 0,
-   "growth_next": 0.0929,
-   "quality": {
-    "grade": "Low",
-    "score": 0.0,
-    "reasons": [
-     "gaps in operating income, capital expenditures, depreciation & amortization",
-     "business model doesn't fit EV/EBITDA and free cash flow",
-     "model value far from the street before anchoring"
-    ]
-   },
-   "files": {
-    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_v9.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_tearsheet_v9.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/financials/CB/CB_report_v9.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T16:21:42Z"
-  },
-  {
-   "ticker": "A",
-   "name": "Agilent Technologies, INC.",
-   "cik": 1090872,
-   "sector": "Information Technology",
-   "industry": "Laboratory Analytical Instruments",
-   "exchange": "NYSE",
-   "sic": "3826",
-   "city": "Santa Clara",
-   "state": "CA",
-   "website": "https://www.agilent.com",
-   "generated_at": "2026-11-24T18:45:57Z",
-   "version": 9,
-   "price": 184.39,
-   "price_date": "2026-11-24",
-   "target": 184.85,
-   "upside": 0.0025,
-   "rating": "Hold",
-   "scenarios": {
-    "bear": 158.81,
-    "base": 184.85,
-    "bull": 217.16
-   },
-   "model_scenarios": {
-    "base": 111.84,
-    "bull": 131.39,
-    "bear": 96.08
-   },
-   "dcf_value": 45.1459990282202,
-   "comps_value": 196.243517052192,
-   "exit_value": 136.329577590584,
-   "model_value": 111.83893405796,
-   "peer_avg_upside": 0.15247665439872354,
-   "anchor_peers": [
-    "ILMN",
-    "MTD",
-    "WAT",
-    "RVTY",
-    "DHR"
-   ],
-   "wacc": 0.1127,
-   "peers": [
-    "ILMN",
-    "MTD",
-    "WAT",
-    "RVTY",
-    "DHR"
-   ],
-   "peer_matches": {
-    "ILMN": "Same industry (Yahoo Finance)",
-    "MTD": "Same industry (Yahoo Finance)",
-    "WAT": "Same industry (Yahoo Finance)",
-    "RVTY": "Same industry (Yahoo Finance)",
-    "DHR": "Same industry (Yahoo Finance)"
-   },
-   "consensus": {
-    "target_mean": 195.087,
-    "target_median": 200.0,
-    "analysts": 20
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "sector_check": null,
-   "pe_ttm": 36.37,
-   "last_filing": {
-    "form": "10-Q",
-    "filed": "2026-09-01",
-    "accession": "0001090872-26-000064",
-    "period": "2026-07-31",
-    "url": "https://www.sec.gov/Archives/edgar/data/1090872/000109087226000064/a-20260731.htm"
-   },
-   "ev_ebitda": 30.3055395076401,
-   "ebitda_margin": 0.254317789291883,
-   "growth_next": 0.0084,
-   "quality": {
-    "grade": "High",
-    "score": 3.0,
-    "reasons": [
-     "clean 10-K data, same-industry peers and a business that fits the DCF"
-    ]
-   },
-   "files": {
-    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_v9.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_tearsheet_v9.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v9.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T16:20:37Z"
-  },
-  {
-   "ticker": "LNG",
-   "name": "Cheniere Energy, Inc.",
-   "cik": 3570,
-   "sector": "Utilities",
-   "industry": "Natural Gas Distribution",
-   "exchange": "NYSE",
-   "sic": "4924",
-   "city": "Houston",
-   "state": "TX",
-   "website": "https://www.cheniere.com",
-   "generated_at": "2026-11-24T18:45:38Z",
-   "version": 9,
-   "price": 296.92,
-   "price_date": "2026-11-24",
-   "target": 335.01,
-   "upside": 0.1283,
-   "rating": "Hold",
-   "scenarios": {
-    "bear": 280.21,
-    "base": 335.01,
-    "bull": 394.4
-   },
-   "model_scenarios": {
-    "base": 303.58,
-    "bull": 357.41,
-    "bear": 253.93
-   },
-   "dcf_value": 284.937443483847,
-   "comps_value": 480.18584515981,
-   "exit_value": 233.929063610807,
-   "model_value": 303.583771869824,
-   "peer_avg_upside": 0.2782592103212615,
-   "anchor_peers": [
-    "TRGP",
-    "KMI",
-    "VG",
-    "WMB",
-    "OKE"
-   ],
-   "wacc": 0.0866,
-   "peers": [
-    "TRGP",
-    "KMI",
-    "VG",
-    "WMB",
-    "OKE"
-   ],
-   "peer_matches": {
-    "TRGP": "Same industry (Yahoo Finance)",
-    "KMI": "Same industry (Yahoo Finance)",
-    "VG": "Same industry (Yahoo Finance)",
-    "WMB": "Same industry (Yahoo Finance)",
-    "OKE": "Same industry (Yahoo Finance)"
-   },
-   "consensus": {
-    "target_mean": 340.8,
-    "target_median": 347.0,
-    "analysts": 20
-   },
-   "beta_source": "default 1.0",
-   "fiscal_year": "FY2025",
-   "sector_check": null,
-   "pe_ttm": 21.13,
-   "last_filing": {
-    "form": "10-Q",
-    "filed": "2026-10-29",
-    "accession": "0000003570-26-000038",
-    "period": "2026-09-30",
-    "url": "https://www.sec.gov/Archives/edgar/data/3570/000000357026000038/lng-20260930.htm"
-   },
-   "ev_ebitda": 7.88671876831721,
-   "ebitda_margin": 0.522677212655186,
-   "growth_next": -0.0103,
-   "quality": {
-    "grade": "High",
-    "score": 3.0,
-    "reasons": [
-     "clean 10-K data, same-industry peers and a business that fits the DCF"
-    ]
-   },
-   "files": {
-    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_v9.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_tearsheet_v9.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/utilities/LNG/LNG_report_v9.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T03:10:47Z"
-  },
-  {
-   "ticker": "KO",
-   "name": "COCA COLA Co",
-   "cik": 21344,
-   "sector": "Consumer Staples",
-   "industry": "Beverages",
-   "exchange": "NYSE",
-   "sic": "2080",
-   "city": "Atlanta",
-   "state": "GA",
-   "website": "https://www.coca-colacompany.com",
-   "generated_at": "2026-11-24T18:45:25Z",
-   "version": 14,
-   "price": 97.8,
-   "price_date": "2026-11-24",
-   "target": 94.21,
-   "upside": -0.0367,
-   "rating": "Hold",
-   "scenarios": {
-    "bear": 74.42,
-    "base": 94.21,
-    "bull": 120.2
-   },
-   "model_scenarios": {
-    "base": 67.73,
-    "bull": 86.42,
-    "bear": 53.51
-   },
-   "dcf_value": 58.4997018785954,
-   "comps_value": 45.4434338495683,
-   "exit_value": 88.1080717588956,
-   "model_value": 67.7317962249101,
-   "peer_avg_upside": 0.11329527442896299,
-   "anchor_peers": [
-    "PEP",
-    "KDP",
-    "MNST",
-    "PRMB",
-    "TAP"
-   ],
-   "wacc": 0.0616,
-   "peers": [
-    "PEP",
-    "KDP",
-    "MNST",
-    "PRMB",
-    "TAP"
-   ],
-   "peer_matches": {
-    "PEP": "Same industry (Yahoo Finance)",
-    "KDP": "Same industry (Yahoo Finance)",
-    "MNST": "Same industry (Yahoo Finance)",
-    "PRMB": "Same industry (Yahoo Finance)",
-    "TAP": "Related SEC industry code, same sector"
-   },
-   "consensus": {
-    "target_mean": 99.64,
-    "target_median": 100.0,
-    "analysts": 25
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "sector_check": null,
-   "pe_ttm": 28.85,
-   "last_filing": {
-    "form": "10-Q",
-    "filed": "2026-10-28",
-    "accession": "0001628280-26-067844",
-    "period": "2026-10-02",
-    "url": "https://www.sec.gov/Archives/edgar/data/21344/000162828026067844/ko-20261002.htm"
-   },
-   "ev_ebitda": 30.6776273021874,
-   "ebitda_margin": 0.30896310047767,
-   "growth_next": 0.0236,
-   "quality": {
-    "grade": "High",
-    "score": 3.0,
-    "reasons": [
-     "clean 10-K data, same-industry peers and a business that fits the DCF"
-    ]
-   },
-   "files": {
-    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_v14.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_tearsheet_v14.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/KO/KO_report_v14.pdf"
-   },
-   "times_generated": 6,
-   "first_generated_at": "2026-11-24T02:12:39Z"
-  },
-  {
-   "ticker": "BE",
-   "name": "Bloom Energy Corp",
-   "cik": 1664703,
-   "sector": "Industrials",
-   "industry": "Electrical Industrial Apparatus",
-   "exchange": "NYSE",
-   "sic": "3620",
-   "city": "San Jose",
-   "state": "CA",
-   "website": "https://www.bloomenergy.com",
-   "generated_at": "2026-11-24T18:45:13Z",
-   "version": 9,
-   "price": 155.91,
-   "price_date": "2026-11-24",
-   "target": 193.81,
-   "upside": 0.2431,
-   "rating": "Buy",
-   "scenarios": {
-    "bear": 150.83,
-    "base": 193.81,
-    "bull": 256.88
-   },
-   "model_scenarios": {
-    "base": 4.14,
-    "bull": 5.48,
-    "bear": 3.22
-   },
-   "dcf_value": -2.05426396998472,
-   "comps_value": 12.6893220845215,
-   "exit_value": 6.0515586979694,
-   "model_value": 4.13678230809817,
-   "peer_avg_upside": 0.3930993343981929,
-   "anchor_peers": [
-    "EAF",
-    "VRT",
-    "WWD",
-    "FELE"
-   ],
-   "wacc": 0.1006,
-   "peers": [
-    "PLUG",
-    "EAF",
-    "VRT",
-    "WWD",
-    "FELE"
-   ],
-   "peer_matches": {
-    "PLUG": "Same industry (Yahoo Finance)",
-    "EAF": "Same industry (Yahoo Finance)",
-    "VRT": "Same industry (Yahoo Finance)",
-    "WWD": "Same SEC industry code and sector",
-    "FELE": "Related SEC industry code, same sector"
-   },
-   "consensus": {
-    "target_mean": 282.69232,
-    "target_median": 295.0,
-    "analysts": 26
-   },
-   "beta_source": "default 1.0",
-   "fiscal_year": "FY2025",
-   "sector_check": null,
-   "pe_ttm": 94.49,
-   "last_filing": {
-    "form": "10-Q",
-    "filed": "2026-10-22",
-    "accession": "0001628280-26-066931",
-    "period": "2026-09-30",
-    "url": "https://www.sec.gov/Archives/edgar/data/1664703/000162828026066931/be-20260930.htm"
-   },
-   "ev_ebitda": 374.972876840023,
-   "ebitda_margin": 0.0609527498599304,
-   "growth_next": 0.12,
-   "quality": {
-    "grade": "High",
-    "score": 2.5,
-    "reasons": [
-     "model value far from the street before anchoring"
-    ]
-   },
-   "files": {
-    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_v9.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_tearsheet_v9.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v9.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T02:49:22Z"
-  },
-  {
-   "ticker": "GOOG",
-   "name": "Alphabet Inc.",
-   "cik": 1652044,
-   "sector": "Information Technology",
-   "industry": "Services-Computer Programming, Data Processing, Etc.",
-   "exchange": "Nasdaq",
-   "sic": "7370",
-   "city": "Mountain View",
-   "state": "CA",
-   "website": "https://abc.xyz",
-   "generated_at": "2026-11-24T18:45:00Z",
-   "version": 8,
-   "price": 276.39,
-   "price_date": "2026-11-24",
-   "target": 318.76,
-   "upside": 0.1533,
-   "rating": "Buy",
-   "scenarios": {
-    "bear": 279.06,
-    "base": 318.76,
-    "bull": 367.08
-   },
-   "model_scenarios": {
-    "base": 213.44,
-    "bull": 245.79,
-    "bear": 186.85
-   },
-   "dcf_value": 81.5690035495355,
-   "comps_value": 370.876594877636,
-   "exit_value": 266.581258829828,
-   "model_value": 213.435423927272,
-   "peer_avg_upside": 0.30327063924357106,
-   "anchor_peers": [
-    "META",
-    "SNAP",
-    "APP",
-    "PINS"
-   ],
-   "wacc": 0.1154,
-   "peers": [
-    "META",
-    "SNAP",
-    "APP",
-    "PINS"
-   ],
-   "peer_matches": {
-    "META": "Same industry (Yahoo Finance)",
-    "SNAP": "Same industry (Yahoo Finance)",
-    "APP": "Same SEC industry code and sector",
-    "PINS": "Same industry (Yahoo Finance)"
-   },
-   "consensus": {
-    "target_mean": 389.0,
-    "target_median": 380.0,
-    "analysts": 15
-   },
-   "beta_source": "Yahoo Finance",
-   "fiscal_year": "FY2025",
-   "sector_check": null,
-   "pe_ttm": 14.43,
-   "last_filing": {
-    "form": "10-Q",
-    "filed": "2026-10-29",
-    "accession": "0001652044-26-000084",
-    "period": "2026-09-30",
-    "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
-   },
-   "ev_ebitda": 22.627499250874,
-   "ebitda_margin": 0.372794387790565,
-   "growth_next": 0.12,
-   "quality": {
-    "grade": "High",
-    "score": 3.0,
-    "reasons": [
-     "clean 10-K data, same-industry peers and a business that fits the DCF"
-    ]
-   },
-   "files": {
-    "card": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/card.png",
-    "xlsx": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_v8.xlsx",
-    "tearsheet": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_tearsheet_v8.pdf",
-    "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOG/GOOG_report_v8.pdf"
-   },
-   "times_generated": 1,
-   "first_generated_at": "2026-11-24T17:39:09Z"
   }
  ]
 }
