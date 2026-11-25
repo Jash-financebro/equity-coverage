@@ -971,5 +971,17 @@
   "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/A/A_report_v10.pdf"
  },
  "times_generated": 1,
- "first_generated_at": "2026-11-24T16:20:37Z"
+ "first_generated_at": "2026-11-24T16:20:37Z",
+ "mark": {
+  "price": 183.52,
+  "date": "2026-11-24"
+ },
+ "track": null,
+ "latest_filing_seen": {
+  "form": "10-Q",
+  "filed": "2026-09-01",
+  "accession": "0001090872-26-000064",
+  "period": "2026-07-31",
+  "url": "https://www.sec.gov/Archives/edgar/data/1090872/000109087226000064/a-20260731.htm"
+ }
 }

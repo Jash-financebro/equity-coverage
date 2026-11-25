@@ -892,5 +892,17 @@
   "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/information-technology/GOOGL/GOOGL_report_v2.pdf"
  },
  "times_generated": 1,
- "first_generated_at": "2026-11-24T22:03:48Z"
+ "first_generated_at": "2026-11-24T22:03:48Z",
+ "mark": {
+  "price": 279.05,
+  "date": "2026-11-24"
+ },
+ "track": null,
+ "latest_filing_seen": {
+  "form": "10-Q",
+  "filed": "2026-10-29",
+  "accession": "0001652044-26-000084",
+  "period": "2026-09-30",
+  "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000084/goog-20260930.htm"
+ }
 }
