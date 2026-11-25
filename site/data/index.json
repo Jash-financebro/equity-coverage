@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-25 04:05 UTC",
+ "generated_at": "2026-11-25 04:10 UTC",
  "site": {
   "title": "Model Builder \u2014 JJ Rajgandhi",
   "tagline": "Full Excel models for any NYSE or Nasdaq company, built from SEC 10-K data.",
@@ -26,7 +26,7 @@
    "target": 340.65,
    "upside": 0.1508,
    "rating": "Buy",
-   "refreshed_at": "2026-11-25 04:05 UTC",
+   "refreshed_at": "2026-11-25 04:10 UTC",
    "status": "ok",
    "target_stale": false,
    "error": null,
