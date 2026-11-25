@@ -1,0 +1,27 @@
+name: tmp live check
+on:
+  push:
+    paths: [".github/workflows/tmp-check.yml"]
+permissions:
+  contents: read
+jobs:
+  t:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          API=https://equity-coverage-api.rajgandhij.workers.dev
+          for T in PG JPM; do
+            echo "::notice title=$T post::$(curl -s -X POST "$API/api/earnings?t=$T" | head -c 300)"
+          done
+          for i in $(seq 1 40); do
+            sleep 5
+            a=$(curl -s "$API/api/earnings?t=PG" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+            b=$(curl -s "$API/api/earnings?t=JPM" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
+            [ "$a" = ready ] && [ "$b" = ready ] && break
+          done
+          echo "::notice title=after ${i}x5s::PG $a JPM $b"
+          for T in PG JPM; do
+            curl -s "$API/api/earnings?t=$T" | python3 -c "
+          import json,sys; d=json.load(sys.stdin); n=d.get('notes') or {}; e=(n.get('events') or [{}])[0]
+          print('::notice title=$T notes::' + json.dumps({'period':e.get('period'),'head':e.get('headline'),'summary':n.get('summary'),'outlook':e.get('outlook'),'results':(e.get('results') or [])[:3],'quotes':e.get('quotes'),'docs':[x['label'] for x in e.get('docs',[])],'call':e.get('call')})[:3500])"
+          done
