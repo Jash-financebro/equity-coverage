@@ -10,6 +10,9 @@
 // POST /api/update?ticker=T        upload an existing model (.xlsx) to be refreshed; returns {id, token}
 // GET  /api/update/status|file/ID  poll / download (token required). Runner endpoints use the GH token.
 // Uploads live in KV (binding UPLOADS) for 6 hours and never touch the public repo.
+// GET  /api/track                calls graded 30+ days after they were made, plus open calls still being tracked
+// GET  /api/models?t=A,B           summary of the models for a list of tickers (watchlist)
+// POST /api/feedback               "this looks off" report for a model; GET / DELETE are owner only
 // GET  /api/health
 // Secrets/vars: GH_TOKEN (fine-grained PAT: Actions RW, Contents R), GH_REPO, ALLOWED_ORIGINS (comma list)
 
@@ -32,6 +35,9 @@ export default {
       if (url.pathname === "/api/quotes" && req.method === "GET") return json(await quotes(url, env, ctx), 200, cors, 300);
       if (url.pathname === "/api/insights" && req.method === "GET") return json(await insights(env, ctx), 200, cors, 300);
       if (url.pathname.startsWith("/api/update")) return await updateRoutes(req, url, env, ctx, cors);
+      if (url.pathname === "/api/track" && req.method === "GET") return json(await track(env, ctx), 200, cors, 300);
+      if (url.pathname === "/api/models" && req.method === "GET") return json(await modelsFor(url, env, ctx), 200, cors, 60);
+      if (url.pathname === "/api/feedback") return await feedbackRoutes(req, url, env, ctx, cors);
       if (url.pathname === "/api/recent" && req.method === "GET") return json(await recent(env, ctx), 200, cors, 30);
       if (url.pathname === "/api/model" && req.method === "GET") return json(await model(url, env, ctx), 200, cors, 60);
       if (url.pathname.startsWith("/m/") && req.method === "GET") return sharePage(url, env, ctx);
@@ -50,7 +56,7 @@ function corsHeaders(req, env) {
   const origin = req.headers.get("Origin") || "";
   const allowed = (env.ALLOWED_ORIGINS || "*").split(",").map((s) => s.trim());
   const ok = allowed.includes("*") || allowed.includes(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin);
-  return { "Access-Control-Allow-Origin": ok ? origin || "*" : allowed[0], "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  return { "Access-Control-Allow-Origin": ok ? origin || "*" : allowed[0], "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
            "Access-Control-Allow-Headers": "Content-Type, X-Owner-Key, X-Filename", "Access-Control-Expose-Headers": "Content-Disposition", Vary: "Origin" };
 }
 function json(obj, status, headers, maxAge = 0) {
@@ -302,6 +308,63 @@ async function startUpdate(req, url, env, ctx) {
   return { status: "queued", id, token, ticker, name: list[ticker].name };
 }
 
+async function track(env, ctx) {
+  const idx = await library(env, ctx);
+  const ms = idx.models || [];
+  const summary = (await insights(env, ctx)).track;
+  const scored = ms.filter((m) => m.track).map((m) => ({ ticker: m.ticker, name: m.name, sector: m.sector, ...m.track }))
+    .sort((a, b) => (b.excess ?? b.ret ?? 0) - (a.excess ?? a.ret ?? 0));
+  const plus30 = (d) => new Date(Date.parse(d) + 30 * 864e5).toISOString().slice(0, 10);
+  const open = ms.filter((m) => m.price && m.target && m.generated_at)
+    .map((m) => ({ ticker: m.ticker, name: m.name, sector: m.sector, rating: m.rating, call_date: m.generated_at.slice(0, 10),
+                   call_price: m.price, call_target: m.target, graded_on: plus30(m.generated_at) }))
+    .sort((a, b) => b.call_date.localeCompare(a.call_date) || a.ticker.localeCompare(b.ticker));
+  return { updated_at: idx.updated_at, summary, scored, open: open.slice(0, 48), open_count: open.length,
+           first_grade: open.length ? open.map((o) => o.graded_on).sort()[0] : null };
+}
+
+async function modelsFor(url, env, ctx) {
+  const want = [...new Set(String(url.searchParams.get("t") || "").toUpperCase().split(/[,\s]+/).map((x) => x.replace(/[./]/g, "-")).filter(Boolean))].slice(0, 40);
+  const idx = await library(env, ctx);
+  return { models: idx.models.filter((m) => want.includes(m.ticker)).map((m) => ({ ...slim(m), mark: m.mark || null })) };
+}
+
+const FEEDBACK_KINDS = ["number", "peer", "target", "other"];
+async function feedbackRoutes(req, url, env, ctx, cors) {
+  if (!env.UPLOADS) fail("Feedback isn't set up yet.", 503);
+  if (req.method === "POST") {
+    const b = await req.json().catch(() => ({}));
+    if (b.website) return json({ ok: true }, 200, cors);           // spam trap: real visitors never fill this hidden field
+    const ticker = String(b.ticker || "").toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 8);
+    const kind = FEEDBACK_KINDS.includes(b.kind) ? b.kind : "other";
+    const text = String(b.text || "").trim().slice(0, 1000);
+    if (!ticker) fail("ticker required");
+    if (!text && kind === "other") fail("Tell us what looks off.");
+    const ip = req.headers.get("CF-Connecting-IP") || "anon", hour = new Date().toISOString().slice(0, 13);
+    const key = new Request(`https://fb.local/${encodeURIComponent(ip)}/${hour}`), cache = caches.default;
+    const hit = await cache.match(key), n = hit ? Number(await hit.text()) : 0;
+    if (n >= 6) fail("Thanks, we've got several reports from you this hour. Try again later.", 429);
+    ctx.waitUntil(cache.put(key, new Response(String(n + 1), { headers: { "Cache-Control": "max-age=3600" } })));
+    const at = new Date().toISOString();
+    await env.UPLOADS.put(`fb:${at}:${ticker}:${rid(3)}`, JSON.stringify({ ticker, kind, text, version: Number(b.version) || null, at }),
+                          { expirationTtl: 180 * 86400 });
+    return json({ ok: true }, 200, cors);
+  }
+  if (!(await isOwner(req, env))) return json({ error: "Owner only." }, 403, cors);
+  if (req.method === "GET") {
+    const keys = (await env.UPLOADS.list({ prefix: "fb:", limit: 200 })).keys.map((k) => k.name).sort().reverse();
+    const items = await Promise.all(keys.map(async (id) => ({ id, ...(JSON.parse((await env.UPLOADS.get(id)) || "{}")) })));
+    return json({ items }, 200, cors);
+  }
+  if (req.method === "DELETE") {
+    const id = url.searchParams.get("id") || "";
+    if (!id.startsWith("fb:")) fail("bad id");
+    await env.UPLOADS.delete(id);
+    return json({ ok: true }, 200, cors);
+  }
+  fail("method not allowed", 405);
+}
+
 async function recent(env, ctx) {
   const idx = await library(env, ctx);
   const now = Date.now();
@@ -390,8 +453,19 @@ async function status(url, env, ctx) {
   const runs = await runsFor(env, ticker, since ? new Date(Date.parse(since) - 60e3).toISOString() : "");
   const w = runs[0];
   if (!w) return { status: "queued", ticker };
-  if (w.status !== "completed") return { status: w.status === "in_progress" ? "running" : "queued", ticker, run_url: w.html_url,
-                                          started: w.run_started_at };
+  if (w.status !== "completed") {
+    let step = null, step_started = null;
+    if (w.status === "in_progress") {
+      try {
+        const j = await gh(env, `/repos/${env.GH_REPO}/actions/runs/${w.id}/jobs`);
+        if (j.ok) {
+          const st = (((await j.json()).jobs || [])[0]?.steps || []).find((x) => x.status === "in_progress");
+          if (st) { step = st.name; step_started = st.started_at; }
+        }
+      } catch (_) { /* step detail is optional */ }
+    }
+    return { status: w.status === "in_progress" ? "running" : "queued", ticker, run_url: w.html_url, started: w.run_started_at, step, step_started };
+  }
   if (w.conclusion === "success") return { status: "finishing", ticker, run_url: w.html_url };
   return { status: "failed", ticker, run_url: w.html_url, conclusion: w.conclusion };
 }

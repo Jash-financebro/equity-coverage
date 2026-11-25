@@ -23,8 +23,11 @@
   const ratioFmt = (i) => (i.unit === "%" ? pct(i.value) : mult(i.value));
   const pill = (r) => `<span class="pill ${esc(r)}">${esc(r || "—")}</span>`;
 
-  async function getJSON(url) {
-    const r = await fetch(url + "?v=" + Date.now().toString().slice(0, -5));
+  // Static JSON is versioned by the last site refresh, so repeat visits come from the browser cache.
+  let DATA_V = Date.now().toString().slice(0, -5);
+  async function getJSON(url, v) {
+    if (!v && url !== "data/index.json") await bootIndex();
+    const r = await fetch(url + "?v=" + (v || DATA_V));
     if (!r.ok) throw new Error(r.status + " " + url);
     return r.json();
   }
@@ -90,6 +93,91 @@
   const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
                   set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch { /* private mode */ } } };
   const ownerKey = () => store.get("mb_owner") || "";
+  const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ------------------------------------------------------------- watchlist (kept in this browser only)
+  const WL = {
+    get: () => { try { return JSON.parse(store.get("mb_watch") || "[]"); } catch { return []; } },
+    set: (a) => { store.set("mb_watch", a.length ? JSON.stringify(a.slice(0, 40)) : ""); watchNav(); },
+    has: (t) => WL.get().includes(t),
+    toggle: (t) => { const a = WL.get(), i = a.indexOf(t); if (i >= 0) a.splice(i, 1); else a.unshift(t); WL.set(a); return i < 0; },
+  };
+  const starBtn = (t) => { const on = WL.has(t);
+    return `<button type="button" class="star${on ? " on" : ""}" data-star="${esc(t)}" aria-pressed="${on}" aria-label="${on ? "Remove " + esc(t) + " from" : "Add " + esc(t) + " to"} watchlist" title="${on ? "On your watchlist" : "Add to watchlist"}">${on ? "★" : "☆"}</button>`; };
+  function watchNav() { const a = document.getElementById("nav-watch"); if (!a) return; const n = WL.get().length;
+    a.innerHTML = `Watchlist${n ? ` <span class="badge" aria-label="${n} companies">${n}</span>` : ""}`; }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-star]"); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const t = b.dataset.star, on = WL.toggle(t);
+    document.querySelectorAll(`[data-star="${CSS.escape(t)}"]`).forEach((x) => { x.outerHTML = starBtn(t); });
+    announce(on ? `${t} added to your watchlist` : `${t} removed from your watchlist`);
+  });
+  function announce(msg) { const el = document.getElementById("sr-live"); if (el) { el.textContent = ""; setTimeout(() => (el.textContent = msg), 50); } }
+
+  // ------------------------------------------------------------- plain-English definitions on hover / focus
+  const GLOSS = {
+    "WACC": "Weighted average cost of capital: the blended return that lenders and shareholders expect. Future cash flows are discounted at this rate, so a higher WACC means a lower value.",
+    "DCF": "Discounted cash flow: estimate the cash a business will generate, then convert it to today's dollars using the WACC.",
+    "Reverse DCF": "Works the DCF backwards: what growth would the business need to justify today's share price?",
+    "EV/EBITDA": "Enterprise value divided by EBITDA. Compares what the whole business costs (debt included) with its operating profit before non-cash charges. Lower is cheaper.",
+    "EBITDA": "Earnings before interest, taxes, depreciation and amortization: a rough measure of operating cash profit.",
+    "P/E": "Share price divided by earnings per share: how many years of current profit you pay for.",
+    "P/B": "Price to book value: share price compared with the accounting value of equity. Used for banks and insurers.",
+    "P/FFO": "Price to funds from operations, the REIT version of a P/E ratio.",
+    "FFO": "Funds from operations: net income plus real-estate depreciation, minus gains on property sales. The standard profit measure for REITs.",
+    "EPS": "Earnings per share: net income divided by shares outstanding.",
+    "Beta": "How much a stock has moved compared with the S&P 500. 1.0 moves with the market; below 1 moves less, above 1 moves more.",
+    "Terminal growth": "The growth rate assumed for every year after the five-year forecast. Small changes move the value a lot.",
+    "Exit multiple": "The EV/EBITDA multiple the business is assumed to sell for at the end of the forecast.",
+    "Free cash flow": "Cash from operations minus capital spending: the cash left over for lenders and shareholders.",
+    "Market cap": "Market capitalization: share price times shares outstanding, the market value of the equity.",
+    "Market value": "Share price times shares outstanding, the market value of the equity.",
+    "Dividend yield": "Dividends paid over the past year divided by today's share price.",
+    "Payout": "The share of profit paid out as dividends. Above 100% means paying more than the company earns.",
+    "Debt-to-equity": "Total debt divided by shareholders' equity: how much the company leans on borrowing.",
+    "Upside": "How far the price target is above (or below) today's share price.",
+    "Price target": "What the model thinks one share is worth in 12 months.",
+    "Comps": "Comparable companies: valuing a business by the multiples similar companies trade at.",
+    "Street median": "The middle price target among Wall Street analysts who cover the stock.",
+    "Operating margin": "Operating profit as a share of revenue.",
+    "Gross margin": "Revenue minus the direct cost of goods sold, as a share of revenue.",
+    "10-K": "The annual report every US-listed company files with the SEC, with audited financial statements.",
+    "10-Q": "The quarterly report US-listed companies file with the SEC (unaudited).",
+    "13F": "A quarterly SEC filing that lists the US stocks a fund with over $100M owns, filed up to 45 days after the quarter ends.",
+    "Sensitivity": "A grid showing how the value changes as two assumptions move together.",
+  };
+  const GL_KEYS = Object.keys(GLOSS).sort((a, b) => b.length - a.length);
+  const GL_RE = new RegExp(`(^|[^A-Za-z0-9/-])(${GL_KEYS.map((k) => k.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")).join("|")})(?![A-Za-z0-9])`, "i");
+  const GL_SEL = ".kpi .k, th, .card-h h2, .card-h .note, h2.sec, .sliders label, .sf > label, .preset span, .kvrow .note, .fin td:first-child, #sec-cases td:first-child, .rdcf b, .hero p, .tcard .note";
+  let GL_SEEN = new Set();
+  function glossify(root) {
+    root.querySelectorAll(GL_SEL).forEach((el) => {
+      if (el.dataset.gl) return; el.dataset.gl = "1";
+      const done = new Set();
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.parentElement.closest("a, button, .gl, input, select, option, output, .num") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+      const nodes = []; while (walk.nextNode()) nodes.push(walk.currentNode);
+      for (const n of nodes) {
+        const m = GL_RE.exec(n.nodeValue); if (!m) continue;
+        const key = GL_KEYS.find((k) => k.toLowerCase() === m[2].toLowerCase());
+        if (!key || done.has(key)) continue; done.add(key);
+        const start = m.index + m[1].length, word = n.splitText(start); word.splitText(m[2].length);
+        const span = document.createElement("span"); span.className = "gl"; span.dataset.g = key; span.textContent = word.nodeValue;
+        if (!GL_SEEN.has(key)) { span.tabIndex = 0; GL_SEEN.add(key); }   // keyboard users get one stop per term per page
+        word.replaceWith(span);
+      }
+    });
+  }
+  const glTip = (el) => { const r = el.getBoundingClientRect(); el.setAttribute("aria-describedby", "tip");
+    showTip(`<b class="gl-t">${esc(el.dataset.g)}</b><br>${esc(GLOSS[el.dataset.g])}`, r.left, r.top); tip.classList.add("wide"); };
+  const glHide = (el) => { el?.removeAttribute?.("aria-describedby"); tip.classList.remove("wide"); hideTip(); };
+  document.addEventListener("mouseover", (e) => { const g = e.target.closest?.(".gl"); if (g) glTip(g); });
+  document.addEventListener("mouseout", (e) => { const g = e.target.closest?.(".gl"); if (g) glHide(g); });
+  document.addEventListener("focusin", (e) => { if (e.target.classList?.contains("gl")) glTip(e.target); });
+  document.addEventListener("focusout", (e) => { if (e.target.classList?.contains("gl")) glHide(e.target); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { glHide(document.activeElement); document.querySelector("#tour .tour-x")?.click(); } });
+  let glTimer = null;
+  new MutationObserver(() => { clearTimeout(glTimer); glTimer = setTimeout(() => glossify(app), 120); }).observe(app, { childList: true, subtree: true });
   async function apiBase() {
     if (API !== null) return API;
     try { API = (await getJSON("api.json")).api || ""; } catch { API = ""; }
@@ -118,7 +206,7 @@
   function resultCard(m, note) {
     const sc = m.scenarios || {};
     return `<div class="card result">
-      <div class="card-h"><h2><a href="#/m/${esc(m.ticker)}" class="plain">${esc(m.ticker)} · ${esc(m.name)}</a></h2><span class="note">${esc(m.exchange || "")} · ${esc(m.sector)} · ${esc(m.industry || "")}</span></div>
+      <div class="card-h"><h2>${starBtn(m.ticker)} <a href="#/m/${esc(m.ticker)}" class="plain">${esc(m.ticker)} · ${esc(m.name)}</a></h2><span class="note">${esc(m.exchange || "")} · ${esc(m.sector)} · ${esc(m.industry || "")}</span></div>
       <div class="kpis" style="padding:18px">
         <div class="kpi hero-n"><div class="k">Price target</div><div class="v">${usd(m.target)}</div><div class="n">${pill(m.rating)} &nbsp;anchored to street and peers</div></div>
         <div class="kpi"><div class="k">Price</div><div class="v">${usd(m.price)}</div><div class="n">${esc(m.price_date || "")}</div></div>
@@ -136,7 +224,12 @@
     const base = await apiBase();
     app.innerHTML = `
       <section class="hero"><h1>Model any NYSE or Nasdaq company</h1>
-        <p>Type a ticker. We pull the company's 10-K data from SEC EDGAR and build a full Excel model: three linked statements with PP&amp;E, debt and revolver schedules, WACC, a five-year DCF with a sensitivity grid, same-industry comps, and bull, base and bear cases you can switch inside the workbook. You also get a summary research report and a model page you can share. It takes about two to three minutes.</p></section>
+        <p>Type a ticker. We pull the company's 10-K data from SEC EDGAR and build a full Excel model: three linked statements with PP&amp;E, debt and revolver schedules, WACC, a five-year DCF with a sensitivity grid, same-industry comps, and bull, base and bear cases you can switch inside the workbook. You also get a summary research report and a model page you can share. It usually takes about a minute.</p></section>
+      ${store.get("mb_start_off") ? "" : `<section class="start" aria-label="Where to start">
+        <button type="button" class="start-card" id="start-tk"><span class="start-k">I have a company in mind</span><span class="note">Type its ticker or name below and get the full model.</span></button>
+        <a class="start-card" href="#/screener"><span class="start-k">I want ideas</span><span class="note">Filter every NYSE and Nasdaq company by size, growth, dividends and price, or start from five ready-made screens.</span></a>
+        <a class="start-card" href="#/quiz"><span class="start-k">I want to learn</span><span class="note">Short quizzes on valuation basics. Every model page also has an "Explain this model" walkthrough.</span></a>
+        <button type="button" class="start-x" id="start-x" aria-label="Hide these suggestions">×</button></section>`}
       <div class="card gen-box">
         <form id="gen-form" autocomplete="off">
           <div class="gen-row">
@@ -146,13 +239,18 @@
           </div>
           <p class="note" id="gen-hint">${base ? "NYSE and Nasdaq SEC filers (funds and trusts excluded). A model built in the last 6 hours is reused instantly." : "The generation service is being set up."}</p>
         </form>
-        <div id="gen-status"></div>
+        <div id="gen-status" aria-live="polite"></div>
       </div>
       <div id="gen-result"></div>
       <section class="section" id="trend-sec" hidden><h2 class="sec">Most generated this week</h2><div class="trend" id="trend"></div></section>
       <section class="section"><h2 class="sec">Generated in the past 24 hours</h2><div class="card" id="recent"><p class="muted loading" style="padding:14px 18px">Loading…</p></div></section>
       <section class="section" id="insights"></section>`;
-    insightsStrip();
+    // the track record and sector tables sit below the fold: load them when they come into view
+    const ins = document.getElementById("insights");
+    if ("IntersectionObserver" in window) { const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { io.disconnect(); insightsStrip(); } }, { rootMargin: "300px" }); io.observe(ins); }
+    else insightsStrip();
+    document.getElementById("start-tk")?.addEventListener("click", () => document.getElementById("tk").focus());
+    document.getElementById("start-x")?.addEventListener("click", () => { store.set("mb_start_off", "1"); document.querySelector(".start")?.remove(); });
 
     recentData(true).then((r) => {
       const el = document.getElementById("recent"); if (!el) return;
@@ -169,6 +267,7 @@
     let list = null;
     const load = async () => (list = list || await searchList());
     tk.addEventListener("focus", load, { once: true });
+    tk.addEventListener("pointerenter", load, { once: true });   // start loading the ticker list as soon as the visitor heads for the box
     tk.addEventListener("input", async () => {
       const q = tk.value.trim().toUpperCase().replace(/[./]/g, "-");
       if (!q) { sugg.hidden = true; return; }
@@ -194,10 +293,25 @@
     if (!t) return;
     if (!base) { stat.innerHTML = `<div class="warn">The generation service isn't connected yet.</div>`; return; }
     const btn = document.getElementById("go"); btn.disabled = true;
-    const steps = ["Request accepted", "Pulling SEC 10-K data, prices and same-industry peers", "Building the three-statement model, DCF and scenarios", "Recalculating in the Excel engine and writing the report", "Ready"];
+    const steps = ["Request accepted", "Starting a build machine", "Pulling the 10-K, share price and same-industry peers", "Building the three statements, DCF and scenarios",
+                   "Recalculating in the Excel engine and writing the PDF", "Publishing to the site", "Ready"];
+    const TYPICAL = 60;   // seconds, from recent builds
     const t0 = Date.now();
-    const draw = (k, msg) => { stat.innerHTML = `<ol class="progress">${steps.map((s, i) => `<li class="${i < k ? "done" : i === k ? "now" : ""}">${s}</li>`).join("")}</ol>
-      <p class="note">${esc(t)} · ${Math.round((Date.now() - t0) / 1000)}s elapsed${msg ? " · " + msg : ""}</p>`; };
+    const draw = (k, msg) => {
+      const el = (Date.now() - t0) / 1000, left = Math.round(Math.min([60, 50, 40, 28, 15, 5, 0][k], TYPICAL - el));
+      const eta = k >= 6 ? "" : left > 5 ? `about ${left}s left` : el < TYPICAL * 2.5 ? "almost done" : "taking longer than usual";
+      stat.innerHTML = `<ol class="progress">${steps.map((s, i) => `<li class="${i < k ? "done" : i === k ? "now" : ""}"${i === k ? ' aria-current="step"' : ""}>${s}</li>`).join("")}</ol>
+        <div class="pbar" role="progressbar" aria-label="Build progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round((k / 6) * 100)}"><span style="width:${Math.max(4, Math.min(100, (k / 6) * 100))}%"></span></div>
+        <p class="note">${esc(t)} · ${Math.round(el)}s elapsed${eta ? " · " + eta : ""}${msg ? " · " + msg : ""}</p>`; };
+    // map the live GitHub Actions step to our steps; inside the long build step, use how long it has been running
+    const phaseOf = (s) => {
+      if (s.status === "queued") return 1;
+      if (s.status === "finishing") return 5;
+      const st = s.step || "";
+      if (/Add to the shared library|Post |Stop containers|Complete job/.test(st)) return 5;
+      if (/Build model/.test(st)) { const run = s.step_started ? (Date.now() - Date.parse(s.step_started)) / 1000 : 0; return run > 30 ? 4 : run > 10 ? 3 : 2; }
+      return 1;
+    };
     draw(0);
     try {
       const r = await fetch(base + "/api/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t, force }) });
@@ -205,14 +319,12 @@
       if (!r.ok) throw new Error(j.error || r.status);
       if (j.status === "ready") { stat.innerHTML = ""; out.innerHTML = resultCard(j.model, `Built ${ago(j.model.generated_at)} — reused <a href="#" id="regen">rebuild now</a>`); hookRegen(t); return; }
       const since = j.since || new Date(Date.now() - 5000).toISOString();
-      for (let i = 0; i < 120; i++) {
-        await new Promise((res) => setTimeout(res, 5000));
-        const el = (Date.now() - t0) / 1000;
-        const phase = el > 75 ? 3 : el > 30 ? 2 : 1;
+      for (let i = 0; i < 160; i++) {
+        await new Promise((res) => setTimeout(res, i < 4 ? 3000 : 4000));
         const s = await fetch(`${base}/api/status?ticker=${encodeURIComponent(t)}&since=${encodeURIComponent(since)}`).then((x) => x.json());
-        if (s.status === "ready") { draw(4); RECENT = null; out.innerHTML = resultCard(s.model, "Fresh build"); stat.innerHTML = ""; return; }
+        if (s.status === "ready") { draw(6); RECENT = null; announce(`${t} model is ready`); out.innerHTML = resultCard(s.model, "Fresh build"); stat.innerHTML = ""; return; }
         if (s.status === "failed") throw new Error(`We couldn't build ${esc(t)}. The usual reasons: no annual US-GAAP XBRL financials on file yet (new registrants, recent reorganizations), a foreign filer reporting in another currency, or a fund or trust. <a href="${esc(s.run_url)}" target="_blank" rel="noopener">Build log</a>.`);
-        draw(s.status === "queued" ? 0 : s.status === "finishing" ? 3 : phase, s.status === "queued" ? "waiting for a runner" : "");
+        draw(phaseOf(s), s.status === "queued" ? "waiting for a free build machine" : "");
       }
       throw new Error("This is taking longer than usual. Try the model page in a few minutes: " + `<a href="#/m/${esc(t)}">${esc(t)}</a>`);
     } catch (e) {
@@ -334,7 +446,7 @@
       ["Latest quarter revenue growth", (m) => (nz(m.latest_quarter?.quarter?.revenue?.chg) ? signed(m.latest_quarter.quarter.revenue.chg) : "—")],
       ["WACC", (m) => pct(m.wacc, 2)], ["Data quality", (m) => esc(m.quality?.grade || "—")], ["Generated", (m) => esc(ago(m.generated_at))],
     ];
-    document.getElementById("cmp").innerHTML = `<div class="card"><div class="scroll"><table class="cmp"><thead><tr><th></th>${ms.map((m) => `<th class="r">${m.missing ? esc(m.ticker) : `<a class="tk" href="#/m/${esc(m.ticker)}">${esc(m.ticker)}</a><span class="co">${esc(m.name)}</span>`}</th>`).join("")}</tr></thead>
+    document.getElementById("cmp").innerHTML = `<div class="card"><div class="scroll"><table class="cmp"><thead><tr><th><span class="sr-only">Measure</span></th>${ms.map((m) => `<th class="r">${m.missing ? esc(m.ticker) : `<a class="tk" href="#/m/${esc(m.ticker)}">${esc(m.ticker)}</a><span class="co">${esc(m.name)}</span>`}</th>`).join("")}</tr></thead>
       <tbody>${rows.map(([lab, f]) => `<tr><td>${lab}</td>${ms.map((m) => `<td class="r num">${m.missing ? (lab === "Price target" ? `<a href="#/" data-gen="${esc(m.ticker)}">Generate ${esc(m.ticker)}</a>` : "") : f(m)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>`;
     document.querySelectorAll("[data-gen]").forEach((a) => a.addEventListener("click", () => sessionStorage.setItem("mb_prefill", a.dataset.gen)));
   }
@@ -411,7 +523,7 @@
     const sec = (d.sectors || []).slice(0, 8);
     el.innerHTML = `<p class="note stat-line">${d.totals.generations.toLocaleString()} models generated for ${d.totals.companies.toLocaleString()} companies across ${d.totals.sectors} sectors.</p>
       <div class="grid2">
-        <div class="card"><div class="card-h"><h2>Track record</h2><span class="note">calls scored 30+ days after they're made</span></div>
+        <div class="card"><div class="card-h"><h2>Track record</h2><a class="note" href="#/track">full record →</a></div>
           ${t.scored ? `<div class="kvrow" style="border:0;padding:14px 18px">
             <div><div class="note">Calls scored</div><b>${t.scored}</b></div><div><div class="note">Working</div><b>${pct(t.hit_rate, 0)}</b></div>
             <div><div class="note">Avg. return since call</div><b>${signed(t.avg_return)}</b></div><div><div class="note">vs S&amp;P 500</div><b>${nz(t.avg_excess) ? signed(t.avg_excess) : "—"}</b></div></div>`
@@ -434,11 +546,13 @@
     }
     document.addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
-      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds" }[e.key];
+      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds", r: "#/track", w: "#/watch" }[e.key];
       if (e.key === "/") { e.preventDefault(); if (location.hash.replace(/^#\/?/, "")) { location.hash = "#/"; setTimeout(() => document.getElementById("tk")?.focus(), 300); } else document.getElementById("tk")?.focus(); }
       else if (e.key === "t") toggleTheme();
       else if (go) location.hash = go;
     });
+  }
+  function beacon() {
     const tok = INDEX?.site?.analytics_token;
     if (tok && !document.getElementById("cf-beacon")) {
       const s = document.createElement("script"); s.id = "cf-beacon"; s.defer = true; s.src = "https://static.cloudflareinsights.com/beacon.min.js";
@@ -490,14 +604,15 @@
       document.querySelectorAll(".spot").forEach((e) => e.classList.remove("spot"));
       const el = document.querySelector(s.sel);
       const box = el?.closest("section") || el;
-      if (box) { box.classList.add("spot"); box.scrollIntoView({ behavior: "smooth", block: "center" }); }
+      if (box) { box.classList.add("spot"); box.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "center" }); }
     };
-    const close = () => { tour.remove(); document.querySelectorAll(".spot").forEach((e) => e.classList.remove("spot")); };
+    const opener = document.activeElement;
+    const close = () => { tour.remove(); document.querySelectorAll(".spot").forEach((e) => e.classList.remove("spot")); opener?.focus?.({ preventScroll: true }); };
     tour.querySelector(".tour-x").addEventListener("click", close);
     document.getElementById("tour-back").addEventListener("click", () => { if (i > 0) { i--; show(); } });
     document.getElementById("tour-next").addEventListener("click", () => { if (i < steps.length - 1) { i++; show(); } else close(); });
     window.addEventListener("hashchange", close, { once: true });
-    show();
+    show(); document.getElementById("tour-next").focus({ preventScroll: true });
   }
 
   // ------------------------------------------------------------- quiz
@@ -636,7 +751,7 @@
     const save = () => store.set("mb_portfolio", JSON.stringify(P));
     const rowsEl = document.getElementById("pf-rows");
     const drawRows = () => {
-      rowsEl.innerHTML = P.rows.length ? `<div class="scroll"><table class="pf-in"><thead><tr><th>Stock</th><th class="r">Amount ($)</th><th class="r">Share of budget</th><th></th></tr></thead><tbody>
+      rowsEl.innerHTML = P.rows.length ? `<div class="scroll"><table class="pf-in"><thead><tr><th>Stock</th><th class="r">Amount ($)</th><th class="r">Share of budget</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody>
         ${P.rows.map((r, i) => `<tr><td><span class="tk">${esc(r.t)}</span><span class="co">${esc(r.n || "")}</span></td>
           <td class="r"><input class="pf-amt" data-i="${i}" type="number" min="0" step="50" value="${Math.round(r.amt)}"></td>
           <td class="r num">${pct(r.amt / (P.rows.reduce((a, z) => a + z.amt, 0) || 1), 0)}</td><td class="r"><button class="btn sm pf-del" data-i="${i}" aria-label="Remove ${esc(r.t)}">×</button></td></tr>`).join("")}
@@ -774,7 +889,7 @@
     const sc = u === "%" ? 100 : u === "b" ? 0.001 : 1;
     const val = (v) => (v == null ? "" : +(v * sc).toFixed(2));
     return `<div class="sf"><label>${lab} <span class="note">${u === "%" ? "%" : u === "b" ? "$B" : "×"}</span></label>
-      <div class="sf-in"><input type="number" step="any" placeholder="min" data-k="${k}_min" value="${val(F[k + "_min"])}"><span>to</span><input type="number" step="any" placeholder="max" data-k="${k}_max" value="${val(F[k + "_max"])}"></div>
+      <div class="sf-in"><input type="number" step="any" placeholder="min" aria-label="${lab}, minimum" data-k="${k}_min" value="${val(F[k + "_min"])}"><span>to</span><input type="number" step="any" placeholder="max" aria-label="${lab}, maximum" data-k="${k}_max" value="${val(F[k + "_max"])}"></div>
       <p class="note">${help}</p></div>`;
   }
   async function screenerView() {
@@ -855,12 +970,14 @@
       document.getElementById("sr").innerHTML = `
         ${p ? `<p class="note preset-why"><b>${esc(p.t)}.</b> ${esc(p.d)}</p>` : ""}
         <div class="card"><div class="card-h"><h2>${hits.length.toLocaleString()} compan${hits.length === 1 ? "y" : "ies"} match</h2><span class="note">data as of ${esc(d.as_of)} · fiscal ${d.fiscal_year} 10-Ks · <a href="#" id="sr-csv">download CSV</a></span></div>
-        <div class="scroll"><table class="scr"><thead><tr>${COLS.map(([k, lab]) => `<th class="${k === "ticker" ? "" : "r"} sortable" data-k="${k}">${lab}${sk === k ? (sd > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}<th></th></tr></thead><tbody>
-          ${hits.slice(0, shown).map((r) => `<tr><td><span class="tk">${esc(r.ticker)}</span><span class="co">${esc(r.name)} · ${esc(r.sector)}</span>${notes(r)}</td>${COLS.slice(1).map(([k]) => `<td class="r num">${cell(r, k)}</td>`).join("")}<td class="r"><a class="btn sm" href="#/m/${esc(r.ticker)}">Model</a></td></tr>`).join("")}
+        <div class="scroll"><table class="scr"><thead><tr>${COLS.map(([k, lab]) => `<th class="${k === "ticker" ? "" : "r"} sortable" data-k="${k}" tabindex="0" aria-sort="${sk === k ? (sd > 0 ? "ascending" : "descending") : "none"}">${lab}${sk === k ? (sd > 0 ? " ↑" : " ↓") : ""}</th>`).join("")}<th><span class="sr-only">Links</span></th></tr></thead><tbody>
+          ${hits.slice(0, shown).map((r) => `<tr><td>${starBtn(r.ticker)}<span class="tk">${esc(r.ticker)}</span><span class="co">${esc(r.name)} · ${esc(r.sector)}</span>${notes(r)}</td>${COLS.slice(1).map(([k]) => `<td class="r num">${cell(r, k)}</td>`).join("")}<td class="r"><a class="btn sm" href="#/m/${esc(r.ticker)}">Model</a></td></tr>`).join("")}
         </tbody></table></div>
         ${hits.length > shown ? `<div class="gen-actions"><button class="btn sm" id="sr-more">Show 50 more</button><span class="note">${(hits.length - shown).toLocaleString()} more</span></div>` : ""}</div>
         <p class="note" style="margin-top:10px">Shows companies that match your filters, not what to buy. Figures come from each company's latest 10-K (fiscal ${d.fiscal_year}) via SEC XBRL, so they can lag by up to a year; a dash means the company didn't report that figure in a comparable way.</p>`;
-      document.querySelectorAll("th.sortable").forEach((th) => th.addEventListener("click", () => { sort = [th.dataset.k, sort[0] === th.dataset.k ? -sort[1] : (th.dataset.k === "ticker" ? 1 : -1)]; apply(); }));
+      document.querySelectorAll("th.sortable").forEach((th) => {
+        const go = () => { sort = [th.dataset.k, sort[0] === th.dataset.k ? -sort[1] : (th.dataset.k === "ticker" ? 1 : -1)]; apply(); document.querySelector(`th.sortable[data-k="${th.dataset.k}"]`)?.focus(); };
+        th.addEventListener("click", go); th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } }); });
       document.getElementById("sr-more")?.addEventListener("click", () => { shown += 50; apply(); });
       document.getElementById("sr-csv").addEventListener("click", (e) => {
         e.preventDefault();
@@ -911,7 +1028,7 @@
       <div class="grid2 section"><section class="card"><div class="card-h"><h2>Sector mix</h2></div><div class="bars">${(f.sectors || []).slice(0, 9).map(([s, w]) => `<div class="bar-r"><span>${esc(s)}</span><div class="bar"><i style="width:${(w * 100).toFixed(1)}%"></i></div><b>${pct(w, 0)}</b></div>`).join("")}</div></section>
         <section class="card"><div class="card-h"><h2>Sold out last quarter</h2></div><div class="scroll"><table><tbody>${(f.exits || []).slice(0, 10).map((e) => `<tr><td>${tickLink(e.ticker, e.name)}</td><td class="r num">${pct(e.prev_weight)} of the fund</td></tr>`).join("") || `<tr><td class="note">No positions sold out.</td></tr>`}</tbody></table></div></section></div>
       <section class="section card"><div class="card-h"><h2>Holdings</h2><span class="note">${f.options ? `${f.options} option positions not shown · ` : ""}value as reported at quarter end</span></div>
-        <div class="scroll"><table><thead><tr><th>Company</th><th class="r">Value</th><th class="r">Weight</th><th class="r hide-sm">Shares</th><th>Change</th><th class="r"></th></tr></thead><tbody>
+        <div class="scroll"><table><thead><tr><th>Company</th><th class="r">Value</th><th class="r">Weight</th><th class="r hide-sm">Shares</th><th>Change</th><th class="r"><span class="sr-only">Model</span></th></tr></thead><tbody>
         ${H.map((h) => `<tr><td>${tickLink(h.ticker, h.name)}</td><td class="r num">${bn(h.value)}</td><td class="r num">${pct(h.weight)}</td><td class="r num hide-sm">${h.shares.toLocaleString()}</td><td>${chgBadge(h)}</td>
           <td class="r">${h.ticker && h.listed ? `<a class="btn sm" href="#/m/${esc(h.ticker)}">Model</a>` : ""}</td></tr>`).join("")}</tbody></table></div></section>`;
   }
@@ -990,10 +1107,19 @@
       <a class="crumb" href="#/">← Generate</a>
       <div class="dhead">
         <div><div class="note">${esc(m.exchange || "NYSE")}: ${esc(m.ticker)} · ${esc(m.sector)} · ${esc(m.industry || "")}</div>
-          <h1 class="dname">${esc(m.name)}</h1>
+          <h1 class="dname">${esc(m.name)} ${starBtn(m.ticker)}</h1>
           <div class="note">Version ${m.version} · generated ${ago(m.generated_at)} · 10-K filed ${esc(d.dates?.tenk_filed || "n/a")} · priced ${esc(m.price_date)} ${qualityPill(m.quality)}</div></div>
-        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <button class="btn sm primary-o" id="explain">Explain this model</button> <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a></div>
+        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <button class="btn sm primary-o" id="explain">Explain this model</button> <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a> <button class="btn sm" id="fb-open" aria-expanded="false" aria-controls="fb">Something look off?</button></div>
       </div>
+      <form class="card section fb" id="fb" hidden>
+        <div class="card-h"><h2>Report a problem with this model</h2><span class="note">goes privately to the site owner · no sign-in, no email needed</span></div>
+        <fieldset><legend class="note">What looks off?</legend>
+          ${[["number", "A number looks wrong"], ["peer", "A peer doesn't fit"], ["target", "The target seems off"], ["other", "Something else"]].map(([k, l], i) =>
+            `<label class="fb-k"><input type="radio" name="fb-kind" value="${k}"${i === 0 ? " checked" : ""}> ${l}</label>`).join("")}</fieldset>
+        <label class="fb-t">Details (optional, but they help)<textarea id="fb-text" maxlength="1000" rows="3" placeholder="e.g. 2024 revenue should be about $47B, not $4.7B"></textarea></label>
+        <input type="text" name="website" id="fb-web" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
+        <div class="gen-actions"><button class="btn sm primary" type="submit">Send</button><button class="btn sm" type="button" id="fb-cancel">Cancel</button><span class="note" id="fb-msg" role="status"></span></div>
+      </form>
       <div class="kpis">
         <div class="kpi hero-n"><div class="k">12-month price target</div><div class="v">${usd(m.target)}</div><div class="n">${pill(m.rating)} &nbsp;${signed(m.upside)} vs ${usd(m.price)}</div></div>
         <div class="kpi"><div class="k">Bear / Base / Bull</div><div class="v" style="font-size:17px">${usd(sc.bear, 0)} / ${usd(sc.base, 0)} / ${usd(sc.bull, 0)}</div></div>
@@ -1044,7 +1170,7 @@
       ${guidancePanel(m)}
       <div id="owners-slot"></div>
       <section class="section card" id="sec-fin"><div class="card-h"><h2>Financial summary</h2><span class="note">$mm except per share · shaded columns are projections (base case)</span></div>
-        <div class="scroll"><table class="fin"><thead><tr><th></th>${years.map((y, i) => `<th class="r${i >= hn ? " proj" : ""}">${esc(y)}</th>`).join("")}</tr></thead><tbody>
+        <div class="scroll"><table class="fin"><thead><tr><th><span class="sr-only">Line item</span></th>${years.map((y, i) => `<th class="r${i >= hn ? " proj" : ""}">${esc(y)}</th>`).join("")}</tr></thead><tbody>
           ${row("Revenue", d.is?.revenue, mm)}${row("Revenue growth", d.is?.growth, pct, 1)}${row("Gross margin", d.is?.gm, pct)}
           ${row("EBITDA margin", d.is?.ebitda_m, pct)}${row("EBIT margin", d.is?.ebit_m, pct)}${row("Net income to common", d.is?.ni, mm)}
           ${row("Diluted EPS", d.is?.eps, (z) => usd(z))}
@@ -1059,7 +1185,7 @@
         </tbody></table></div></section>
 
       <section class="section card"><div class="card-h"><h2>Historical financials</h2><span class="note">$mm except per share · straight from the Excel model · <a href="${esc(d.filings_index)}" target="_blank" rel="noopener">all 10-K filings ↗</a></span></div>
-        <div class="scroll"><table class="fin hist"><thead><tr><th></th>${years.slice(0, hn).map((y, i) => { const l = d.tenk_links?.[i];
+        <div class="scroll"><table class="fin hist"><thead><tr><th><span class="sr-only">Line item</span></th>${years.slice(0, hn).map((y, i) => { const l = d.tenk_links?.[i];
             return `<th class="r">${esc(y)}${l ? `<br><a class="note" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.form)} ↗</a>` : ""}</th>`; }).join("")}</tr></thead><tbody>
           ${histRows(d, hn)}
         </tbody></table></div>
@@ -1072,6 +1198,22 @@
     });
     document.getElementById("rebuild").addEventListener("click", () => sessionStorage.setItem("mb_prefill", m.ticker));
     document.getElementById("explain").addEventListener("click", () => openExplain(m));
+    const fbForm = document.getElementById("fb"), fbBtn = document.getElementById("fb-open");
+    const fbToggle = (open) => { fbForm.hidden = !open; fbBtn.setAttribute("aria-expanded", String(open)); if (open) fbForm.querySelector("input[type=radio]").focus(); else fbBtn.focus(); };
+    fbBtn.addEventListener("click", () => fbToggle(fbForm.hidden));
+    document.getElementById("fb-cancel").addEventListener("click", () => fbToggle(false));
+    fbForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("fb-msg"), btn = fbForm.querySelector("button[type=submit]");
+      const body = { ticker: m.ticker, version: m.version, kind: fbForm.querySelector("input[name=fb-kind]:checked").value,
+                     text: document.getElementById("fb-text").value, website: document.getElementById("fb-web").value };
+      btn.disabled = true; msg.textContent = "Sending…";
+      try {
+        const r = await fetch(base + "/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status);
+        fbForm.innerHTML = `<p class="fb-done">Thanks. The report went to the site owner, who reviews every one.</p>`;
+      } catch (err) { msg.textContent = String(err.message || err); btn.disabled = false; }
+    });
     ownersPanel(m.ticker).then((h) => { const el = document.getElementById("owners-slot"); if (el) el.innerHTML = h; });
 
     if (x) {
@@ -1109,6 +1251,93 @@
     }
   }
 
+  // ------------------------------------------------------------- track record
+  const closeOn = (series, day) => { let b = null; for (const [d, c] of series || []) { if (d <= day) b = c; else break; } return b; };
+  async function quotesFor(tickers) {
+    const base = await apiBase(), out = {}; let spy = [];
+    for (let i = 0; i < tickers.length; i += 12) {
+      try { const j = await fetch(base + "/api/quotes?t=" + tickers.slice(i, i + 12).join(",")).then((r) => (r.ok ? r.json() : null));
+            if (j) { (j.quotes || []).forEach((q) => (out[q.ticker] = q)); spy = j.spy || spy; } } catch { /* leave blank */ }
+    }
+    return { q: out, spy };
+  }
+  const bar = (v, scale) => { if (!nz(v)) return ""; const w = Math.min(50, (Math.abs(v) / scale) * 50);
+    return `<span class="dbar" aria-hidden="true"><span class="${v >= 0 ? "pos" : "neg"}" style="${v >= 0 ? "left:50%" : `right:50%`};width:${w}%"></span></span>`; };
+  async function trackView() {
+    document.title = "Track record · " + SITE;
+    app.innerHTML = `<p class="muted loading">Loading the track record…</p>`;
+    const base = await apiBase();
+    let d; try { d = await fetch(base + "/api/track").then((r) => r.json()); } catch { app.innerHTML = `<div class="warn">The track record isn't available right now.</div>`; return; }
+    const S = d.summary || {}, sc = d.scored || [], open = d.open || [];
+    const scale = Math.max(0.1, ...sc.map((c) => Math.abs(c.excess ?? c.ret ?? 0)));
+    app.innerHTML = `<section class="hero"><h1>Track record</h1>
+        <p>Every model makes a call: Buy, Hold or Sell with a 12-month price target. Each call is graded once it's 30 days old, against the share price and against the S&amp;P 500 over the same days. Nothing is removed: if a call goes wrong, it stays on this page.</p></section>
+      <div class="kpis">
+        <div class="kpi hero-n"><div class="k">Calls graded</div><div class="v">${S.scored || 0}</div><div class="n">${S.scored ? `average ${Math.round(S.avg_days || 0)} days old` : d.first_grade ? `first grades on ${esc(d.first_grade)}` : "none yet"}</div></div>
+        <div class="kpi"><div class="k">Calls that worked</div><div class="v">${S.scored ? pct(S.hit_rate, 0) : "—"}</div><div class="n">Buy: price rose · Sell: fell · Hold: within 10%</div></div>
+        <div class="kpi"><div class="k">Average return since call</div><div class="v">${S.scored ? signed(S.avg_return) : "—"}</div></div>
+        <div class="kpi"><div class="k">Versus the S&amp;P 500</div><div class="v">${S.scored && nz(S.avg_excess) ? signed(S.avg_excess) : "—"}</div><div class="n">positive means the call beat the index</div></div>
+        <div class="kpi"><div class="k">Calls being tracked</div><div class="v">${d.open_count || 0}</div><div class="n">not graded yet</div></div>
+      </div>
+      ${Object.keys(S.by_rating || {}).length ? `<section class="section card"><div class="card-h"><h2>By rating</h2></div><div class="scroll"><table><thead><tr><th>Rating</th><th class="r">Calls</th><th class="r">Worked</th><th class="r">Average return</th></tr></thead><tbody>
+        ${["Buy", "Hold", "Sell"].filter((k) => S.by_rating[k]).map((k) => `<tr><td>${pill(k)}</td><td class="r num">${S.by_rating[k].n}</td><td class="r num">${pct(S.by_rating[k].hit_rate, 0)}</td><td class="r num">${signed(S.by_rating[k].avg_return)}</td></tr>`).join("")}</tbody></table></div></section>` : ""}
+      <section class="section card"><div class="card-h"><h2>Graded calls</h2><span class="note">best to worst against the S&amp;P 500</span></div>
+        ${sc.length ? `<div class="scroll"><table><thead><tr><th>Company</th><th>Call</th><th class="r hide-sm">Price then</th><th class="r hide-sm">Target</th><th class="r">Price graded</th><th class="r">Return</th><th class="r">S&amp;P 500</th><th class="r">Difference</th><th class="hide-sm" aria-hidden="true"></th><th>Result</th></tr></thead><tbody>
+          ${sc.map((c) => `<tr><td><a class="tk" href="#/m/${esc(c.ticker)}">${esc(c.ticker)}</a><span class="co">${esc(c.name)}</span></td><td>${pill(c.rating)} <span class="note">${esc(c.call_date)}</span></td>
+            <td class="r num hide-sm">${usd(c.call_price)}</td><td class="r num hide-sm">${usd(c.call_target)}</td><td class="r num">${usd(c.mark)}</td>
+            <td class="r num">${signed(c.ret)}</td><td class="r num">${nz(c.spy_ret) ? signed(c.spy_ret) : "—"}</td><td class="r num">${nz(c.excess) ? signed(c.excess) : "—"}</td>
+            <td class="hide-sm">${bar(c.excess, scale)}</td><td>${c.hit ? '<span class="ok">✓ worked</span>' : '<span class="bad">✗ missed</span>'}</td></tr>`).join("")}</tbody></table></div>`
+          : `<p class="note" style="padding:14px 18px">No call is 30 days old yet${d.first_grade ? `. The first ones are graded on ${esc(d.first_grade)}` : ""}. Until then, the calls below are tracked live.</p>`}</section>
+      <section class="section card"><div class="card-h"><h2>Calls being tracked</h2><span class="note">live, not graded yet · prices refresh every 30 minutes</span></div>
+        ${open.length ? `<div class="scroll"><table><thead><tr><th>Company</th><th>Call</th><th class="r">Price then</th><th class="r">Target</th><th class="r">Price now</th><th class="r">So far</th><th class="r hide-sm">S&amp;P 500</th><th class="hide-sm">Graded on</th></tr></thead><tbody id="open-rows">
+          ${open.map((c) => `<tr data-t="${esc(c.ticker)}"><td><a class="tk" href="#/m/${esc(c.ticker)}">${esc(c.ticker)}</a><span class="co">${esc(c.name)}</span></td><td>${pill(c.rating)} <span class="note">${esc(c.call_date)}</span></td>
+            <td class="r num">${usd(c.call_price)}</td><td class="r num">${usd(c.call_target)}</td><td class="r num px">…</td><td class="r num ret">…</td><td class="r num hide-sm spy">…</td><td class="hide-sm note">${esc(c.graded_on)}</td></tr>`).join("")}</tbody></table></div>
+          ${d.open_count > open.length ? `<p class="note" style="padding:10px 18px">Showing the ${open.length} most recent of ${d.open_count}.</p>` : ""}` : `<p class="note" style="padding:14px 18px">No calls yet.</p>`}</section>
+      <p class="note section">How grading works: a Buy works if the price is higher on the grading date, a Sell if it's lower, and a Hold if the price moved less than 10% either way. The S&amp;P 500 return uses SPY over the same dates. When a model is rebuilt, its newest call is graded separately once it's 30 days old. Dividends aren't included. For education only, not investment advice.</p>`;
+    if (!open.length) return;
+    const { q, spy } = await quotesFor([...new Set(open.map((c) => c.ticker))]);
+    const spyNow = spy.at(-1)?.[1];
+    open.forEach((c) => {
+      const tr = document.querySelector(`#open-rows tr[data-t="${CSS.escape(c.ticker)}"]`); if (!tr) return;
+      const px = q[c.ticker]?.price, s0 = closeOn(spy, c.call_date);
+      tr.querySelector(".px").textContent = px ? usd(px) : "—";
+      tr.querySelector(".ret").innerHTML = px ? signed(px / c.call_price - 1) : "—";
+      tr.querySelector(".spy").innerHTML = s0 && spyNow ? signed(spyNow / s0 - 1) : "—";
+    });
+  }
+
+  // ------------------------------------------------------------- watchlist page
+  async function watchView() {
+    document.title = "Watchlist · " + SITE;
+    const list = WL.get();
+    if (!list.length) {
+      app.innerHTML = `<section class="hero"><h1>Watchlist</h1><p>Tap the ☆ next to any company (on a model page, a result card or in the Screener) to keep it here. Your list is saved in this browser only: no account, nothing sent to us.</p></section>
+        <div class="card empty">Nothing on your watchlist yet. <a href="#/screener">Find ideas in the Screener</a> or <a href="#/">build a model</a>.</div>`;
+      return;
+    }
+    app.innerHTML = `<section class="hero"><h1>Watchlist</h1><p>Each company's price against its latest model. Saved in this browser only. Tick two to compare them side by side.</p></section>
+      <div class="gen-actions" style="padding:0 0 12px"><button class="btn sm" id="wl-cmp" disabled>Compare selected</button><span class="note" id="wl-n">Select two</span></div>
+      <div class="card" id="wl"><p class="muted loading" style="padding:14px 18px">Loading ${list.length} compan${list.length > 1 ? "ies" : "y"}…</p></div>`;
+    const base = await apiBase();
+    let models = []; try { models = (await fetch(base + "/api/models?t=" + list.join(",")).then((r) => r.json())).models || []; } catch { /* still show prices */ }
+    const M = Object.fromEntries(models.map((m) => [m.ticker, m]));
+    const { q } = await quotesFor(list);
+    const names = Object.fromEntries((await searchList()).map(([t, n]) => [t, n]));
+    const el = document.getElementById("wl"); if (!el) return;
+    el.innerHTML = `<div class="scroll"><table><thead><tr><th><span class="sr-only">Select</span></th><th>Company</th><th class="r">Price</th><th class="r">Model target</th><th class="r">Upside now</th><th>Rating</th><th class="hide-sm">Model built</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
+      ${list.map((t) => { const m = M[t], px = q[t]?.price ?? m?.mark?.price ?? m?.price;
+        return `<tr><td><input type="checkbox" class="wl-c" value="${esc(t)}" aria-label="Select ${esc(t)} to compare"></td>
+          <td>${starBtn(t)}<a class="tk" href="#/m/${esc(t)}">${esc(t)}</a><span class="co">${esc(m?.name || q[t]?.name || names[t] || "")}</span></td>
+          <td class="r num">${usd(px)}</td><td class="r num">${m ? usd(m.target) : "—"}</td><td class="r num">${m && px ? signed(m.target / px - 1) : "—"}</td>
+          <td>${m ? pill(m.rating) : ""}</td><td class="hide-sm note">${m ? ago(m.generated_at) : "no model yet"}</td>
+          <td class="r">${m ? `<a class="btn sm" href="#/m/${esc(t)}">Model page</a>` : `<a class="btn sm primary" href="#/" data-gen="${esc(t)}">Build model</a>`}</td></tr>`; }).join("")}</tbody></table></div>`;
+    el.querySelectorAll("[data-gen]").forEach((a) => a.addEventListener("click", () => sessionStorage.setItem("mb_prefill", a.dataset.gen)));
+    const sync = () => { const sel = [...el.querySelectorAll(".wl-c:checked")].map((c) => c.value); const btn = document.getElementById("wl-cmp");
+      btn.disabled = sel.length !== 2; document.getElementById("wl-n").textContent = sel.length === 2 ? sel.join(" vs ") : "Select two"; btn.dataset.sel = sel.join(","); };
+    el.addEventListener("change", sync);
+    document.getElementById("wl-cmp").addEventListener("click", (e) => { location.hash = "#/compare/" + e.target.dataset.sel; });
+  }
+
   // ------------------------------------------------------------- library (owner only)
   async function libraryView() {
     document.title = "Library · " + SITE;
@@ -1140,13 +1369,32 @@
       <div class="fresh"><span class="dot" aria-hidden="true"></span>${models.length} companies · ${sectors.length} sectors · updated ${ago(lib.updated_at)} · <a href="#" id="lock">lock</a></div></section>
       <div class="lib-tools"><input id="lib-q" placeholder="Filter by ticker or name" aria-label="Filter library">
         <div class="chips"><button class="chip on" data-s="">All</button>${sectors.map((s) => `<button class="chip" data-s="${esc(s)}">${esc(s)} <span>${models.filter((m) => m.sector === s).length}</span></button>`).join("")}</div></div>
+      <div id="fb-list"></div>
       <div id="lib-body"></div>`;
+    loadFeedback();
     let sel = "";
     const q = document.getElementById("lib-q");
     q.addEventListener("input", () => render(q.value, sel));
     app.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => { sel = c.dataset.s; app.querySelectorAll(".chip").forEach((z) => z.classList.toggle("on", z === c)); render(q.value, sel); }));
     document.getElementById("lock").addEventListener("click", (e) => { e.preventDefault(); store.set("mb_owner", ""); navLib(); location.hash = "#/"; });
     render("", "");
+  }
+  const FB_KIND = { number: "A number looks wrong", peer: "A peer doesn't fit", target: "The target seems off", other: "Something else" };
+  async function loadFeedback() {
+    const el = document.getElementById("fb-list"); if (!el) return;
+    const base = await apiBase();
+    let items = [];
+    try { const r = await fetch(base + "/api/feedback", { headers: { "X-Owner-Key": ownerKey() } }); if (r.ok) items = (await r.json()).items || []; } catch { return; }
+    el.innerHTML = `<div class="card section"><div class="card-h"><h2>Visitor reports</h2><span class="note">${items.length ? items.length + " open · kept 180 days" : "none right now"}</span></div>
+      ${items.length ? `<div class="scroll"><table><thead><tr><th>Model</th><th>Problem</th><th>Details</th><th class="hide-sm">Sent</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
+        ${items.map((f) => `<tr><td><a class="tk" href="#/m/${esc(f.ticker)}">${esc(f.ticker)}</a>${f.version ? `<span class="co">v${f.version}</span>` : ""}</td><td>${esc(FB_KIND[f.kind] || f.kind)}</td>
+          <td>${esc(f.text || "—")}</td><td class="hide-sm note">${ago(f.at)}</td><td class="r"><button class="btn sm" data-fb="${esc(f.id)}">Done</button></td></tr>`).join("")}</tbody></table></div>`
+        : `<p class="note" style="padding:12px 18px">When a visitor uses "Something look off?" on a model page, it shows up here.</p>`}</div>`;
+    el.querySelectorAll("[data-fb]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true;
+      const r = await fetch(base + "/api/feedback?id=" + encodeURIComponent(b.dataset.fb), { method: "DELETE", headers: { "X-Owner-Key": ownerKey() } });
+      if (r.ok) loadFeedback(); else b.disabled = false;
+    }));
   }
   function ownerView(msg) {
     document.title = "Owner · " + SITE;
@@ -1202,7 +1450,7 @@
     const site = INDEX?.site || {};
     app.innerHTML = `<div class="doc">
       <h1>How I built this</h1>
-      <p class="muted">Model Builder turns a ticker into a full analyst-style Excel model in about two minutes, with no server of my own to run.</p>
+      <p class="muted">Model Builder turns a ticker into a full analyst-style Excel model in about a minute, with no server of my own to run.</p>
       <h2>The pieces</h2>
       <ol class="steps">
         <li><b>Front end.</b> A static site on GitHub Pages: plain HTML, CSS and JavaScript, no framework. Charts are hand-drawn SVG. The scenario sliders re-run the workbook's DCF in the browser.</li>
@@ -1221,24 +1469,37 @@
   }
 
   // ----------------------------------------------------------------- router
+  // site settings load alongside the first page instead of before it
+  let INDEX_P = null;
+  function bootIndex() {
+    if (INDEX_P) return INDEX_P;
+    INDEX_P = getJSON("data/index.json", Date.now().toString().slice(0, -5))
+      .then((x) => { INDEX = x; if (x.generated_at) DATA_V = String(x.generated_at).replace(/\D/g, "").slice(0, 12); })
+      .catch(() => { INDEX = { coverage: [], site: {}, generated_at: "— first refresh pending" }; })
+      .then(() => {
+        const site = INDEX.site || {}, nav = document.getElementById("nav");
+        if (site.portfolio) nav.insertAdjacentHTML("beforeend", `<a href="${esc(site.portfolio)}" target="_blank" rel="noopener">Portfolio ↗</a>`);
+        if (site.linkedin) nav.insertAdjacentHTML("beforeend", `<a href="${esc(site.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>`);
+        document.getElementById("foot-right").textContent = INDEX.owner ? "© " + new Date().getFullYear() + " " + INDEX.owner : "";
+        beacon();
+        return INDEX;
+      });
+    return INDEX_P;
+  }
   async function route() {
     hideTip();
-    if (!INDEX) {
-      try { INDEX = await getJSON("data/index.json"); }
-      catch { INDEX = { coverage: [], site: {}, generated_at: "— first refresh pending" }; }
-      const site = INDEX.site || {};
-      const nav = document.getElementById("nav");
-      if (site.portfolio) nav.insertAdjacentHTML("beforeend", `<a href="${esc(site.portfolio)}" target="_blank" rel="noopener">Portfolio ↗</a>`);
-      if (site.linkedin) nav.insertAdjacentHTML("beforeend", `<a href="${esc(site.linkedin)}" target="_blank" rel="noopener">LinkedIn ↗</a>`);
-      document.getElementById("foot-right").textContent = INDEX.owner ? "© " + new Date().getFullYear() + " " + INDEX.owner : "";
-    }
+    bootIndex(); apiBase();
     const h = location.hash.replace(/^#\/?/, "");
+    if (h === "built") await bootIndex();
     navLib();
     if (!window.__mbChrome) { window.__mbChrome = true; initChrome(); }
-    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds"];
+    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds", "track", "watch"];
     const tab = TABS.includes(h) ? h : h.startsWith("funds/") ? "funds" : h ? "__" : "";
-    document.querySelectorAll("nav a").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + tab));
+    document.querySelectorAll("nav a").forEach((a) => { const on = a.getAttribute("href") === "#/" + tab; a.classList.toggle("on", on);
+      if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
     window.scrollTo(0, 0);
+    GL_SEEN = new Set(); watchNav();
+    if (window.__mbRouted) { app.focus({ preventScroll: true }); } window.__mbRouted = true;   // screen readers start at the new page
     if (!h || h === "coverage" || h === "fund") { if (h) history.replaceState(null, "", "#/"); generateView(); }
     else if (h === "library") libraryView();
     else if (h === "owner") ownerView();
@@ -1250,6 +1511,8 @@
     else if (h === "funds") fundsView();
     else if (h.startsWith("funds/")) fundPage(decodeURIComponent(h.slice(6)));
     else if (h === "quiz") quizView();
+    else if (h === "track") trackView();
+    else if (h === "watch") watchView();
     else if (h === "compare" || h.startsWith("compare/")) comparePage(decodeURIComponent(h.slice(8)));
     else if (h.startsWith("m/")) modelPage(decodeURIComponent(h.slice(2)));
     else modelPage(decodeURIComponent(h));

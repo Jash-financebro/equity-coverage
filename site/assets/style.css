@@ -3,14 +3,14 @@
   --panel: #ffffff;
   --ink: #0b0b0b;
   --ink-2: #52514e;
-  --ink-3: #8a8984;
+  --ink-3: #6b6a65;
   --line: #e7e6e2;
   --line-2: #f1f0ec;
-  --s1: #2a78d6;
+  --s1: #2470cc;
   --s2: #eb6834;
   --up: #006300;
   --down: #c62f2f;
-  --hold: #8a6d00;
+  --hold: #7a6000;
   --chip: #f3f2ee;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -35,7 +35,7 @@ a { color: inherit; }
 .top-inner { display: flex; align-items: center; justify-content: space-between; height: 58px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; letter-spacing: -0.01em; }
 .mark { width: 14px; height: 14px; background: var(--ink); border-radius: 3px; }
-nav a { text-decoration: none; color: var(--ink-2); margin-left: 22px; font-size: 14px; }
+nav a { text-decoration: none; color: var(--ink-2); margin-left: 18px; font-size: 14px; }
 nav a:hover, nav a.on { color: var(--ink); }
 
 /* hero */
@@ -325,3 +325,54 @@ th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: v
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .foot-links a { color: inherit; }
 @media (max-width: 1000px) { .presets-grid { grid-template-columns: repeat(2, 1fr); } .sf-grid, .grid3 { grid-template-columns: 1fr; } }
+
+/* ---------- accessibility */
+.skip { position: absolute; left: 12px; top: -48px; z-index: 50; background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 6px; text-decoration: none; font-size: 14px; }
+.skip:focus { top: 10px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; border-radius: 3px; }
+main:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+/* ---------- glossary terms */
+.gl { text-decoration: underline dotted var(--ink-3); text-underline-offset: 3px; cursor: help; }
+.tip.wide { max-width: 320px; line-height: 1.45; }
+.tip .gl-t { font-family: var(--sans); font-weight: 600; }
+
+/* ---------- start here */
+.start { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: -8px 0 22px; }
+.start-card { display: flex; flex-direction: column; gap: 4px; text-align: left; font: inherit; color: var(--ink); text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; cursor: pointer; }
+.start-card:hover { border-color: var(--ink-3); }
+.start-k { font-weight: 600; }
+.start-x { position: absolute; top: -26px; right: 0; background: none; border: 0; color: var(--ink-3); font-size: 18px; cursor: pointer; padding: 2px 6px; }
+@media (max-width: 760px) { .start { grid-template-columns: 1fr; gap: 8px; } .start-card { padding: 10px 14px; } .start-card .note { display: none; } }
+
+/* ---------- build progress */
+.pbar { height: 4px; background: var(--line-2); border-radius: 4px; overflow: hidden; margin: 6px 0 2px; }
+.pbar span { display: block; height: 100%; background: var(--s1); transition: width .6s ease; }
+
+/* ---------- watchlist */
+.star { background: none; border: 0; padding: 0 6px 0 0; font-size: 16px; line-height: 1; color: var(--ink-3); cursor: pointer; vertical-align: -1px; }
+.star.on { color: var(--hold); }
+.star:hover { color: var(--hold); }
+h1 .star { font-size: 22px; padding-left: 4px; }
+.badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--chip); color: var(--ink); font: 11px/18px var(--mono); text-align: center; }
+
+/* ---------- track record */
+.dbar { position: relative; display: block; width: 80px; height: 10px; background: var(--line-2); border-radius: 2px; }
+.dbar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink-3); }
+.dbar span { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+.dbar .pos { background: var(--up); } .dbar .neg { background: var(--down); }
+.ok { color: var(--up); white-space: nowrap; } .bad { color: var(--down); white-space: nowrap; }
+
+/* ---------- feedback */
+.fb fieldset { border: 0; margin: 0; padding: 12px 18px 4px; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.fb legend { padding: 0; margin-bottom: 6px; width: 100%; }
+.fb-k { font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+.fb-t { display: block; padding: 6px 18px 0; font-size: 13px; color: var(--ink-2); }
+.fb-t textarea { display: block; width: 100%; margin-top: 6px; font: 14px var(--sans); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; resize: vertical; }
+.fb .gen-actions { padding: 12px 18px 16px; }
+.fb-done { padding: 16px 18px; margin: 0; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+th.sortable { cursor: pointer; }

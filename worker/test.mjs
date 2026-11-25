@@ -22,7 +22,7 @@ globalThis.fetch = async (url, init = {}) => {
 };
 import { createHash } from "node:crypto";
 const kv = new Map();
-const UPLOADS = { get: async (k, t) => { const v = kv.get(k); if (v == null) return null; return t === "json" ? JSON.parse(v) : t === "arrayBuffer" ? v : v; },
+const UPLOADS = { list: async ({ prefix }) => ({ keys: [...kv.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name })) }), get: async (k, t) => { const v = kv.get(k); if (v == null) return null; return t === "json" ? JSON.parse(v) : t === "arrayBuffer" ? v : v; },
                   put: async (k, v) => kv.set(k, v), delete: async (k) => kv.delete(k) };
 const env = { UPLOADS, GH_TOKEN: "x", GH_REPO: "o/r", ALLOWED_ORIGINS: "https://jash-financebro.github.io",
               OWNER_KEY_SHA256: createHash("sha256").update("secret-key").digest("hex"), SITE_URL: "https://site/" };
@@ -68,4 +68,17 @@ ok(s === 429, "rate limit " + s + JSON.stringify(b));
 [s, b] = await call("/api/quotes?t=ko,xom"); ok(s === 200 && b.quotes.length === 2 && b.quotes[0].pe === 24.5 && b.quotes[0].closes.length === 2 && b.quotes[0].sector === "Consumer Staples" && b.spy.length === 2, "quotes " + JSON.stringify(b).slice(0, 300));
 ok(Math.abs(b.quotes[1].pe - 110 / 8) < 1e-9 && b.quotes[1].market_cap === 110 * 4200e6 && b.quotes[1].pe_source, "SEC fallback for P/E and market cap " + JSON.stringify(b.quotes[1]).slice(0, 300));
 [s, b] = await call("/api/quotes?t=ZZZZ"); ok(s === 404, "unknown ticker rejected");
-console.log("OK  worker: quotes, insights, model updates, private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");
+// feedback: public POST, owner-only read/delete, spam trap
+{ const fb = (method, path, body, key) => worker.fetch(new Request("https://w.dev" + path, { method, body: body ? JSON.stringify(body) : undefined,
+    headers: { "CF-Connecting-IP": "5.5.5.5", ...(key ? { "X-Owner-Key": key } : {}) } }), env, ctx);
+  let r = await fb("POST", "/api/feedback", { ticker: "ko", kind: "peer", text: "PEP fits better than SN" }); ok(r.status === 200, "feedback saved");
+  r = await fb("POST", "/api/feedback", { ticker: "KO", text: "", kind: "other" }); ok(r.status === 400, "empty 'other' rejected");
+  const before = [...kv.keys()].filter((k) => k.startsWith("fb:")).length;
+  await fb("POST", "/api/feedback", { ticker: "KO", kind: "number", website: "spam.biz" }); ok([...kv.keys()].filter((k) => k.startsWith("fb:")).length === before, "spam trap");
+  r = await fb("GET", "/api/feedback"); ok(r.status === 403, "feedback list is owner only");
+  r = await fb("GET", "/api/feedback", null, "secret-key"); const items = (await r.json()).items;
+  ok(items.length === 1 && items[0].ticker === "KO" && items[0].kind === "peer", "owner reads feedback " + JSON.stringify(items));
+  r = await fb("DELETE", "/api/feedback?id=" + encodeURIComponent(items[0].id), null, "secret-key"); ok(r.status === 200 && ![...kv.keys()].some((k) => k.startsWith("fb:")), "owner clears feedback"); }
+[s, b] = await call("/api/track"); ok(s === 200 && Array.isArray(b.open) && Array.isArray(b.scored) && "summary" in b, "track " + JSON.stringify(b).slice(0, 200));
+[s, b] = await call("/api/models?t=xom,zzz"); ok(s === 200 && Array.isArray(b.models), "watchlist models " + JSON.stringify(b).slice(0, 200));
+console.log("OK  worker: feedback, track, watchlist models, quotes, insights, model updates, private library, recent, model, share page, NYSE validation, dispatch, in-flight dedupe, status, fresh-cache reuse, library, rate limit, CORS");

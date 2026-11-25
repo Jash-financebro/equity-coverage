@@ -6,9 +6,10 @@
   <title>Model Builder — Excel models for any NYSE or Nasdaq company</title>
   <meta name="description" content="Type a ticker and get a full three-statement Excel model, DCF, comps and bull/base/bear cases built from SEC 10-K data.">
   <meta property="og:title" content="Model Builder">
-  <meta property="og:description" content="A full three-statement Excel model, DCF and scenarios for any NYSE or Nasdaq company, built from SEC 10-K data in about two minutes.">
+  <meta property="og:description" content="A full three-statement Excel model, DCF and scenarios for any NYSE or Nasdaq company, built from SEC 10-K data in about a minute.">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#121211">
+  <link rel="preconnect" href="https://equity-coverage-api.rajgandhij.workers.dev" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -16,29 +17,35 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230b0b0b'/><path d='M3 11l3-3 2 2 5-5' stroke='white' stroke-width='1.6' fill='none'/></svg>">
 </head>
 <body>
+  <a class="skip" href="#app">Skip to content</a>
   <header class="top">
     <div class="wrap top-inner">
       <a href="#/" class="brand"><span class="mark" aria-hidden="true"></span><span id="brand-name">Model Builder</span></a>
-      <nav id="nav">
+      <nav id="nav" aria-label="Main">
         <a href="#/">Generate</a>
         <a href="#/update">Update a model</a>
         <a href="#/screener">Screener</a>
         <a href="#/funds">Funds</a>
         <a href="#/portfolio">Portfolio</a>
         <a href="#/quiz">Quiz</a>
+        <a href="#/track">Track record</a>
+        <a href="#/watch" id="nav-watch">Watchlist</a>
         <a href="#/library" id="nav-lib" hidden>Library</a>
         <a href="#/method">Methodology</a>
       </nav>
     </div>
   </header>
-  <main id="app" class="wrap" aria-live="polite"><p class="muted loading">Loading…</p></main>
+  <main id="app" class="wrap" tabindex="-1"><section class="hero" id="boot-hero"><h1>Model any NYSE or Nasdaq company</h1>
+    <p>Type a ticker. We pull the company's 10-K data from SEC EDGAR and build a full Excel model: three linked statements with PP&amp;E, debt and revolver schedules, WACC, a five-year DCF with a sensitivity grid, same-industry comps, and bull, base and bear cases you can switch inside the workbook. You also get a summary research report and a model page you can share. It usually takes about a minute.</p></section>
+    <script>if (location.hash.replace(/^#\/?/, "")) document.getElementById("boot-hero").innerHTML = '<p class="muted loading">Loading…</p>';</script></main>
   <footer class="wrap foot">
     <span id="foot-left">Fundamentals: SEC EDGAR (10-K XBRL). Prices: Yahoo Finance. For educational purposes only — not investment advice.</span>
     <span class="note foot-links"><a href="#/built">How I built this</a> · <a href="downloads/DCF_Template.xlsx" download>DCF template</a></span>
-    <span class="note keys">Keys: <kbd>/</kbd> search · <kbd>g</kbd> generate · <kbd>u</kbd> update · <kbd>c</kbd> compare · <kbd>s</kbd> screener · <kbd>f</kbd> funds · <kbd>p</kbd> portfolio · <kbd>q</kbd> quiz · <kbd>t</kbd> theme</span>
+    <span class="note keys">Keys: <kbd>/</kbd> search · <kbd>g</kbd> generate · <kbd>u</kbd> update · <kbd>c</kbd> compare · <kbd>s</kbd> screener · <kbd>f</kbd> funds · <kbd>p</kbd> portfolio · <kbd>q</kbd> quiz · <kbd>r</kbd> track record · <kbd>w</kbd> watchlist · <kbd>t</kbd> theme</span>
     <span id="foot-right"></span>
   </footer>
   <div id="tip" class="tip" role="tooltip" hidden></div>
+  <div id="sr-live" class="sr-only" aria-live="polite"></div>
   <script src="assets/app.js" defer></script>
 </body>
 </html>
