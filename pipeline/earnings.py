@@ -45,13 +45,17 @@ def _text(raw: str) -> str:
 def _sentences(text: str) -> list[str]:
     text = re.sub(r"\s*[•▪●◦■]\s*", " . ", text)
     text = re.sub(r"(^|[.!?:]\s+)[nlqüØ§v]\s+(?=[A-Z$])", r"\1", text)   # Wingdings bullets render as a lone letter
+    # keep abbreviations whole: "e.l.f. Beauty", "U.S. sales", "Coca-Cola Co. said", "a.m."
+    text = re.sub(r"\b(?:[A-Za-z]\.){2,}", lambda m: m.group(0).replace(".", "\u2024"), text)
+    text = re.sub(r"\b(Inc|Corp|Co|Ltd|Mr|Ms|Dr|No|vs|approx|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)\.(?=\s)", "\\1\u2024", text)
     out = []
     for s in re.split(r"(?<=[.!?])\s+(?=[A-Z(\"“$])|\s\.\s", text):
         s = re.sub(r"\s+", " ", s).strip(" .")
         s = re.sub(r"^(?:[nlqüØ§v]|\d{1,2})\s+(?=[A-Z$])", "", s)     # Wingdings bullets ("n Revenue ...") and stray footnote marks
         s = re.sub(r"\s+Document$", "", s)
+        s = s.replace("\u2024", ".")
         if s:
-            out.append(s + ("" if s.endswith(("!", "?", "”", '"')) else "."))
+            out.append(s + ("" if s.endswith(("!", "?", "”", '"', ".")) else "."))
     return out
 
 
@@ -115,7 +119,7 @@ def _quotes(text: str) -> list[dict]:
 def _outlook(text: str, sents: list[str]) -> list[str]:
     """Guidance sentences, plus the lines under an "Outlook" / "Guidance" heading (often bullets with no verb)."""
     found = list(guidance._sentences(text))
-    for m in re.finditer(r"\.\s+((?:[A-Z][\w&/-]* ){0,5}(?:Outlook|Guidance|OUTLOOK|GUIDANCE))(?=\s*[.:])", text):
+    for m in re.finditer(r"\.\s+((?:[A-Z0-9][\w&/-]* ){0,5}(?:Outlook|Guidance|OUTLOOK|GUIDANCE))(?=\s*[.:])", text):
         if m.start() < 300:
             continue
         chunk = text[m.end(): m.end() + 2200]

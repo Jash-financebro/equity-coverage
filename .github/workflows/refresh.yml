@@ -52,6 +52,7 @@ jobs:
           python3 tests/test_update.py
           python3 tests/test_funds.py
           python3 tests/test_backtest.py
+          python3 tests/test_earnings.py
 
       - name: NYSE + Nasdaq universe for the Generate tab (rebuilt weekly from SEC bulk data)
         env:
