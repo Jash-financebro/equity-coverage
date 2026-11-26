@@ -981,5 +981,17 @@
   "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/industrials/BE/BE_report_v11.pdf"
  },
  "times_generated": 1,
- "first_generated_at": "2026-11-24T02:49:22Z"
+ "first_generated_at": "2026-11-24T02:49:22Z",
+ "mark": {
+  "price": 152.89,
+  "date": "2026-11-25"
+ },
+ "track": null,
+ "latest_filing_seen": {
+  "form": "10-Q",
+  "filed": "2026-10-22",
+  "accession": "0001628280-26-066931",
+  "period": "2026-09-30",
+  "url": "https://www.sec.gov/Archives/edgar/data/1664703/000162828026066931/be-20260930.htm"
+ }
 }

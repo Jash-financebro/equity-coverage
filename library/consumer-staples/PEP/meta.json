@@ -925,5 +925,17 @@
   "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-staples/PEP/PEP_report_v3.pdf"
  },
  "times_generated": 1,
- "first_generated_at": "2026-11-25T01:52:47Z"
+ "first_generated_at": "2026-11-25T01:52:47Z",
+ "mark": {
+  "price": 143.93,
+  "date": "2026-11-25"
+ },
+ "track": null,
+ "latest_filing_seen": {
+  "form": "10-Q",
+  "filed": "2026-10-08",
+  "accession": "0000077476-26-000048",
+  "period": "2026-09-05",
+  "url": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000048/pep-20260905.htm"
+ }
 }

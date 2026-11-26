@@ -967,5 +967,17 @@
   "pdf": "https://raw.githubusercontent.com/Jash-financebro/equity-coverage/main/library/consumer-discretionary/SN/SN_report_v11.pdf"
  },
  "times_generated": 1,
- "first_generated_at": "2026-11-24T16:42:38Z"
+ "first_generated_at": "2026-11-24T16:42:38Z",
+ "mark": {
+  "price": 232.5,
+  "date": "2026-11-25"
+ },
+ "track": null,
+ "latest_filing_seen": {
+  "form": "10-Q",
+  "filed": "2026-11-04",
+  "accession": "0001957132-26-000056",
+  "period": "2026-09-30",
+  "url": "https://www.sec.gov/Archives/edgar/data/1957132/000195713226000056/sharkninja-20260930.htm"
+ }
 }
