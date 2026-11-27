@@ -421,3 +421,26 @@ th.sortable { cursor: pointer; }
 .src { font-size: 12px; color: var(--ink-3); white-space: nowrap; margin-left: 4px; }
 .er-docs { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 16px; }
 .er > p:last-child { padding-bottom: 16px; }
+
+/* ---------- index funds */
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 860px) { .grid3 { grid-template-columns: 1fr; } }
+.ix-card { padding: 14px 18px; }
+.ix-card .k { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-2); }
+.ix-card p { margin: 6px 0 0; line-height: 1.5; }
+.ix-list { margin: 0; padding: 12px 18px 14px 36px; } .ix-list li { margin: 6px 0; line-height: 1.5; }
+.ix-f { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; padding: 12px 18px; }
+@media (max-width: 760px) { .ix-f { grid-template-columns: 1fr; } }
+.ix-f fieldset { border: 0; margin: 0; padding: 6px 0; }
+.ix-f legend { font-weight: 600; font-size: 14px; padding: 0; margin-bottom: 6px; }
+.ix-f label { display: flex; gap: 8px; align-items: center; font-size: 14px; margin: 3px 0; cursor: pointer; }
+#ix-out { padding: 0 18px 16px; border-top: 1px solid var(--line); }
+.ix-v { font-size: 20px; margin: 14px 0 4px; } .ix-v span { font-weight: 600; }
+.ix-res h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); margin: 16px 0 6px; font-weight: 600; }
+.ix-res ul, .ix-res ol { margin: 0; padding-left: 20px; } .ix-res li { margin: 5px 0; line-height: 1.5; }
+.ix-calc { padding: 12px 18px 0; gap: 18px; flex-wrap: wrap; }
+.ix-calc label { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.ix-calc input, .ix-calc select { font: 14px var(--sans); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; width: 110px; }
+.ix-hold { padding: 4px 18px 0; } .ix-hold details { margin: 4px 0; font-size: 14px; } .ix-hold summary { cursor: pointer; }
+
+.ix-tr { max-width: 300px; white-space: normal; }

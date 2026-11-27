@@ -119,7 +119,7 @@
   const starBtn = (t) => { const on = WL.has(t);
     return `<button type="button" class="star${on ? " on" : ""}" data-star="${esc(t)}" aria-pressed="${on}" aria-label="${on ? "Remove " + esc(t) + " from" : "Add " + esc(t) + " to"} watchlist" title="${on ? "On your watchlist" : "Add to watchlist"}">${on ? "★" : "☆"}</button>`; };
   function watchNav() { const a = document.getElementById("nav-watch"); if (!a) return; const n = WL.get().length;
-    a.innerHTML = `Watchlist${n ? ` <span class="badge" aria-label="${n} companies">${n}</span>` : ""}`; }
+    a.innerHTML = `<span aria-hidden="true">★</span><span class="sr-only">Watchlist</span>${n ? ` <span class="badge" aria-label="${n} companies">${n}</span>` : ""}`; a.title = "Watchlist"; }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-star]"); if (!b) return;
     e.preventDefault(); e.stopPropagation();
@@ -699,7 +699,7 @@
     }
     document.addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
-      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds", r: "#/track", w: "#/watch", a: "#/about", x: "#/sectors", e: "#/earnings" }[e.key];
+      const go = { g: "#/", u: "#/update", c: "#/compare/", m: "#/method", p: "#/portfolio", q: "#/quiz", s: "#/screener", f: "#/funds", r: "#/track", w: "#/watch", a: "#/about", x: "#/sectors", e: "#/earnings", i: "#/index" }[e.key];
       if (e.key === "/") { e.preventDefault(); if (location.hash.replace(/^#\/?/, "")) { location.hash = "#/"; setTimeout(() => document.getElementById("tk")?.focus(), 300); } else document.getElementById("tk")?.focus(); }
       else if (e.key === "t") toggleTheme();
       else if (go) location.hash = go;
@@ -1627,6 +1627,125 @@
       <p class="note section">Pulled automatically from ${esc(n.name)}'s SEC filings on ${esc((n.built_at || "").slice(0, 10))}. Quoted lines are word for word from the linked documents; the “In short” lines are our summary of the tagged figures. Check the original before relying on any number. Not investment advice.</p>`;
   }
 
+  // ------------------------------------------------------------- index funds
+  const IX_Q = [
+    ["horizon", "When will you need this money?", [["lt2", "Within 2 years"], ["2to5", "In 2–5 years"], ["5to10", "In 5–10 years"], ["10p", "10+ years from now"]]],
+    ["debt", "Do you carry credit card or other debt above about 8% interest?", [["yes", "Yes"], ["no", "No"]]],
+    ["emergency", "Do you have 3–6 months of expenses saved for emergencies?", [["yes", "Yes"], ["some", "Some, not that much"], ["no", "No"]]],
+    ["match", "Does your employer match 401(k) contributions you aren't fully getting yet?", [["yes", "Yes"], ["no", "No, or I already get all of it"], ["na", "No 401(k)"]]],
+    ["drop", "If your investment fell 30% in a few months, what would you do?", [["sell", "Probably sell"], ["hold", "Hold and wait"], ["buy", "Buy more"]]],
+    ["goal", "Which sounds more like you?", [["simple", "I want something simple that grows over time"], ["beat", "I want to pick stocks and try to beat the market"]]],
+  ];
+  function ixAssess(A, D) {
+    const R = D.spy?.rolling || {}, spy = D.spy || {};
+    const steps = [], why = [], cautions = [];
+    if (A.debt === "yes") steps.push(`<b>Pay off high-interest debt first.</b> A credit card charging 20%+ costs more than the stock market has paid: the S&amp;P 500 returned about ${pct(spy.since, 1)} a year since ${esc((spy.start || "1993").slice(0, 4))}, with dividends. Paying down the card is a guaranteed return.`);
+    if (A.match === "yes") steps.push(`<b>Get the full employer match.</b> A 50% or 100% match is an instant return no fund can beat, and most 401(k) plans offer an S&amp;P 500 or target-date index fund to put it in.`);
+    if (A.emergency === "no" || A.emergency === "some") steps.push(`<b>Build an emergency fund${A.emergency === "some" ? " to 3–6 months" : ""}.</b> Keep it in a high-yield savings account, so a surprise bill never forces you to sell stocks when they're down.`);
+    let verdict, cls, stock;
+    if (A.horizon === "lt2") {
+      verdict = "Not for money you need within 2 years"; cls = "bad"; stock = [0, 10];
+      why.push(`Over single 12-month stretches since ${esc(spy.start?.slice(0, 4) || "1993")}, the S&amp;P 500 lost money ${pct(1 - (R["1"]?.positive || 0), 0)} of the time, and the worst one was ${signed(R["1"]?.worst)}.`);
+      why.push("Money you'll need soon belongs in a high-yield savings account, CDs or Treasury bills, where it can't drop right before you need it.");
+    } else if (A.horizon === "2to5") {
+      verdict = "Partly: mix it with safer holdings"; cls = "hold-t"; stock = [30, 50];
+      why.push(`Over 5-year stretches the S&amp;P 500 made money ${pct(R["5"]?.positive, 0)} of the time, but the worst 5 years still lost ${signed(R["5"]?.worst)} a year.`);
+      why.push("With a few years to go, a bond index fund (like BND) or Treasury bills alongside a stock index fund softens the swings.");
+    } else {
+      verdict = steps.length ? "A good fit, after the steps above" : "A good fit"; cls = "ok"; stock = A.horizon === "10p" ? [80, 100] : [60, 80];
+      const r = A.horizon === "10p" ? R["10"] : R["5"];
+      why.push(`Across all ${A.horizon === "10p" ? "10" : "5"}-year stretches since ${esc(spy.start?.slice(0, 4) || "1993")}, the S&amp;P 500 made money ${pct(r?.positive, 0)} of the time. The middle result was ${signed(r?.median)} a year, the worst ${signed(r?.worst)}.`);
+      if (A.horizon === "10p" && R["20"]?.n) why.push(`Over 20-year stretches it was positive ${pct(R["20"].positive, 0)} of the time, never worse than ${signed(R["20"].worst)} a year.`);
+      why.push("Time is the main thing an index fund needs: the longer you hold, the less any one bad year matters.");
+    }
+    if (A.drop === "sell") { stock = [Math.max(0, stock[0] - 20), Math.max(0, stock[1] - 20)]; cautions.push(`You said you'd probably sell after a 30% drop. The S&amp;P 500 has done that: it fell ${signed(spy.max_dd)} from its peak to the low in ${esc(spy.max_dd_at || "2009")}. Selling then locked in the loss for anyone who did. Holding more bonds and investing automatically every month makes it easier to sit still.`); }
+    if (A.drop === "buy") why.push("You said you'd buy more after a drop. That habit (buying when prices are low) is what makes regular monthly investing work.");
+    if (A.goal === "beat") cautions.push(`Most professionals don't beat the index over time (see "Hard to beat" above). A common approach is "core and explore": keep most of your money (say 80–90%) in an index fund and use a small slice for stock picks. You can research picks with the <a href="#/">model builder</a> and <a href="#/screener">screener</a>.`);
+    const mix = stock[1] === 0 ? "Cash, CDs or Treasury bills" :
+      `${stock[0]}–${stock[1]}% stock index funds (for example a US fund like VTI or VOO with some international, like VXUS), the rest in a bond fund like BND or Treasury bills`;
+    return { verdict, cls, steps, why, cautions, mix };
+  }
+  function ixResult(A, D) {
+    const done = IX_Q.every(([k]) => A[k]);
+    if (!done) return `<p class="note">Answer all ${IX_Q.length} to see the result. ${IX_Q.filter(([k]) => A[k]).length} of ${IX_Q.length} done.</p>`;
+    const r = ixAssess(A, D);
+    return `<div class="ix-res"><p class="ix-v"><span class="${r.cls}">${esc(r.verdict)}</span></p>
+      ${r.steps.length ? `<h3>Before you invest</h3><ol>${r.steps.map((x) => `<li>${x}</li>`).join("")}</ol>` : ""}
+      <h3>Why</h3><ul>${r.why.map((x) => `<li>${x}</li>`).join("")}</ul>
+      ${r.cautions.length ? `<h3>Worth knowing</h3><ul>${r.cautions.map((x) => `<li>${x}</li>`).join("")}</ul>` : ""}
+      <h3>A common starting mix for your timeline</h3><p>${r.mix}.</p>
+      <p class="note">A rule of thumb from what's typical, not a recommendation for you personally. Before investing a large amount, talk to a fee-only financial planner.</p></div>`;
+  }
+  function ixDca(D, amt, yrs) {
+    const v = D.spy?.v || [], n = yrs * 12, outs = [];
+    for (let s0 = 0; s0 + n < v.length; s0++) {
+      let val = 0; for (let k = 0; k < n; k++) val += amt * v[s0 + n] / v[s0 + k];
+      outs.push([val, s0]);
+    }
+    if (!outs.length) return null;
+    outs.sort((a, b) => a[0] - b[0]);
+    const [y0, m0] = (D.spy.start || "1993-01").split("-").map(Number);
+    const when = (i) => { const t = y0 * 12 + (m0 - 1) + i; return `${Math.floor(t / 12)}`; };
+    const put = amt * n, pick = (p) => outs[Math.min(outs.length - 1, Math.floor(p * (outs.length - 1)))];
+    return { put, n: outs.length, worst: outs[0], med: pick(0.5), best: outs[outs.length - 1], ahead: outs.filter((o) => o[0] > put).length / outs.length, when };
+  }
+  async function indexView() {
+    document.title = "Index funds · " + SITE;
+    app.innerHTML = `<p class="muted loading">Loading index fund data…</p>`;
+    let D; try { D = await getJSON("index/data.json"); } catch { app.innerHTML = `<div class="warn">Index fund data isn't available yet. It's rebuilt every weekday evening.</div>`; return; }
+    const F = D.funds || [], spy = D.spy || {}, mk = D.market || {}, R = spy.rolling || {};
+    const voo = F.find((f) => f.t === "VOO") || {}, vti = F.find((f) => f.t === "VTI") || {};
+    const fv = (rate, fee, yrs = 30, p = 10000) => p * Math.pow(1 + rate - fee, yrs);
+    const A = JSON.parse(sessionStorage.getItem("mb_ix") || "{}");
+    app.innerHTML = `<section class="hero"><h1>Index funds: are they right for you?</h1>
+        <p>An index fund buys every company in a market index, like the S&amp;P 500, instead of trying to pick winners. You own a small slice of all of them for a tiny yearly fee. Below: why people use them, what can go wrong, a one-minute check of whether one fits you, and what history says monthly investing could have turned into.</p></section>
+      <div class="grid3 section">
+        <div class="card ix-card"><div class="k">Cheap</div><p>${esc(voo.t || "VOO")} costs <b>${pct(voo.er, 2)}</b> a year: <b>${usd((voo.er || 0.0003) * 10000)}</b> on every $10,000. Over 30 years at a 7% return, $10,000 grows to about <b>${usd(fv(0.07, voo.er || 0.0003))}</b>. At a 1% yearly fee it would be about <b>${usd(fv(0.07, 0.01))}</b>.</p></div>
+        <div class="card ix-card"><div class="k">Hard to beat</div><p>In 2025, <b>79%</b> of actively managed large-company US funds did worse than the S&amp;P 500, and over 20 years it's more than <b>9 in 10</b>. <a href="https://www.spglobal.com/spdji/en/spiva/article/spiva-us/" target="_blank" rel="noopener">S&amp;P SPIVA scorecard ↗</a></p></div>
+        <div class="card ix-card"><div class="k">Spread out</div><p>${esc(vti.t || "VTI")} owns about 3,500 US companies. If one fails, you barely notice. Picking 5 or 10 stocks yourself, one bad pick can sink the whole portfolio.</p></div>
+      </div>
+      <section class="section card"><div class="card-h"><h2>The honest downsides</h2></div><ul class="ix-list">
+        <li><b>You get every crash.</b> The S&amp;P 500 fell <b>${signed(spy.max_dd)}</b> from its peak to the bottom in ${esc(spy.max_dd_at || "")}. It lost money in <b>${spy.down_years ?? "—"} of the last ${spy.years ?? "—"}</b> calendar years, the worst being ${esc(spy.worst_year?.[0] || "")} (${signed(spy.worst_year?.[1])}).</li>
+        <li><b>It's top-heavy.</b> The 10 largest US companies (${esc((mk.top10 || []).slice(0, 5).join(", "))} and others) make up about <b>${pct(mk.top10_share, 0)}</b> of the 500 largest. An "S&amp;P 500 fund" leans heavily on a handful of tech giants.</li>
+        <li><b>You'll never beat the market.</b> You'll get the market's return minus a tiny fee. For most people that's the point.</li>
+        <li><b>Short-term, anything can happen.</b> Over single 12-month stretches since ${esc((spy.start || "").slice(0, 4))}, results ranged from ${signed(R["1"]?.worst)} to ${signed(R["1"]?.best)}.</li></ul></section>
+
+      <section class="section card" id="ix-quiz"><div class="card-h"><h2>Is an index fund right for you?</h2><span class="note">6 questions · nothing is saved or sent</span></div>
+        <form id="ix-f" class="ix-f">${IX_Q.map(([k, q, opts]) => `<fieldset><legend>${q}</legend>${opts.map(([v, l]) => `<label><input type="radio" name="${k}" value="${v}"${A[k] === v ? " checked" : ""}> ${l}</label>`).join("")}</fieldset>`).join("")}</form>
+        <div id="ix-out" aria-live="polite">${ixResult(A, D)}</div></section>
+
+      <section class="section card"><div class="card-h"><h2>What could investing every month have become?</h2><span class="note">real S&amp;P 500 history, dividends reinvested</span></div>
+        <form class="gen-row ix-calc" id="ix-c"><label>Each month <input id="ix-amt" type="number" min="10" step="10" value="200"></label>
+          <label>For <select id="ix-yrs">${[5, 10, 15, 20, 25, 30].map((y) => `<option${y === 10 ? " selected" : ""}>${y}</option>`).join("")}</select> years</label></form>
+        <div id="ix-dca"></div></section>
+
+      <section class="section card"><div class="card-h"><h2>Popular index funds compared</h2><span class="note">returns are yearly averages with dividends reinvested · as of ${esc(D.built_at)}</span></div>
+        <div class="scroll"><table><thead><tr><th>Fund</th><th class="r">Yearly fee</th><th class="r">1 year</th><th class="r">5 years</th><th class="r">10 years</th><th class="r">Worst drop</th><th class="r hide-sm">Yield</th></tr></thead><tbody>
+          ${F.map((f) => `<tr><td><a class="tk" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.t)}</a><span class="co">${esc(f.name)}</span><span class="co ix-tr">${esc(f.tracks)}</span></td>
+            <td class="r num">${pct(f.er, 2)}<span class="co">${usd(f.er * 10000)} per $10k</span></td><td class="r num">${signed(f.r1)}</td><td class="r num">${nz(f.r5) ? signed(f.r5) : "—"}</td><td class="r num">${nz(f.r10) ? signed(f.r10) : "—"}</td>
+            <td class="r num">${signed(f.max_dd)}<span class="co">${esc(f.max_dd_at || "")} · data from ${esc((f.start || "").slice(0, 4))}</span></td><td class="r num hide-sm">${nz(f.yield) ? pct(f.yield, 1) : "—"}</td></tr>`).join("")}</tbody></table></div>
+        <div class="ix-hold">${F.filter((f) => (f.top || []).length).map((f) => `<details><summary>${esc(f.t)}: biggest holdings</summary><p class="note">${f.top.map((h) => `${esc(h.t || h.name)} ${pct(h.w, 1)}`).join(" · ")}${f.top.length ? ` · top ${f.top.length} together ${pct(f.top.reduce((a, h) => a + (h.w || 0), 0), 0)}` : ""}</p></details>`).join("")}</div>
+        <p class="note" style="padding:10px 18px 14px">"Worst drop" is the biggest fall from a high to a low since the fund started, using month-end prices. These are ETFs; Vanguard, Schwab and Fidelity also sell mutual-fund versions of the same indexes. Past returns don't predict future ones.</p></section>
+
+      ${mk.pe ? `<section class="section card"><div class="card-h"><h2>Is the market expensive right now?</h2></div>
+        <div class="kvrow" style="border:0;padding:14px 18px 4px"><div><div class="note">P/E of the 500 largest US companies</div><b>${mult(mk.pe)}</b></div><div><div class="note">Their earnings yield (1 ÷ P/E)</div><b>${pct(1 / mk.pe, 1)}</b></div>${nz(mk.t10) ? `<div><div class="note">10-year Treasury yield</div><b>${pct(mk.t10, 2)}</b></div>` : ""}</div>
+        <p style="padding:0 18px">${nz(mk.t10) ? (1 / mk.pe > mk.t10 ? "Stocks' earnings yield is above what a 10-year Treasury pays, so stocks are still being paid something extra for their risk." : "Stocks' earnings yield is below what a risk-free 10-year Treasury pays, which means investors are paying up for growth they expect later.") : ""} Research by Robert Shiller and others found that when prices are high relative to earnings, the following 10 years have tended to return less. It has been a poor guide to the next year or two, which is why most people keep investing every month rather than waiting for a dip.</p>
+        <p class="note" style="padding:0 18px 14px">Our estimate: the market value of the 500 largest US-based companies on NYSE and Nasdaq divided by their latest annual earnings (profitable companies only). It's close to, but not the same as, the official S&amp;P 500 figure.</p></section>` : ""}
+      <p class="note section">For education only. This is general information, not personal financial advice, and Model Builder isn't a registered investment adviser. Fund data from Yahoo Finance and each fund's issuer; fund performance figures are calculated by Model Builder.</p>`;
+    const f = document.getElementById("ix-f");
+    f.addEventListener("change", () => { const a = Object.fromEntries(new FormData(f)); sessionStorage.setItem("mb_ix", JSON.stringify(a)); document.getElementById("ix-out").innerHTML = ixResult(a, D); });
+    const calc = () => {
+      const amt = Math.max(1, +document.getElementById("ix-amt").value || 200), yrs = +document.getElementById("ix-yrs").value, r = ixDca(D, amt, yrs), el = document.getElementById("ix-dca");
+      if (!r) { el.innerHTML = `<p class="note" style="padding:0 18px 14px">Not enough history for ${yrs} years.</p>`; return; }
+      el.innerHTML = `<div class="kpis" style="padding:12px 18px 0"><div class="kpi"><div class="k">You put in</div><div class="v">${usd(r.put, 0)}</div></div>
+          <div class="kpi"><div class="k">Worst start (${r.when(r.worst[1])})</div><div class="v">${usd(r.worst[0], 0)}</div></div>
+          <div class="kpi hero-n"><div class="k">Typical result</div><div class="v">${usd(r.med[0], 0)}</div></div>
+          <div class="kpi"><div class="k">Best start (${r.when(r.best[1])})</div><div class="v">${usd(r.best[0], 0)}</div></div></div>
+        <p style="padding:8px 18px 14px;margin:0">Investing ${usd(amt, 0)} every month for ${yrs} years in the S&amp;P 500 ended with more than you put in <b>${pct(r.ahead, 0)}</b> of the time, across ${r.n} different starting months since ${esc((D.spy.start || "").slice(0, 4))}. <span class="note">Before taxes and fund fees; uses SPY's monthly prices with dividends reinvested.</span></p>`;
+    };
+    document.getElementById("ix-c").addEventListener("input", calc); calc();
+  }
+
   // ------------------------------------------------------------- about JJ
   function aboutView() {
     document.title = "About JJ · " + SITE;
@@ -1917,7 +2036,7 @@ ${esc(g.ex.ua || "")}</pre></details></td><td class="r num">${g.n}</td><td class
     if (h === "built" || h === "about") await bootIndex();
     navLib();
     if (!window.__mbChrome) { window.__mbChrome = true; initChrome(); }
-    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds", "track", "watch", "about", "sectors", "earnings"];
+    const TABS = ["method", "library", "built", "update", "portfolio", "quiz", "screener", "funds", "track", "watch", "about", "sectors", "earnings", "index"];
     const hb = h.split("?")[0];
     const tab = TABS.includes(hb) ? hb : h.startsWith("funds/") ? "funds" : h.startsWith("sector/") ? "sectors" : h.startsWith("earnings/") ? "earnings" : h ? "__" : "";
     document.querySelectorAll("nav a").forEach((a) => { const on = a.getAttribute("href") === "#/" + tab; a.classList.toggle("on", on);
@@ -1934,6 +2053,7 @@ ${esc(g.ex.ua || "")}</pre></details></td><td class="r num">${g.n}</td><td class
     else if (h === "portfolio") portfolioView();
     else if (hb === "screener") screenerView(h.split("?")[1] || "");
     else if (h === "about") aboutView();
+    else if (h === "index") indexView();
     else if (h === "earnings" || h.startsWith("earnings/")) earningsView(decodeURIComponent(h.split("/")[1] || ""));
     else if (h === "sectors") sectorsView();
     else if (h.startsWith("sector/")) sectorPage(decodeURIComponent(h.slice(7)));
