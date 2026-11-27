@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-27 05:09 UTC",
+ "generated_at": "2026-11-27 18:32 UTC",
  "site": {
   "title": "Model Builder \u2014 JJ Rajgandhi",
   "tagline": "Full Excel models for any NYSE or Nasdaq company, built from SEC 10-K data.",
@@ -14,31 +14,30 @@
   "sell_below": -0.1
  },
  "rates": {
-  "rf_10y": 0.04848,
-  "tbill_3m": 0.04155
+  "rf_10y": 0.04936,
+  "tbill_3m": 0.04153
  },
  "coverage": [
   {
    "ticker": "LNG",
    "name": "Cheniere Energy, Inc.",
    "sector": "Energy",
-   "price": 301.99,
-   "target": 344.63,
-   "upside": 0.1412,
+   "price": 305.18,
+   "target": 342.51,
+   "upside": 0.1223,
    "rating": "Hold",
-   "refreshed_at": "2026-11-27 05:09 UTC",
+   "refreshed_at": "2026-11-27 18:32 UTC",
    "status": "ok",
    "target_stale": false,
    "error": null,
    "needs_review": false,
-   "pe": 12.5151,
-   "ev_ebitda": 7.986,
+   "pe": 12.6473,
+   "ev_ebitda": 8.0484,
    "op_margin": 0.4561,
-   "market_cap": 61667.566,
+   "market_cap": 62318.977,
    "street_median": 347.0,
    "street_mean": 340.8,
    "spark": [
-    295.86,
     290.85,
     292.0,
     276.02,
@@ -97,7 +96,8 @@
     294.84,
     295.46,
     296.01,
-    301.99
+    301.99,
+    305.18
    ],
    "has_report": true
   }
