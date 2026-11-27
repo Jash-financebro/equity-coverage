@@ -81,6 +81,9 @@ jobs:
           SEC_USER_AGENT: ${{ vars.SEC_USER_AGENT }}
         run: python3 pipeline/run.py
 
+      - name: Index fund data (returns, risk, costs, S&P 500 history)
+        run: python3 pipeline/index_funds.py || echo "::warning::index fund data failed"
+
       - name: Earnings notes for library models and the largest companies
         env:
           TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
@@ -112,7 +115,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/data site/downloads site/universe site/funds site/feed.xml data/cusip_map.json models
+          git add site/data site/downloads site/universe site/funds site/feed.xml site/index data/cusip_map.json models
           git diff --cached --quiet || git commit -m "Data refresh $(date -u +'%Y-%m-%d %H:%M UTC')"
           # a newer refresh always wins over older generated data
           git push || (git pull --rebase -X theirs origin main && git push)
