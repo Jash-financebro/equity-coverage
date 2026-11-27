@@ -163,7 +163,7 @@
   };
   const GL_KEYS = Object.keys(GLOSS).sort((a, b) => b.length - a.length);
   const GL_RE = new RegExp(`(^|[^A-Za-z0-9/-])(${GL_KEYS.map((k) => k.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")).join("|")})(?![A-Za-z0-9])`, "i");
-  const GL_SEL = ".kpi .k, th, .card-h h2, .card-h .note, h2.sec, .sliders label, .sf > label, .preset span, .kvrow .note, .fin td:first-child, #sec-cases td:first-child, .rdcf b, .hero p, .tcard .note";
+  const GL_SEL = ".kpi .k, th, .card-h h2, .card-h .note, h2.sec, .sf > label, .preset span, .kvrow .note, .fin td:first-child, #sec-cases td:first-child, .rdcf b, .hero p, .tcard .note";
   let GL_SEEN = new Set();
   function glossify(root) {
     root.querySelectorAll(GL_SEL).forEach((el) => {
@@ -188,10 +188,33 @@
   document.addEventListener("mouseover", (e) => { const g = e.target.closest?.(".gl"); if (g) glTip(g); });
   document.addEventListener("mouseout", (e) => { const g = e.target.closest?.(".gl"); if (g) glHide(g); });
   document.addEventListener("focusin", (e) => { if (e.target.classList?.contains("gl")) glTip(e.target); });
+  document.addEventListener("click", (e) => { const g = e.target.closest?.(".gl"); if (g) { e.preventDefault(); glTip(g); } else if (tip.classList.contains("wide")) glHide(); });
   document.addEventListener("focusout", (e) => { if (e.target.classList?.contains("gl")) glHide(e.target); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") { glHide(document.activeElement); document.querySelector("#tour .tour-x")?.click(); } });
   let glTimer = null;
-  new MutationObserver(() => { clearTimeout(glTimer); glTimer = setTimeout(() => glossify(app), 120); }).observe(app, { childList: true, subtree: true });
+  // wide tables on phones: a fade on the right edge says "there's more, swipe"
+  // tables with many columns become label/value cards on phones (CSS: table.stack); statements, grids and the screener keep scrolling
+  function stackTables(root) {
+    root.querySelectorAll(".scroll > table:not(.stack-done)").forEach((t) => {
+      t.classList.add("stack-done");
+      const heads = [...t.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+      if (heads.length < 5 || t.matches(".scr, .fin, .hist, .cmp, .pf-in, .sens") || t.closest("#sec-sens")) return;
+      t.classList.add("stack");
+      t.querySelectorAll("tbody tr").forEach((tr) => [...tr.children].forEach((td, i) => { if (i && !td.dataset.l && heads[i]) td.dataset.l = heads[i]; }));
+    });
+  }
+  function markScroll(root) {
+    stackTables(root);
+    root.querySelectorAll(".scroll").forEach((el) => {
+      const upd = () => el.classList.toggle("more", el.scrollWidth - el.clientWidth - el.scrollLeft > 4);
+      upd(); if (!el.dataset.sw) { el.dataset.sw = "1"; el.addEventListener("scroll", upd, { passive: true }); }
+      // keyboard users can scroll a table that doesn't fit
+      if (el.scrollWidth > el.clientWidth + 4 && !el.querySelector("a, button, input")) { el.tabIndex = 0; el.setAttribute("role", "region"); const sec = el.closest("section, .card"), all = sec ? [...sec.querySelectorAll(".scroll")] : [el];
+        el.setAttribute("aria-label", `${sec?.querySelector("h2")?.textContent.trim() || "Table"}${all.length > 1 ? ", table " + (all.indexOf(el) + 1) : ""}, scrolls sideways`); }
+    });
+  }
+  window.addEventListener("resize", () => markScroll(app));
+  new MutationObserver(() => { clearTimeout(glTimer); glTimer = setTimeout(() => { glossify(app); markScroll(app); }, 120); }).observe(app, { childList: true, subtree: true });
   async function apiBase() {
     if (API !== null) return API;
     try { API = (await getJSON("api.json")).api || ""; } catch { API = ""; }
@@ -225,7 +248,7 @@
         <div class="kpi hero-n"><div class="k">Price target</div><div class="v">${usd(m.target)}</div><div class="n">${pill(m.rating)} &nbsp;anchored to street and peers</div></div>
         <div class="kpi"><div class="k">Price</div><div class="v">${usd(m.price)}</div><div class="n">${esc(m.price_date || "")}</div></div>
         <div class="kpi"><div class="k">Upside</div><div class="v">${signed(m.upside)}</div></div>
-        <div class="kpi"><div class="k">Bear / Base / Bull</div><div class="v" style="font-size:17px">${usd(sc.bear, 0)} / ${usd(sc.base, 0)} / ${usd(sc.bull, 0)}</div></div>
+        <div class="kpi kpi-wide"><div class="k">Bear / Base / Bull</div><div class="v" style="font-size:17px">${usd(sc.bear, 0)} / ${usd(sc.base, 0)} / ${usd(sc.bull, 0)}</div></div>
         <div class="kpi"><div class="k">WACC</div><div class="v">${pct(m.wacc, 2)}</div><div class="n">peers: ${esc((m.peers || []).join(", ") || "none")}</div></div>
       </div>
       <div class="gen-actions">${pageLink(m)} ${dl(m)}<span class="note">${note || ""} · version ${m.version} · generated ${ago(m.generated_at)}${m.times_generated > 1 ? ` · ${m.times_generated} builds` : ""}</span></div>
@@ -691,6 +714,13 @@
   // ------------------------------------------------------------- theme + keyboard shortcuts
   function initChrome() {
     const root = document.documentElement;
+    // phone menu: one button opens every tab as a grid of large targets
+    const top = document.querySelector(".top"), mb = document.getElementById("menu-btn");
+    const setMenu = (open) => { top.classList.toggle("open", open); mb.setAttribute("aria-expanded", String(open)); document.getElementById("menu-lab").textContent = open ? "Close" : "Menu"; };
+    mb?.addEventListener("click", () => setMenu(!top.classList.contains("open")));
+    window.addEventListener("hashchange", () => setMenu(false));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && top.classList.contains("open")) { setMenu(false); mb.focus(); } });
+    document.addEventListener("click", (e) => { if (top.classList.contains("open") && !top.contains(e.target)) setMenu(false); });
     const saved = store.get("mb_theme"); if (saved) root.dataset.theme = saved;
     const nav = document.getElementById("nav");
     if (nav && !document.getElementById("theme-btn")) {
@@ -1293,7 +1323,7 @@
         <div><div class="note">${esc(m.exchange || "NYSE")}: ${esc(m.ticker)} · <a href="#/sector/${secSlug(m.sector)}">${esc(m.sector)}</a> · ${esc(m.industry || "")}</div>
           <h1 class="dname">${esc(m.name)} ${starBtn(m.ticker)}</h1>
           <div class="note">Version ${m.version} · generated ${ago(m.generated_at)} · 10-K filed ${esc(d.dates?.tenk_filed || "n/a")} · priced ${esc(m.price_date)} ${qualityPill(m.quality)}</div></div>
-        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <button class="btn sm primary-o" id="explain">Explain this model</button> <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a> <a class="btn sm" href="#/earnings/${esc(m.ticker)}">Earnings notes</a> <button class="btn sm" id="fb-open" aria-expanded="false" aria-controls="fb">Something look off?</button></div>
+        <div class="actions">${dl(m)}${m.files?.tearsheet ? ` <a class="btn sm" href="${esc(m.files.tearsheet)}" target="_blank" rel="noopener">⤓ Tear sheet</a>` : ""} <button class="btn sm primary-o" id="explain">Explain this model</button> <button type="button" class="btn sm more-btn" id="more-acts" aria-expanded="false" aria-controls="acts2">More ▾</button><span class="acts2" id="acts2"> <a class="btn sm" href="#/compare/${esc(m.ticker)}">Compare</a> <button class="btn sm" id="share">Copy share link</button> <a class="btn sm" href="#/" id="rebuild">Rebuild</a> <a class="btn sm" href="#/earnings/${esc(m.ticker)}">Earnings notes</a> <button class="btn sm" id="fb-open" aria-expanded="false" aria-controls="fb">Something look off?</button></span></div>
       </div>
       <form class="card section fb" id="fb" hidden>
         <div class="card-h"><h2>Report a problem with this model</h2><span class="note">goes privately to the site owner · no sign-in, no email needed</span></div>
@@ -1306,7 +1336,7 @@
       </form>
       <div class="kpis">
         <div class="kpi hero-n"><div class="k">12-month price target</div><div class="v">${usd(m.target)}</div><div class="n">${pill(m.rating)} &nbsp;${signed(m.upside)} vs ${usd(m.price)}</div></div>
-        <div class="kpi"><div class="k">Bear / Base / Bull</div><div class="v" style="font-size:17px">${usd(sc.bear, 0)} / ${usd(sc.base, 0)} / ${usd(sc.bull, 0)}</div></div>
+        <div class="kpi kpi-wide"><div class="k">Bear / Base / Bull</div><div class="v" style="font-size:17px">${usd(sc.bear, 0)} / ${usd(sc.base, 0)} / ${usd(sc.bull, 0)}</div></div>
         <div class="kpi"><div class="k">Model value</div><div class="v">${usd(m.model_value)}</div><div class="n">before street &amp; peer anchoring</div></div>
         <div class="kpi"><div class="k">Street median</div><div class="v">${usd(m.consensus?.target_median)}</div><div class="n">${m.consensus?.analysts || "n/a"} analysts</div></div>
         <div class="kpi"><div class="k">WACC</div><div class="v">${pct(m.wacc, 2)}</div><div class="n">beta: ${esc(m.beta_source || "")}</div></div>
@@ -1386,6 +1416,8 @@
     });
     document.getElementById("rebuild").addEventListener("click", () => sessionStorage.setItem("mb_prefill", m.ticker));
     document.getElementById("explain").addEventListener("click", () => openExplain(m));
+    document.getElementById("more-acts").addEventListener("click", (e) => { const a = document.getElementById("acts2"), on = !a.classList.contains("open");
+      a.classList.toggle("open", on); e.currentTarget.setAttribute("aria-expanded", String(on)); e.currentTarget.textContent = on ? "Less ▴" : "More ▾"; });
     if (x?.rev) setTimeout(() => runMonteCarlo(m, 1), 30);
     const fbForm = document.getElementById("fb"), fbBtn = document.getElementById("fb-open");
     const fbToggle = (open) => { fbForm.hidden = !open; fbBtn.setAttribute("aria-expanded", String(open)); if (open) fbForm.querySelector("input[type=radio]").focus(); else fbBtn.focus(); };
@@ -1720,10 +1752,10 @@
         <div id="ix-dca"></div></section>
 
       <section class="section card"><div class="card-h"><h2>Popular index funds compared</h2><span class="note">returns are yearly averages with dividends reinvested · as of ${esc(D.built_at)}</span></div>
-        <div class="scroll"><table><thead><tr><th>Fund</th><th class="r">Yearly fee</th><th class="r">1 year</th><th class="r">5 years</th><th class="r">10 years</th><th class="r">Worst drop</th><th class="r hide-sm">Yield</th></tr></thead><tbody>
+        <div class="scroll"><table class="stack"><thead><tr><th>Fund</th><th class="r">Yearly fee</th><th class="r">1 year</th><th class="r">5 years</th><th class="r">10 years</th><th class="r">Worst drop</th><th class="r hide-sm">Yield</th></tr></thead><tbody>
           ${F.map((f) => `<tr><td><a class="tk" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.t)}</a><span class="co">${esc(f.name)}</span><span class="co ix-tr">${esc(f.tracks)}</span></td>
-            <td class="r num">${pct(f.er, 2)}<span class="co">${usd(f.er * 10000)} per $10k</span></td><td class="r num">${signed(f.r1)}</td><td class="r num">${nz(f.r5) ? signed(f.r5) : "—"}</td><td class="r num">${nz(f.r10) ? signed(f.r10) : "—"}</td>
-            <td class="r num">${signed(f.max_dd)}<span class="co">${esc(f.max_dd_at || "")} · data from ${esc((f.start || "").slice(0, 4))}</span></td><td class="r num hide-sm">${nz(f.yield) ? pct(f.yield, 1) : "—"}</td></tr>`).join("")}</tbody></table></div>
+            <td class="r num" data-l="Yearly fee">${pct(f.er, 2)}<span class="co">${usd(f.er * 10000)} per $10k</span></td><td class="r num" data-l="1 year">${signed(f.r1)}</td><td class="r num" data-l="5 years">${nz(f.r5) ? signed(f.r5) : "—"}</td><td class="r num" data-l="10 years">${nz(f.r10) ? signed(f.r10) : "—"}</td>
+            <td class="r num" data-l="Worst drop">${signed(f.max_dd)}<span class="co">${esc(f.max_dd_at || "")} · data from ${esc((f.start || "").slice(0, 4))}</span></td><td class="r num" data-l="Yield">${nz(f.yield) ? pct(f.yield, 1) : "—"}</td></tr>`).join("")}</tbody></table></div>
         <div class="ix-hold">${F.filter((f) => (f.top || []).length).map((f) => `<details><summary>${esc(f.t)}: biggest holdings</summary><p class="note">${f.top.map((h) => `${esc(h.t || h.name)} ${pct(h.w, 1)}`).join(" · ")}${f.top.length ? ` · top ${f.top.length} together ${pct(f.top.reduce((a, h) => a + (h.w || 0), 0), 0)}` : ""}</p></details>`).join("")}</div>
         <p class="note" style="padding:10px 18px 14px">"Worst drop" is the biggest fall from a high to a low since the fund started, using month-end prices. These are ETFs; Vanguard, Schwab and Fidelity also sell mutual-fund versions of the same indexes. Past returns don't predict future ones.</p></section>
 
